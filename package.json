@@ -1,0 +1,9 @@
+{
+  "name": "ufcmania",
+  "version": "1.0.0",
+  "private": true,
+  "description": "UFC Mania — static UFC fighter database site (single self-contained HTML file, no backend).",
+  "scripts": {
+    "start": "npx serve ."
+  }
+}

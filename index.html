@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>UFC Mania — Explore UFC Fighters Around the World</title>
+<meta name="description" content="UFC Mania: browse UFC fighters, compare stats, and explore rankings, weight classes and countries. Demo dataset for a scalable fighter database platform.">
+<meta property="og:title" content="UFC Mania — Explore UFC Fighters Around the World">
+<meta property="og:description" content="Browse UFC fighters, compare stats, and explore rankings, weight classes and countries on UFC Mania.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="UFC Mania">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="UFC Mania — Explore UFC Fighters Around the World">
+<meta name="twitter:description" content="Browse UFC fighters, compare stats, and explore rankings, weight classes and countries on UFC Mania.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0b;
+  --surface:#141416;
+  --surface-2:#1c1c1f;
+  --line:#2b2b2f;
+  --red:#e0102b;
+  --red-dim:#8c0c1c;
+  --gold:#c9a227;
+  --white:#f4f4f2;
+  --muted:#9a9aa1;
+  --muted-2:#616166;
+  --win:#2f9e5b;
+  --loss:#c9372c;
+  --draw:#c9a227;
+  --nc:#6b6b70;
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:70px;height:100%;}
+*,*::before,*::after{box-sizing:inherit;}
+body{
+  margin:0;background:var(--bg);color:var(--white);
+  -webkit-font-smoothing:antialiased;
+  min-height:100%;
+  overflow-x:hidden;
+}
+img{max-width:100%;display:block;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;cursor:pointer;}
+h1,h2,h3,h4{font-family:'Oswald',sans-serif;margin:0;letter-spacing:.01em;}
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px;}
+.hidden{display:none !important;}
+
+/* ===== ANIMATED BACKGROUND CANVAS ===== */
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+#nav,#searchOverlay,main,footer{position:relative;z-index:1;}
+
+/* ===== KEYFRAME ANIMATIONS ===== */
+@keyframes float-y{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
+@keyframes rotate-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes glow-pulse{0%,100%{box-shadow:0 4px 20px rgba(224,16,43,.45),0 1px 4px rgba(0,0,0,.4)}50%{box-shadow:0 6px 36px rgba(224,16,43,.75),0 1px 4px rgba(0,0,0,.4)}}
+@keyframes border-spin{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes fade-in-up{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scanline{0%{top:-5%}100%{top:105%}}
+@keyframes logo-glow{0%,100%{box-shadow:0 0 10px rgba(224,16,43,.4)}50%{box-shadow:0 0 24px rgba(224,16,43,.9),0 0 40px rgba(224,16,43,.4)}}
+@keyframes card-appear{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+
+
+
+/* ---------- NAV ---------- */
+#nav{
+  position:sticky;top:0;top:env(safe-area-inset-top,0px);z-index:100;
+  background:rgba(8,8,9,.78);backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-bottom:1px solid rgba(224,16,43,.18);
+}
+#nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(224,16,43,.5),transparent);}
+#nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Oswald';font-weight:600;font-size:18px;}
+.logo .mark{width:32px;height:32px;border-radius:4px;background:linear-gradient(135deg,var(--red),#ff2020,var(--red-dim));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;font-family:'Oswald';transform:skew(-6deg);animation:logo-glow 2.5s ease-in-out infinite;}
+.navlinks{display:flex;gap:2px;align-items:center;}
+.navlinks a{padding:10px 14px;font-size:14px;font-weight:500;color:var(--muted);border-radius:6px;transition:color .2s,background .2s;position:relative;}
+.navlinks a::after{content:'';position:absolute;bottom:4px;left:50%;right:50%;height:2px;background:var(--red);border-radius:2px;transition:left .2s,right .2s;}
+.navlinks a:hover::after,.navlinks a.active::after{left:14px;right:14px;}
+.navlinks a:hover,.navlinks a.active{color:var(--white);background:rgba(224,16,43,.08);}
+.navtools{display:flex;align-items:center;gap:10px;}
+#navSearchBtn{background:rgba(224,16,43,.1);border:1px solid rgba(224,16,43,.25);color:var(--muted);width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+#navSearchBtn:hover{color:var(--white);border-color:var(--red);background:rgba(224,16,43,.22);box-shadow:0 0 12px rgba(224,16,43,.3);}
+.burger{display:none;background:none;border:none;color:var(--white);width:38px;height:38px;}
+@media(max-width:900px){
+  .navlinks{display:none;position:absolute;top:64px;left:0;right:0;background:rgba(8,8,9,.97);flex-direction:column;border-bottom:1px solid var(--line);padding:8px;backdrop-filter:blur(20px);}
+  .navlinks.open{display:flex;}
+  .burger{display:flex;align-items:center;justify-content:center;}
+}
+
+
+/* global search overlay */
+#searchOverlay{position:fixed;inset:0;background:rgba(8,8,9,.92);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding-top:14vh;}
+#searchOverlay .box{width:min(560px,90vw);}
+#searchOverlay input{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;color:var(--white);font-size:18px;outline:none;}
+#searchOverlay input:focus{border-color:var(--red);}
+#searchResults{margin-top:10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;max-height:50vh;overflow-y:auto;}
+.searchRow{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);}
+.searchRow:last-child{border-bottom:none;}
+.searchRow:hover{background:var(--surface-2);}
+.searchRow img{width:36px;height:36px;border-radius:6px;object-fit:cover;}
+#searchClose{position:absolute;top:18px;right:22px;color:var(--muted);background:none;border:none;font-size:26px;}
+
+/* ---------- HERO ---------- */
+#hero{
+  position:relative;padding:110px 0 96px;overflow:hidden;
+  background:
+    radial-gradient(ellipse 70% 60% at 80% -10%, rgba(224,16,43,.22), transparent 65%),
+    radial-gradient(ellipse 50% 40% at 10% 110%, rgba(201,162,39,.10), transparent 60%),
+    var(--bg);
+}
+#hero::before{content:'';position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,rgba(224,16,43,.35),transparent);animation:scanline 5s linear infinite;z-index:2;pointer-events:none;}
+#hero .cage{position:absolute;right:-100px;top:-60px;width:680px;height:680px;opacity:.22;pointer-events:none;animation:rotate-slow 80s linear infinite;}
+#hero .cage svg{width:100%;height:100%;}
+#hero .orb1{position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(224,16,43,.12) 0%,transparent 70%);top:-100px;right:100px;animation:float-y 8s ease-in-out infinite;pointer-events:none;}
+#hero .orb2{position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,39,.08) 0%,transparent 70%);bottom:-80px;left:60px;animation:float-y 11s ease-in-out infinite reverse;pointer-events:none;}
+.eyebrow{color:var(--red);font-weight:700;font-size:12px;letter-spacing:.14em;margin-bottom:18px;display:flex;align-items:center;gap:10px;text-transform:uppercase;animation:fade-in-up .6s ease both;}
+.eyebrow::before{content:'';width:28px;height:2px;background:linear-gradient(90deg,var(--red),transparent);display:inline-block;}
+.eyebrow::after{content:'';width:28px;height:2px;background:linear-gradient(270deg,var(--red),transparent);display:inline-block;}
+#hero h1{font-size:clamp(38px,6vw,68px);line-height:1.02;max-width:820px;font-weight:700;animation:fade-in-up .7s .1s ease both;text-shadow:0 2px 40px rgba(0,0,0,.5);}
+#hero h1 em{font-style:normal;color:var(--red);position:relative;}
+#hero h1 em::after{content:'';position:absolute;left:0;bottom:-4px;right:0;height:3px;background:linear-gradient(90deg,var(--red),rgba(224,16,43,.3));border-radius:2px;}
+#hero p.lead{color:var(--muted);font-size:18px;max-width:560px;margin-top:26px;line-height:1.6;animation:fade-in-up .7s .2s ease both;}
+.btnrow{display:flex;gap:16px;margin-top:38px;flex-wrap:wrap;animation:fade-in-up .7s .3s ease both;}
+
+/* ---------- BUTTONS ---------- */
+.btn{
+  padding:13px 28px;border-radius:10px;font-weight:700;font-size:13.5px;
+  border:none;transition:transform .15s,box-shadow .2s,filter .2s;
+  display:inline-flex;align-items:center;gap:9px;
+  cursor:pointer;letter-spacing:.04em;text-transform:uppercase;
+  font-family:'Oswald',sans-serif;position:relative;overflow:hidden;
+}
+.btn::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.13) 50%,transparent 70%);transform:translateX(-100%);transition:transform .45s ease;}
+.btn:hover::before{transform:translateX(100%);}
+.btn:hover{transform:translateY(-2px);}
+.btn:active{transform:scale(.96);}
+.btn-primary{background:linear-gradient(135deg,#ff1a2e,#e0102b,#b80d22);color:#fff;animation:glow-pulse 3s ease-in-out infinite;}
+.btn-primary:hover{filter:brightness(1.1);}
+.btn-ghost{background:rgba(255,255,255,.04);color:var(--white);border:1px solid rgba(255,255,255,.18);position:relative;}
+.btn-ghost::after{content:'';position:absolute;inset:-1px;border-radius:11px;background:linear-gradient(90deg,rgba(224,16,43,0),rgba(224,16,43,.5),rgba(201,162,39,.4),rgba(224,16,43,.5),rgba(224,16,43,0));background-size:300% 100%;animation:border-spin 4s linear infinite;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;-webkit-mask-composite:xor;padding:1px;}
+.btn-ghost:hover{background:rgba(224,16,43,.1);border-color:rgba(224,16,43,.4);box-shadow:0 0 18px rgba(224,16,43,.2);}
+
+.heroStats{display:flex;gap:40px;margin-top:60px;flex-wrap:wrap;animation:fade-in-up .7s .45s ease both;}
+.heroStats .n{font-family:'Oswald';font-size:32px;font-weight:700;}
+.heroStats .l{color:var(--muted);font-size:12px;margin-top:4px;text-transform:uppercase;letter-spacing:.06em;}
+.heroSearch{margin-top:44px;max-width:480px;position:relative;animation:fade-in-up .7s .35s ease both;}
+.heroSearch input{width:100%;background:rgba(20,20,22,.85);border:1px solid rgba(224,16,43,.25);border-radius:12px;padding:15px 18px 15px 48px;color:var(--white);font-size:15px;backdrop-filter:blur(10px);transition:border-color .2s,box-shadow .2s;}
+.heroSearch input:focus{outline:none;border-color:var(--red);box-shadow:0 0 18px rgba(224,16,43,.2);}
+.heroSearch svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--red);}
+
+/* ---------- SECTIONS ---------- */
+section.pad{padding:72px 0;}
+.sectionHead{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:32px;gap:20px;flex-wrap:wrap;}
+.sectionHead h2{font-size:30px;font-weight:700;position:relative;display:inline-block;padding-bottom:8px;}
+.sectionHead h2::after{content:'';position:absolute;left:0;bottom:0;width:40px;height:3px;background:linear-gradient(90deg,var(--red),rgba(224,16,43,.3));border-radius:2px;}
+.sectionHead p{color:var(--muted);font-size:14px;margin-top:8px;}
+.sectionHead a.more{color:var(--red);font-size:13px;font-weight:700;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em;padding:8px 16px;border:1px solid rgba(224,16,43,.3);border-radius:8px;transition:all .2s;}
+.sectionHead a.more:hover{background:rgba(224,16,43,.1);border-color:var(--red);box-shadow:0 0 14px rgba(224,16,43,.2);}
+
+
+/* fighter card grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;}
+.fcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;transition:transform .18s,border-color .18s;position:relative;}
+.fcard:hover{transform:translateY(-4px);border-color:var(--muted-2);}
+.fcard .photo{position:relative;height:220px;background:linear-gradient(160deg,#232326,#0f0f11);overflow:hidden;}
+.fcard .photo img{width:100%;height:100%;object-fit:cover;object-position:top center;}
+.fcard .statusPill{position:absolute;top:10px;left:10px;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);}
+.statusPill.active{color:#7ee0a1;border:1px solid #2f9e5b;}
+.statusPill.retired{color:#c9a227;border:1px solid #7a641c;}
+.statusPill.former{color:#c98f8f;border:1px solid #7a2f2f;}
+.fcard .flag{position:absolute;top:10px;right:10px;font-size:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));}
+.fcard .body{padding:14px 16px 16px;}
+.fcard .nick{color:var(--red);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+.fcard h3{font-size:19px;margin-top:3px;font-weight:600;}
+.fcard .meta{display:flex;gap:8px;color:var(--muted);font-size:12.5px;margin-top:6px;flex-wrap:wrap;}
+.fcard .meta span:not(:last-child)::after{content:'•';margin-left:8px;color:var(--muted-2);}
+.fcard .record{font-family:'Oswald';font-size:15px;margin-top:12px;letter-spacing:.02em;}
+.fcard .record b{color:var(--win);}
+.fcard .record .l{color:var(--loss);}
+.fcard .record .d{color:var(--muted);}
+.fcard .viewBtn{display:block;text-align:center;margin-top:12px;padding:9px;border-radius:7px;border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--white);}
+.fcard .viewBtn:hover{background:var(--red);border-color:var(--red);}
+
+/* filter bar */
+.filterBar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:26px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;}
+.filterBar input[type=text]{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--white);font-size:14px;min-width:200px;flex:1;}
+.filterBar select{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--white);font-size:13px;}
+.chipRow{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px;}
+.chip{padding:7px 13px;border-radius:20px;font-size:12.5px;font-weight:600;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);}
+.chip:hover{color:var(--white);}
+.chip.active{background:var(--red);border-color:var(--red);color:#fff;}
+.resultCount{color:var(--muted);font-size:13px;margin:2px 0 18px;}
+
+/* country / weightclass pill grids */
+.pillGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.countryPill,.wcPill{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;transition:border-color .15s,transform .15s;}
+.countryPill:hover,.wcPill:hover{border-color:var(--red);transform:translateY(-2px);}
+.countryPill .name,.wcPill .name{font-weight:600;font-size:14.5px;}
+.countryPill .flag{font-size:22px;margin-right:10px;}
+.countryPill .count,.wcPill .count{color:var(--muted);font-size:13px;}
+
+/* ---------- PROFILE ---------- */
+#profileHero{position:relative;padding:48px 0 0;background:linear-gradient(180deg,rgba(224,16,43,.10),transparent 60%);}
+.backlink{color:var(--muted);font-size:13px;display:inline-flex;align-items:center;gap:6px;margin-bottom:22px;}
+.backlink:hover{color:var(--white);}
+.profileTop{display:flex;gap:32px;align-items:flex-end;flex-wrap:wrap;padding-bottom:32px;border-bottom:1px solid var(--line);}
+.profileTop .photo{width:180px;height:220px;border-radius:12px;overflow:hidden;flex-shrink:0;background:var(--surface-2);border:1px solid var(--line);}
+.profileTop .photo img{width:100%;height:100%;object-fit:cover;object-position:top center;}
+.profileTop--stacked{flex-direction:column;align-items:center;text-align:center;padding-bottom:36px;}
+.profileTop--stacked .photo--lg{width:220px;height:280px;}
+.profileTop--stacked .subline{justify-content:center;}
+.profileTop--stacked .recordBig{white-space:normal;}
+.photoSrcLink{display:inline-block;margin-top:10px;font-size:12px;color:var(--muted);border-bottom:1px dotted var(--muted-2);}
+.photoSrcLink:hover{color:var(--white);}
+.profileTop .info .nick{color:var(--red);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.04em;}
+.profileTop h1{font-size:clamp(28px,4vw,42px);margin-top:4px;}
+.profileTop .subline{color:var(--muted);font-size:14.5px;margin-top:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.tag{padding:4px 10px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);font-size:12.5px;font-weight:600;}
+.tag.status-active{color:#7ee0a1;border-color:#2f9e5b;}
+.tag.status-retired{color:#c9a227;border-color:#7a641c;}
+.tag.status-former{color:#c98f8f;border-color:#7a2f2f;}
+.recordBig{font-family:'Oswald';font-size:34px;font-weight:600;white-space:nowrap;}
+.recordBig .l{color:var(--loss);}
+.recordBig .d{color:var(--muted);font-size:.7em;}
+
+.tabs{display:flex;gap:4px;overflow-x:auto;padding:18px 0;border-bottom:1px solid var(--line);position:sticky;top:64px;top:calc(env(safe-area-inset-top,0px) + 64px);background:var(--bg);z-index:40;}
+.tabBtn{padding:9px 16px;border-radius:7px;font-size:13.5px;font-weight:600;color:var(--muted);white-space:nowrap;background:none;border:none;}
+.tabBtn:hover{color:var(--white);}
+.tabBtn.active{background:var(--surface-2);color:var(--white);}
+
+.tabPanel{padding:36px 0;display:none;}
+.tabPanel.active{display:block;}
+.panelGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;}
+.statBox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+.statBox .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em;}
+.statBox .v{font-family:'Oswald';font-size:22px;margin-top:5px;font-weight:600;}
+
+.bioGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 30px;}
+@media(max-width:640px){.bioGrid{grid-template-columns:1fr;}}
+.bioRow{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px;gap:10px;}
+.bioRow .k{color:var(--muted);}
+.bioRow .v{text-align:right;font-weight:500;}
+
+.subhead{font-size:16px;font-weight:600;margin:30px 0 14px;color:var(--white);border-left:3px solid var(--red);padding-left:10px;}
+.subhead:first-child{margin-top:0;}
+.na{color:var(--muted-2);font-style:italic;font-size:14px;}
+
+/* timeline */
+.timeline{position:relative;padding-left:26px;}
+.timeline::before{content:'';position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--line);}
+.tItem{position:relative;padding-bottom:26px;}
+.tItem::before{content:'';position:absolute;left:-26px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--red);border:2px solid var(--bg);}
+.tItem.loss::before{background:var(--muted-2);}
+.tItem .row1{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.tItem .date{color:var(--muted);font-size:12.5px;}
+.tItem h4{font-size:16px;margin-top:4px;}
+.tItem .sub{color:var(--muted);font-size:13px;margin-top:3px;}
+.badgeRow{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+.mini{font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;background:var(--surface-2);border:1px solid var(--line);color:var(--gold);}
+
+/* fight history table */
+table.fh{width:100%;border-collapse:collapse;font-size:13.5px;}
+table.fh th{text-align:left;color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--line);}
+table.fh td{padding:12px;border-bottom:1px solid var(--line);}
+table.fh tr:hover td{background:var(--surface);}
+.resBadge{display:inline-block;padding:3px 10px;border-radius:5px;font-weight:700;font-size:11.5px;}
+.resBadge.win{background:rgba(47,158,91,.18);color:var(--win);}
+.resBadge.loss{background:rgba(201,55,44,.18);color:var(--loss);}
+.resBadge.draw{background:rgba(201,162,39,.18);color:var(--draw);}
+.resBadge.nc{background:rgba(107,107,112,.18);color:var(--nc);}
+.tableScroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;}
+
+.newsItem{padding:18px 0;border-bottom:1px solid var(--line);}
+.newsItem .date{color:var(--muted);font-size:12px;}
+.newsItem h4{margin-top:5px;font-size:16px;}
+.newsItem p{color:var(--muted);font-size:14px;margin-top:6px;line-height:1.5;}
+.newsItem .src{color:var(--muted-2);font-size:12px;margin-top:6px;}
+
+.sourceBox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px;font-size:13.5px;color:var(--muted);}
+.sourceBox ul{margin:8px 0 0;padding-left:18px;}
+.sourceBox li{margin-bottom:4px;}
+.updated{color:var(--gold);font-weight:600;}
+
+/* rankings table */
+.rankRow{display:flex;align-items:center;gap:14px;padding:12px 14px;border-bottom:1px solid var(--line);}
+.rankRow:hover{background:var(--surface);}
+.rankNum{font-family:'Oswald';font-size:20px;width:34px;color:var(--muted);}
+.rankNum.champ{color:var(--gold);}
+.rankRow img{width:40px;height:40px;border-radius:6px;object-fit:cover;}
+.rankRow .nm{font-weight:600;font-size:14.5px;flex:1;}
+.rankRow .rec{color:var(--muted);font-size:13px;}
+
+/* compare */
+.compareSelectRow{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:36px;}
+.compareSelectRow select{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;color:var(--white);font-size:14px;min-width:220px;}
+.vsMark{font-family:'Oswald';color:var(--red);font-size:22px;font-weight:600;}
+table.cmp{width:100%;border-collapse:collapse;}
+table.cmp td,table.cmp th{padding:13px 14px;border-bottom:1px solid var(--line);font-size:14px;}
+table.cmp th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em;text-align:center;width:22%;}
+table.cmp td.label{color:var(--muted);width:26%;font-size:13px;}
+table.cmp td.val{text-align:center;font-weight:600;}
+table.cmp td.win{color:var(--win);}
+.cmpHead{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.cmpHead img{width:64px;height:64px;border-radius:8px;object-fit:cover;}
+
+footer{border-top:1px solid var(--line);padding:40px 0;margin-top:40px;color:var(--muted-2);font-size:13px;}
+footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;}
+.demoNote{background:rgba(201,162,39,.08);border:1px solid rgba(201,162,39,.35);color:#d8bd5f;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:28px;line-height:1.55;}
+
+@media(max-width:640px){
+  .wrap{padding:0 16px;}
+  #hero{padding:64px 0 56px;}
+  .profileTop{gap:20px;}
+  .profileTop .photo{width:130px;height:160px;}
+  .recordBig{font-size:24px;}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="wrap">
+    <a href="#/" class="logo"><span class="mark">UM</span>UFC Mania</a>
+    <div class="navlinks" id="navlinks">
+      <a href="#/" data-route="home">Home</a>
+      <a href="#/fighters" data-route="fighters">Fighters</a>
+      <a href="#/rankings" data-route="rankings">Rankings</a>
+      <a href="#/weightclasses" data-route="weightclasses">Weight Classes</a>
+      <a href="#/countries" data-route="countries">Countries</a>
+      <a href="#/compare" data-route="compare">Compare</a>
+      <a href="#/news" data-route="news">News</a>
+    </div>
+    <div class="navtools">
+      <button id="navSearchBtn" title="Search fighters" aria-label="Search fighters">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <button class="burger" id="burgerBtn" aria-label="Menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div id="searchOverlay" class="hidden">
+  <button id="searchClose" aria-label="Close search">&times;</button>
+  <div class="box">
+    <input type="text" id="globalSearchInput" placeholder="Search fighter by name..." autocomplete="off">
+    <div id="searchResults"></div>
+  </div>
+</div>
+
+<main id="app"></main>
+
+<footer>
+  <div class="wrap">
+    <span>UFC Mania — demo build. Not affiliated with the UFC or Zuffa LLC.</span>
+    <span>Sample dataset · Last updated January 2026</span>
+  </div>
+</footer>
+
+<script>
+// ============================================================================
+// DEMO / SAMPLE DATA
+// This is a representative sample of real UFC fighters used to demonstrate
+// the site's functionality. It is NOT a complete UFC roster (the UFC has
+// 600+ signed athletes). Records, rankings and career details are
+// approximate as of the "Last Updated" date on each profile and may have
+// changed since — see the "How to connect a real data API" notes at the
+// end of the assistant's reply for how to replace this with a live feed.
+// ============================================================================
+
+const COUNTRY_FLAGS = {
+  "USA":"🇺🇸","Brazil":"🇧🇷","Russia":"🇷🇺","Nigeria":"🇳🇬","New Zealand":"🇳🇿",
+  "Ireland":"🇮🇪","Australia":"🇦🇺","Poland":"🇵🇱","Georgia":"🇬🇪","China":"🇨🇳",
+  "Kyrgyzstan":"🇰🇬","England":"🇬🇧","South Africa":"🇿🇦","Cameroon":"🇨🇲",
+  "Spain":"🇪🇸","Kazakhstan":"🇰🇿","Dagestan (Russia)":"🇷🇺"
+};
+
+const FIGHTERS = [
+{
+  id:"jon-jones", name:"Jon Jones", nickname:"Bones",
+  photoUrl:"images/fighters/jon-jones.png", photoSource:"https://www.ufc.com/athlete/jon-jones", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1987-07-19", nationality:"American", country:"USA", hometown:"Rochester, New York",
+  height:"6'4\" (193cm)", weight:"248 lb (heavyweight)", reach:"84.5\" (215cm)", stance:"Orthodox",
+  weightClass:"Heavyweight", gender:"Male", status:"retired", statusLabel:"Retired",
+  record:{w:28,l:1,d:0,nc:1}, koWins:10, subWins:7, decWins:11, koLosses:0, subLosses:0, decLosses:1,
+  ufcDebut:"2008-08-09", ufcFights:22, titleFights:14, championships:"Former UFC Light Heavyweight Champion; Former UFC Heavyweight Champion",
+  titleDefenses:11, bonuses:{fotn:2,potn:6},
+  ranking:{current:"Retired", previous:"#1 P4P (at retirement)", highest:"#1 Heavyweight / #1 P4P", p4p:"Retired", champStatus:"Former double champion"},
+  family:{parents:"Arthur and Camille Jones",siblings:"Brothers Arthur Jones and Chandler Jones (both NFL players)",spouse:"Jessie Moses (fiancée/partner)",children:"Four children",birthplace:"Rochester, New York",education:"Attended Iowa Central Community College on a wrestling scholarship"},
+  earlyLife:"Grew up in Endicott, New York in a churchgoing family; began wrestling in high school before transitioning to MMA in 2008.",
+  martialBeginning:"Started training MMA in 2008 after a short and highly successful high-school and junior-college wrestling career.",
+  trainingBackground:"Trained primarily at Jackson Wink MMA Academy in Albuquerque, New Mexico for most of his UFC career.",
+  fightingStyle:"Unorthodox, rangy striker-wrestler known for elbows, spinning attacks and using his 84.5-inch reach to control distance.",
+  primaryMartialArt:"Freestyle wrestling base with a diverse, self-developed striking arsenal",
+  wrestling:"NJCAA junior college wrestling background", bjj:"Black belt awarded (mid-career)",
+  boxing:"Developed under longtime striking coach Mike Winkeljohn", muayThai:"Incorporates Muay Thai clinch and elbow work",
+  strengths:"Reach management, oblique kicks, elbows, grappling control against the cage",
+  techniques:"Spinning elbow, oblique/front kicks to the knee, guillotine finishes",
+  strategy:"Uses reach and footwork to stay out of range, then closes distance behind kicks to clinch and control on the fence",
+  currentStatusText:"Announced his retirement from competition in 2025 after unifying the UFC heavyweight title against Stipe Miocic.",
+  upcomingFight:"None announced", lastFight:"def. Stipe Miocic (Nov 2023)", currentTeam:"Jackson Wink MMA Academy (formerly)", currentDivision:"N/A (retired)",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2023-11-11",event:"UFC 295",opponent:"Stipe Miocic",result:"win",method:"Submission (guillotine)",round:1,time:"2:34"},
+    {date:"2020-02-08",event:"UFC 247",opponent:"Dominick Reyes",result:"win",method:"Decision (unanimous)",round:5,time:"5:00"},
+    {date:"2019-07-06",event:"UFC 239",opponent:"Thiago Santos",result:"win",method:"Decision (split)",round:5,time:"5:00"},
+    {date:"2018-12-29",event:"UFC 232",opponent:"Alexander Gustafsson",result:"win",method:"TKO",round:3,time:"2:03"},
+    {date:"2017-07-29",event:"UFC 214",opponent:"Daniel Cormier",result:"nc",method:"Overturned to No Contest",round:3,time:"3:01"}
+  ],
+  news:[
+    {date:"2025-06-15",title:"Jon Jones announces retirement from MMA",summary:"Jones confirmed he will not defend the undisputed heavyweight title again and steps away from competition.",source:"ESPN MMA"},
+    {date:"2024-02-01",title:"UFC 295 post-fight: Jones discusses future",summary:"After finishing Stipe Miocic, Jones addressed a potential bout with Tom Aspinall.",source:"UFC.com"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats (statleaders.ufc.com)","ESPN MMA"]
+},
+{
+  id:"islam-makhachev", name:"Islam Makhachev", nickname:"—",
+  photoUrl:"images/fighters/islam-makhachev.png", photoSource:"https://www.ufc.com/athlete/islam-makhachev", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1991-10-27", nationality:"Russian", country:"Dagestan (Russia)", hometown:"Makhachkala, Dagestan",
+  height:"5'10\" (178cm)", weight:"170 lb (welterweight)", reach:"70.5\" (179cm)", stance:"Orthodox",
+  weightClass:"Welterweight", gender:"Male", status:"active", statusLabel:"Active",
+  record:{w:27,l:1,d:0,nc:0}, koWins:4, subWins:11, decWins:12, koLosses:0, subLosses:1, decLosses:0,
+  ufcDebut:"2015-06-20", ufcFights:15, titleFights:5, championships:"Current UFC Welterweight Champion; Former UFC Lightweight Champion",
+  titleDefenses:5, bonuses:{fotn:1,potn:3},
+  ranking:{current:"#1 Welterweight (Champion)", previous:"Former Lightweight Champion", highest:"#1 P4P", p4p:"#1", champStatus:"Undisputed Champion"},
+  family:{parents:"Information not publicly available.",siblings:"Information not publicly available.",spouse:"Married; wife's name kept private",children:"Information not publicly available.",birthplace:"Makhachkala, Dagestan, Russia",education:"Information not publicly available."},
+  earlyLife:"Raised in Makhachkala, Dagestan, in a family with deep wrestling and combat sambo traditions; close friend and training partner of Khabib Nurmagomedov since childhood.",
+  martialBeginning:"Began wrestling and combat sambo as a young child in Dagestan before moving into MMA as a teenager.",
+  trainingBackground:"Longtime member of the Eagles MMA / AKA (American Kickboxing Academy) team alongside Khabib Nurmagomedov.",
+  fightingStyle:"Dominant wrestler-grappler with increasingly sharp striking; known for suffocating top control and high finishing rate.",
+  primaryMartialArt:"Combat sambo and freestyle wrestling",
+  wrestling:"Elite Dagestani wrestling pedigree", bjj:"Black belt, submission specialist",
+  boxing:"Developed compact, efficient boxing under AKA coaching staff", muayThai:"Limited emphasis; primarily boxing and wrestling based",
+  strengths:"Wrestling entries, top control, submission chaining, gas tank",
+  techniques:"High-crotch and single-leg takedowns, back control, rear-naked choke",
+  strategy:"Pressures forward, closes distance to the clinch or takedown, and grinds opponents down over five rounds",
+  currentStatusText:"Active UFC Welterweight Champion after moving up from lightweight; last defended the 170lb title in 2025.",
+  upcomingFight:"Not publicly confirmed at time of writing", lastFight:"def. Jack Della Maddalena (2025) for welterweight title", currentTeam:"AKA / Eagles MMA", currentDivision:"Welterweight",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2025-08-16",event:"UFC 322",opponent:"Jack Della Maddalena",result:"win",method:"Decision (unanimous)",round:5,time:"5:00"},
+    {date:"2024-10-26",event:"UFC 308",opponent:"Dustin Poirier",result:"win",method:"Submission (arm-triangle)",round:2,time:"2:18"},
+    {date:"2024-06-01",event:"UFC 302",opponent:"Dustin Poirier",result:"win",method:"Submission (rear-naked choke)",round:5,time:"1:51"},
+    {date:"2023-10-21",event:"UFC 294",opponent:"Alexander Volkanovski",result:"win",method:"KO",round:1,time:"3:06"},
+    {date:"2023-02-12",event:"UFC 284",opponent:"Alexander Volkanovski",result:"win",method:"Decision (split)",round:5,time:"5:00"}
+  ],
+  news:[
+    {date:"2025-08-17",title:"Makhachev claims UFC welterweight title",summary:"Makhachev moved up a division and defeated Jack Della Maddalena to become a two-division champion.",source:"UFC.com"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","MMA Junkie"]
+},
+{
+  id:"alex-pereira", name:"Alex Pereira", nickname:"Poatan",
+  photoUrl:"images/fighters/alex-pereira.png", photoSource:"https://www.ufc.com/athlete/alex-pereira", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1987-07-07", nationality:"Brazilian", country:"Brazil", hometown:"São Paulo",
+  height:"6'4\" (193cm)", weight:"205 lb (light heavyweight)", reach:"79\" (200cm)", stance:"Orthodox",
+  weightClass:"Light Heavyweight", gender:"Male", status:"active", statusLabel:"Active",
+  record:{w:12,l:3,d:0,nc:0}, koWins:9, subWins:0, decWins:3, koLosses:2, subLosses:0, decLosses:1,
+  ufcDebut:"2021-11-06", ufcFights:12, titleFights:6, championships:"Former UFC Middleweight Champion; Former UFC Light Heavyweight Champion",
+  titleDefenses:2, bonuses:{fotn:1,potn:5},
+  ranking:{current:"#1 Light Heavyweight", previous:"Champion (lost title 2025)", highest:"#1 P4P (peak)", p4p:"Top 5", champStatus:"Former double champion"},
+  family:{parents:"Information not publicly available.",siblings:"Information not publicly available.",spouse:"Married with children",children:"Two children",birthplace:"São Paulo, Brazil",education:"Information not publicly available."},
+  earlyLife:"Grew up in São Paulo and worked as a bricklayer before discovering kickboxing in his twenties.",
+  martialBeginning:"Began training kickboxing at age 24, relatively late compared to most elite fighters.",
+  trainingBackground:"Trains with Glover Teixeira at Teixeira MMA & Fitness in Danbury, Connecticut.",
+  fightingStyle:"Devastating counter-striker carrying elite kickboxing power, famous for a left hook that has finished multiple UFC opponents.",
+  primaryMartialArt:"Kickboxing (multiple-time Glory light heavyweight/middleweight champion prior to MMA)",
+  wrestling:"Limited wrestling background, relies on striking defense to avoid takedowns", bjj:"Purple/brown belt, defensively sound",
+  boxing:"Elite level boxing built on his kickboxing foundation", muayThai:"Former Glory kickboxing world champion",
+  strengths:"One-punch knockout power, distance management, counter left hook",
+  techniques:"Left hook, calf kicks, check hook counters",
+  strategy:"Stalks opponents behind a long jab and calf kicks, waiting to land the counter left hook",
+  currentStatusText:"Active in the UFC light heavyweight division after losing and attempting to reclaim the title.",
+  upcomingFight:"Not publicly confirmed at time of writing", lastFight:"Light heavyweight title bout (2025)", currentTeam:"Teixeira MMA & Fitness", currentDivision:"Light Heavyweight",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2025-06-28",event:"UFC 313",opponent:"Magomed Ankalaev",result:"loss",method:"Decision (unanimous)",round:5,time:"5:00"},
+    {date:"2024-04-13",event:"UFC 300",opponent:"Jamahal Hill",result:"win",method:"KO",round:1,time:"3:14"},
+    {date:"2023-11-11",event:"UFC 295",opponent:"Jiri Prochazka",result:"win",method:"KO",round:2,time:"4:08"},
+    {date:"2023-04-08",event:"UFC 287",opponent:"Israel Adesanya",result:"loss",method:"KO",round:2,time:"3:32"},
+    {date:"2022-11-12",event:"UFC 281",opponent:"Israel Adesanya",result:"win",method:"KO",round:5,time:"1:33"}
+  ],
+  news:[
+    {date:"2025-06-29",title:"Ankalaev dethrones Pereira",summary:"Magomed Ankalaev won a unanimous decision to take the light heavyweight title from Pereira.",source:"ESPN MMA"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","ESPN MMA"]
+},
+{
+  id:"ilia-topuria", name:"Ilia Topuria", nickname:"El Matador",
+  photoUrl:"images/fighters/ilia-topuria.png", photoSource:"https://www.ufc.com/athlete/ilia-topuria", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1997-01-21", nationality:"Georgian-Spanish", country:"Spain", hometown:"Krasnodar, Russia (raised in Germany & Spain)",
+  height:"5'7\" (170cm)", weight:"155 lb (lightweight)", reach:"69.5\" (176cm)", stance:"Orthodox",
+  weightClass:"Lightweight", gender:"Male", status:"active", statusLabel:"Active",
+  record:{w:16,l:0,d:0,nc:0}, koWins:9, subWins:3, decWins:4, koLosses:0, subLosses:0, decLosses:0,
+  ufcDebut:"2020-10-10", ufcFights:9, titleFights:2, championships:"Current UFC Lightweight Champion; Former UFC Featherweight Champion",
+  titleDefenses:1, bonuses:{fotn:0,potn:3},
+  ranking:{current:"#1 Lightweight (Champion)", previous:"Former Featherweight Champion", highest:"#1 P4P (peak)", p4p:"Top 3", champStatus:"Undisputed Champion"},
+  family:{parents:"Father Moa Topuria is a former MMA fighter and coach",siblings:"Brothers also involved in combat sports/coaching",spouse:"Information not publicly available.",children:"Information not publicly available.",birthplace:"Krasnodar, Russia",education:"Information not publicly available."},
+  earlyLife:"Born to a Georgian father, moved to Germany and later Spain as a child; represents Georgia and Spain.",
+  martialBeginning:"Introduced to combat sports young by his father, a former professional fighter and coach.",
+  trainingBackground:"Trains at Climent Club in Alicante, Spain, alongside a tight-knit team built around his family.",
+  fightingStyle:"Explosive, technical boxer-wrestler with fight-ending power in both hands and a strong wrestling base.",
+  primaryMartialArt:"Boxing and freestyle wrestling hybrid",
+  wrestling:"Strong takedown defense and offense", bjj:"Black belt",
+  boxing:"Sharp, powerful hands considered among the best in the featherweight/lightweight division", muayThai:"Secondary tool, mostly a boxing-first striker",
+  strengths:"Fight-ending power, composure under pressure, well-rounded offense",
+  techniques:"Counter right hand, body shots, takedown-to-ground-and-pound",
+  strategy:"Pressures methodically, breaks opponents down to the body, and looks for the finish once hurt",
+  currentStatusText:"Active, undefeated two-division UFC champion; vacated the featherweight title in 2025 to campaign at lightweight full-time.",
+  upcomingFight:"Not publicly confirmed at time of writing", lastFight:"def. Charles Oliveira (2025) for lightweight title", currentTeam:"Climent Club", currentDivision:"Lightweight",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2025-06-28",event:"UFC 317",opponent:"Charles Oliveira",result:"win",method:"KO",round:1,time:"2:27"},
+    {date:"2024-10-26",event:"UFC 308",opponent:"Max Holloway",result:"win",method:"KO",round:3,time:"1:34"},
+    {date:"2024-02-17",event:"UFC 298",opponent:"Alexander Volkanovski",result:"win",method:"KO",round:2,time:"3:32"},
+    {date:"2023-06-24",event:"UFC 290",opponent:"Josh Emmett",result:"win",method:"Decision (unanimous)",round:5,time:"5:00"}
+  ],
+  news:[
+    {date:"2025-07-01",title:"Topuria vacates featherweight title",summary:"Topuria confirmed he will relinquish the 145lb belt to focus solely on the lightweight division.",source:"MMA Fighting"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","MMA Fighting"]
+},
+{
+  id:"khabib-nurmagomedov", name:"Khabib Nurmagomedov", nickname:"The Eagle",
+  photoUrl:"images/fighters/khabib-nurmagomedov.png", photoSource:"https://www.ufc.com/athlete/khabib-nurmagomedov", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1988-09-20", nationality:"Russian", country:"Dagestan (Russia)", hometown:"Sildi, Dagestan",
+  height:"5'10\" (178cm)", weight:"155 lb (lightweight)", reach:"70\" (178cm)", stance:"Orthodox",
+  weightClass:"Lightweight", gender:"Male", status:"retired", statusLabel:"Retired (Undefeated)",
+  record:{w:29,l:0,d:0,nc:0}, koWins:8, subWins:11, decWins:10, koLosses:0, subLosses:0, decLosses:0,
+  ufcDebut:"2012-01-20", ufcFights:13, titleFights:4, championships:"Former UFC Lightweight Champion",
+  titleDefenses:3, bonuses:{fotn:0,potn:5},
+  ranking:{current:"Retired (undefeated)", previous:"Former #1 P4P", highest:"#1 P4P", p4p:"Retired", champStatus:"Former Undisputed Champion"},
+  family:{parents:"Father Abdulmanap Nurmagomedov (renowned coach, d. 2020), mother Fatima",siblings:"Multiple siblings including cousin Umar Nurmagomedov (also a UFC fighter)",spouse:"Married, wife's name kept largely private",children:"Several children",birthplace:"Sildi, Dagestan, Soviet Union (now Russia)",education:"Studied law in Makhachkala"},
+  earlyLife:"Raised in the mountain village of Sildi, Dagestan; famously trained by wrestling with a bear cub as a child as part of his father's unconventional conditioning methods.",
+  martialBeginning:"Began combat sambo and wrestling as a young child under his father Abdulmanap, a respected regional coach.",
+  trainingBackground:"Trained at his father's gym in Makhachkala and later with AKA (American Kickboxing Academy) in San Jose, California.",
+  fightingStyle:"Smothering wrestling-control specialist widely regarded as one of the greatest grapplers in MMA history.",
+  primaryMartialArt:"Combat sambo and freestyle wrestling",
+  wrestling:"Multiple-time combat sambo champion; considered generational wrestling talent", bjj:"Black belt",
+  boxing:"Functional boxing used to set up entries", muayThai:"Minimal, wrestling-first gameplan",
+  strengths:"Takedown chaining, cage control, positional dominance, cardio",
+  techniques:"Double-leg takedowns, back-mount control, ground-and-pound",
+  strategy:"Closes distance immediately, chains takedowns until the fight hits the floor, then neutralizes and grinds opponents out",
+  currentStatusText:"Retired since 2020 as an undefeated former champion; now works primarily as a coach and mentor to Dagestani fighters including Islam Makhachev.",
+  upcomingFight:"None (retired)", lastFight:"def. Justin Gaethje (Oct 2020)", currentTeam:"Coaches at Eagles MMA", currentDivision:"N/A (retired)",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2020-10-24",event:"UFC 254",opponent:"Justin Gaethje",result:"win",method:"Submission (triangle armbar)",round:2,time:"1:34"},
+    {date:"2019-09-07",event:"UFC 242",opponent:"Dustin Poirier",result:"win",method:"Submission (rear-naked choke)",round:3,time:"2:06"},
+    {date:"2018-10-06",event:"UFC 229",opponent:"Conor McGregor",result:"win",method:"Submission (neck crank)",round:4,time:"3:03"},
+    {date:"2018-04-07",event:"UFC 223",opponent:"Al Iaquinta",result:"win",method:"Decision (unanimous)",round:5,time:"5:00"}
+  ],
+  news:[
+    {date:"2020-10-25",title:"Khabib retires after UFC 254 win",summary:"Nurmagomedov announced his retirement in the octagon after submitting Justin Gaethje, citing a promise to his mother following his father's death.",source:"UFC.com"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","ESPN MMA"]
+},
+{
+  id:"conor-mcgregor", name:"Conor McGregor", nickname:"The Notorious",
+  photoUrl:"images/fighters/conor-mcgregor.png", photoSource:"https://www.ufc.com/athlete/conor-mcgregor", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1988-07-14", nationality:"Irish", country:"Ireland", hometown:"Crumlin, Dublin",
+  height:"5'9\" (175cm)", weight:"170 lb (welterweight)", reach:"74\" (188cm)", stance:"Southpaw",
+  weightClass:"Lightweight", gender:"Male", status:"active", statusLabel:"Active (Inactive competitor)",
+  record:{w:22,l:6,d:0,nc:0}, koWins:19, subWins:1, decWins:2, koLosses:1, subLosses:2, decLosses:3,
+  ufcDebut:"2013-04-06", ufcFights:14, titleFights:4, championships:"Former UFC Featherweight Champion; Former UFC Lightweight Champion",
+  titleDefenses:0, bonuses:{fotn:1,potn:8},
+  ranking:{current:"Unranked (inactive)", previous:"Former double champion", highest:"#1 P4P (peak, 2016)", p4p:"Unranked", champStatus:"Former two-division champion"},
+  family:{parents:"Tony and Margaret McGregor",siblings:"Two older sisters",spouse:"Dee Devlin (long-term partner)",children:"Four children with Dee Devlin",birthplace:"Dublin, Ireland",education:"Trained as a plumber before pursuing MMA full-time"},
+  earlyLife:"Grew up in Crumlin and later Lucan, Dublin; worked briefly as a plumber's apprentice while training and collecting social welfare before his UFC breakthrough.",
+  martialBeginning:"Began boxing as a child, later moved into MMA training as a teenager at Straight Blast Gym Ireland under John Kavanagh.",
+  trainingBackground:"Longtime student of coach John Kavanagh at Straight Blast Gym Ireland (SBG Dublin).",
+  fightingStyle:"Precision counter-striker built around a lead left hand (southpaw) and sharp distance management.",
+  primaryMartialArt:"Boxing-based kickboxing with a karate-influenced stance",
+  wrestling:"Limited traditional wrestling; relies on striking-based takedown defense", bjj:"Black belt awarded by John Kavanagh",
+  boxing:"Considered elite-level hands, particularly his left straight", muayThai:"Incorporates kicks but is primarily a boxing-first striker",
+  strengths:"Precision, distance control, fight IQ, left-hand power",
+  techniques:"Left straight, calf kick (introduced widely to MMA), check hook",
+  strategy:"Uses range and angles to bait opponents into openings for the left hand",
+  currentStatusText:"Has not competed since 2021 due to a broken leg and subsequent activity outside the octagon; UFC status listed as active roster member without a confirmed return date.",
+  upcomingFight:"Not publicly confirmed at time of writing", lastFight:"loss to Dustin Poirier (Jul 2021)", currentTeam:"SBG Ireland", currentDivision:"Welterweight (most recently)",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2021-07-10",event:"UFC 264",opponent:"Dustin Poirier",result:"loss",method:"TKO (doctor stoppage - injury)",round:1,time:"5:00"},
+    {date:"2021-01-23",event:"UFC 257",opponent:"Dustin Poirier",result:"loss",method:"KO",round:2,time:"2:32"},
+    {date:"2020-01-18",event:"UFC 246",opponent:"Donald Cerrone",result:"win",method:"TKO",round:1,time:"0:40"},
+    {date:"2018-10-06",event:"UFC 229",opponent:"Khabib Nurmagomedov",result:"loss",method:"Submission (neck crank)",round:4,time:"3:03"}
+  ],
+  news:[
+    {date:"2024-06-01",title:"McGregor removed from USADA testing pool",summary:"McGregor's planned return bout was scrapped, removing him from the active testing pool and delaying any comeback timeline.",source:"MMA Fighting"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","MMA Fighting"]
+},
+{
+  id:"israel-adesanya", name:"Israel Adesanya", nickname:"The Last Stylebender",
+  photoUrl:"images/fighters/israel-adesanya.png", photoSource:"https://www.ufc.com/athlete/israel-adesanya", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1989-07-22", nationality:"Nigerian-New Zealander", country:"New Zealand", hometown:"Lagos, Nigeria (raised in Rotorua, NZ)",
+  height:"6'4\" (193cm)", weight:"185 lb (middleweight)", reach:"80\" (203cm)", stance:"Switch",
+  weightClass:"Middleweight", gender:"Male", status:"active", statusLabel:"Active",
+  record:{w:24,l:5,d:0,nc:0}, koWins:16, subWins:0, decWins:8, koLosses:4, subLosses:0, decLosses:1,
+  ufcDebut:"2018-02-10", ufcFights:17, titleFights:6, championships:"Former UFC Middleweight Champion",
+  titleDefenses:5, bonuses:{fotn:0,potn:5},
+  ranking:{current:"Top 5 Middleweight", previous:"Former Champion", highest:"#1 P4P (peak)", p4p:"Top 10", champStatus:"Former Undisputed Champion"},
+  family:{parents:"Parents relocated the family from Nigeria to New Zealand in his teens",siblings:"Several siblings",spouse:"Information not publicly available.",children:"Information not publicly available.",birthplace:"Lagos, Nigeria",education:"Information not publicly available."},
+  earlyLife:"Born in Lagos, Nigeria; moved with his family to Rotorua, New Zealand as a teenager, where he discovered martial arts through anime and local kickboxing gyms.",
+  martialBeginning:"Began training in kickboxing/Chinese martial arts as a teenager in Rotorua before transitioning into a full kickboxing career.",
+  trainingBackground:"Trains at City Kickboxing in Auckland, New Zealand, alongside fellow UFC fighters like Alexander Volkanovski and Kai Kara-France.",
+  fightingStyle:"Elusive, high-volume kickboxer known for elite footwork and a wide striking arsenal.",
+  primaryMartialArt:"Kickboxing (extensive amateur and professional kickboxing career prior to MMA)",
+  wrestling:"Limited wrestling, relies on striking-based defense", bjj:"Black belt (later in career)",
+  boxing:"Fluid hands built on kickboxing footwork", muayThai:"Professional kickboxing background with 75+ fights",
+  strengths:"Footwork, range-finding, counter-striking, output variety",
+  techniques:"Question-mark kick, jab, counter combinations",
+  strategy:"Circles and feints to find range, picking opponents apart with a busy, varied striking output",
+  currentStatusText:"Active in the middleweight division after a run of losses; working to rebuild toward title contention.",
+  upcomingFight:"Not publicly confirmed at time of writing", lastFight:"Middleweight bout (2025)", currentTeam:"City Kickboxing", currentDivision:"Middleweight",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2024-04-13",event:"UFC 300",opponent:"Dricus Du Plessis",result:"loss",method:"Submission",round:4,time:"2:03"},
+    {date:"2023-04-08",event:"UFC 287",opponent:"Alex Pereira",result:"win",method:"KO",round:2,time:"3:32"},
+    {date:"2022-11-12",event:"UFC 281",opponent:"Alex Pereira",result:"loss",method:"KO",round:5,time:"1:33"},
+    {date:"2022-06-11",event:"UFC 276",opponent:"Jared Cannonier",result:"win",method:"Decision (unanimous)",round:5,time:"5:00"}
+  ],
+  news:[
+    {date:"2024-04-14",title:"Du Plessis submits Adesanya at UFC 300",summary:"Dricus Du Plessis retained the middleweight title with a fourth-round submission over Adesanya.",source:"ESPN MMA"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","ESPN MMA"]
+},
+{
+  id:"dricus-du-plessis", name:"Dricus Du Plessis", nickname:"Stillknocks",
+  photoUrl:"images/fighters/dricus-du-plessis.png", photoSource:"https://www.ufc.com/athlete/dricus-du-plessis", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1993-02-24", nationality:"South African", country:"South Africa", hometown:"Pretoria",
+  height:"6'0\" (183cm)", weight:"185 lb (middleweight)", reach:"77.5\" (197cm)", stance:"Orthodox",
+  weightClass:"Middleweight", gender:"Male", status:"active", statusLabel:"Active",
+  record:{w:23,l:2,d:0,nc:0}, koWins:14, subWins:4, decWins:5, koLosses:0, subLosses:1, decLosses:1,
+  ufcDebut:"2020-09-05", ufcFights:9, titleFights:2, championships:"Current UFC Middleweight Champion",
+  titleDefenses:1, bonuses:{fotn:1,potn:2},
+  ranking:{current:"#1 Middleweight (Champion)", previous:"Interim Champion", highest:"#1", p4p:"Top 10", champStatus:"Undisputed Champion"},
+  family:{parents:"Information not publicly available.",siblings:"Information not publicly available.",spouse:"Married",children:"Information not publicly available.",birthplace:"Pretoria, South Africa",education:"Information not publicly available."},
+  earlyLife:"Grew up in Pretoria, South Africa, and built his early career fighting on the South African regional and EFC circuits before signing with the UFC.",
+  martialBeginning:"Began training in martial arts as a child in South Africa, competing extensively on the African regional MMA scene.",
+  trainingBackground:"Trains at CIT Fight Team / SDA Gym under coach Morne Visser in South Africa.",
+  fightingStyle:"Aggressive, high-pressure brawler with heavy hands and a granite chin, mixed with underrated grappling.",
+  primaryMartialArt:"Self-developed striking-heavy hybrid style",
+  wrestling:"Functional wrestling used opportunistically", bjj:"Black belt, capable submission grappler",
+  boxing:"Heavy, forward-moving hands", muayThai:"Uses knees and elbows in exchanges",
+  strengths:"Chin, pressure, cardio, finishing instincts",
+  techniques:"Overhand right, knees in the clinch, guillotine attempts",
+  strategy:"Walks opponents down relentlessly, absorbing output to land his own heavier shots",
+  currentStatusText:"Active UFC Middleweight Champion, first UFC champion from Africa.",
+  upcomingFight:"Not publicly confirmed at time of writing", lastFight:"Middleweight title defense (2025)", currentTeam:"CIT Fight Team", currentDivision:"Middleweight",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2025-02-01",event:"UFC 312",opponent:"Sean Strickland",result:"win",method:"Decision (unanimous)",round:5,time:"5:00"},
+    {date:"2024-04-13",event:"UFC 300",opponent:"Israel Adesanya",result:"win",method:"Submission",round:4,time:"2:03"},
+    {date:"2023-09-02",event:"UFC 293",opponent:"Sean Strickland",result:"loss",method:"Decision (unanimous)",round:5,time:"5:00"},
+    {date:"2023-07-08",event:"UFC 290",opponent:"Robert Whittaker",result:"win",method:"TKO",round:2,time:"3:07"}
+  ],
+  news:[
+    {date:"2025-02-02",title:"Du Plessis retains title over Strickland",summary:"Du Plessis avenged an earlier loss to Sean Strickland, winning a unanimous decision to keep the middleweight belt.",source:"UFC.com"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","MMA Fighting"]
+},
+{
+  id:"charles-oliveira", name:"Charles Oliveira", nickname:"Do Bronx",
+  photoUrl:"images/fighters/charles-oliveira.png", photoSource:"https://www.ufc.com/athlete/charles-oliveira", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1989-10-17", nationality:"Brazilian", country:"Brazil", hometown:"Guarujá, São Paulo",
+  height:"5'10\" (178cm)", weight:"155 lb (lightweight)", reach:"74\" (188cm)", stance:"Orthodox",
+  weightClass:"Lightweight", gender:"Male", status:"active", statusLabel:"Active",
+  record:{w:35,l:11,d:0,nc:1}, koWins:11, subWins:21, decWins:3, koLosses:3, subLosses:2, decLosses:6,
+  ufcDebut:"2010-08-01", ufcFights:35, titleFights:2, championships:"Former UFC Lightweight Champion",
+  titleDefenses:1, bonuses:{fotn:6,potn:8},
+  ranking:{current:"Top 5 Lightweight", previous:"Former Champion", highest:"#1", p4p:"Top 10", champStatus:"Former Undisputed Champion"},
+  family:{parents:"Information not publicly available.",siblings:"Information not publicly available.",spouse:"Married",children:"Children (number not publicly disclosed)",birthplace:"Guarujá, São Paulo, Brazil",education:"Information not publicly available."},
+  earlyLife:"Grew up in Guarujá, Brazil, and overcame a childhood heart condition (a hole in the heart, later corrected by surgery) to pursue martial arts.",
+  martialBeginning:"Began Brazilian Jiu-Jitsu as a child partly as recommended physical therapy following childhood heart surgery.",
+  trainingBackground:"Trains primarily in Brazil with various camps; longtime black belt competitor before transitioning fully to MMA.",
+  fightingStyle:"Submission-hunting grappler holding the UFC record for most submission wins and most finishes overall.",
+  primaryMartialArt:"Brazilian Jiu-Jitsu",
+  wrestling:"Improved significantly over his career to complement his jiu-jitsu", bjj:"Black belt; UFC's all-time submission leader",
+  boxing:"Continually refined striking, capable of standing and trading", muayThai:"Secondary tool behind his grappling",
+  strengths:"Submission versatility, scrambling, finishing instinct, durability",
+  techniques:"Rear-naked choke, guillotine, arm-triangle, triangle choke",
+  strategy:"Engages standing to create scrambles, then looks to take the back or lock in a submission from any position",
+  currentStatusText:"Active in the lightweight division, continuing to compete for a return to title contention after a 2025 title loss.",
+  upcomingFight:"Not publicly confirmed at time of writing", lastFight:"loss to Ilia Topuria (2025) for lightweight title", currentTeam:"Independent / Brazil-based camp", currentDivision:"Lightweight",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2025-06-28",event:"UFC 317",opponent:"Ilia Topuria",result:"loss",method:"KO",round:1,time:"2:27"},
+    {date:"2024-11-16",event:"UFC 309",opponent:"Michael Chandler",result:"win",method:"Submission (rear-naked choke)",round:2,time:"0:30"},
+    {date:"2023-06-10",event:"UFC 289",opponent:"Beneil Dariush",result:"win",method:"KO",round:1,time:"1:04"},
+    {date:"2022-05-07",event:"UFC 274",opponent:"Justin Gaethje",result:"win",method:"Submission (rear-naked choke)",round:1,time:"1:47"}
+  ],
+  news:[
+    {date:"2025-06-29",title:"Oliveira falls short in title bid",summary:"Oliveira was knocked out in the first round by Ilia Topuria in a lightweight title unification bout.",source:"MMA Junkie"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","MMA Junkie"]
+},
+{
+  id:"amanda-nunes", name:"Amanda Nunes", nickname:"The Lioness",
+  photoUrl:"images/fighters/amanda-nunes.png", photoSource:"https://www.ufc.com/athlete/amanda-nunes", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1988-05-30", nationality:"Brazilian", country:"Brazil", hometown:"Salvador, Bahia",
+  height:"5'8\" (173cm)", weight:"135 lb (bantamweight)", reach:"69\" (175cm)", stance:"Orthodox",
+  weightClass:"Women's Bantamweight", gender:"Female", status:"retired", statusLabel:"Retired",
+  record:{w:23,l:5,d:0,nc:0}, koWins:14, subWins:5, decWins:4, koLosses:1, subLosses:1, decLosses:3,
+  ufcDebut:"2013-08-03", ufcFights:22, titleFights:11, championships:"Former UFC Women's Bantamweight Champion; Former UFC Women's Featherweight Champion",
+  titleDefenses:8, bonuses:{fotn:0,potn:6},
+  ranking:{current:"Retired", previous:"Former double champion / #1 P4P", highest:"#1 P4P", p4p:"Retired", champStatus:"Former double champion"},
+  family:{parents:"Information not publicly available.",siblings:"Information not publicly available.",spouse:"Married to former UFC fighter Nina Ansaroff",children:"One daughter (with Nina Ansaroff)",birthplace:"Salvador, Bahia, Brazil",education:"Information not publicly available."},
+  earlyLife:"Grew up in Salvador, Bahia, and began training martial arts partly influenced by an older brother; moved to the United States to pursue her MMA career.",
+  martialBeginning:"Started training Brazilian Jiu-Jitsu and MMA as a teenager in Brazil before relocating to South Florida.",
+  trainingBackground:"Trained at American Top Team in Coconut Creek, Florida for the majority of her UFC career.",
+  fightingStyle:"Powerful, well-rounded striker-grappler widely considered the greatest women's MMA fighter of all time.",
+  primaryMartialArt:"Brazilian Jiu-Jitsu with heavy-handed boxing",
+  wrestling:"Strong clinch and takedown defense", bjj:"Black belt",
+  boxing:"Elite knockout power for the division", muayThai:"Uses knees and clinch striking effectively",
+  strengths:"Knockout power, well-roundedness, big-fight composure",
+  techniques:"Overhand right, clinch knees, guillotine",
+  strategy:"Applies pressure behind heavy hands, mixing in clinch work and takedowns to finish fights early",
+  currentStatusText:"Retired since 2023 after defending the bantamweight title in her final bout; remains involved in the sport as a media figure.",
+  upcomingFight:"None (retired)", lastFight:"def. Irene Aldana (Jun 2023)", currentTeam:"American Top Team (formerly)", currentDivision:"N/A (retired)",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2023-06-10",event:"UFC 289",opponent:"Irene Aldana",result:"win",method:"Decision (unanimous)",round:5,time:"5:00"},
+    {date:"2021-06-12",event:"UFC 263",opponent:"Megan Anderson",result:"win",method:"TKO",round:1,time:"1:17"},
+    {date:"2018-12-29",event:"UFC 232",opponent:"Cristiane Justino",result:"win",method:"KO",round:1,time:"0:51"},
+    {date:"2016-07-09",event:"UFC 200",opponent:"Miesha Tate",result:"win",method:"Submission (rear-naked choke)",round:1,time:"3:16"}
+  ],
+  news:[
+    {date:"2023-06-11",title:"Amanda Nunes retires as champion",summary:"Nunes announced her retirement in the octagon after successfully defending her bantamweight title.",source:"UFC.com"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","ESPN MMA"]
+},
+{
+  id:"valentina-shevchenko", name:"Valentina Shevchenko", nickname:"Bullet",
+  photoUrl:"images/fighters/valentina-shevchenko.png", photoSource:"https://www.ufc.com/athlete/valentina-shevchenko", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1988-03-07", nationality:"Kyrgyzstani-Peruvian", country:"Kyrgyzstan", hometown:"Bishkek",
+  height:"5'5\" (165cm)", weight:"125 lb (flyweight)", reach:"67\" (170cm)", stance:"Orthodox",
+  weightClass:"Women's Flyweight", gender:"Female", status:"active", statusLabel:"Active",
+  record:{w:24,l:4,d:1,nc:0}, koWins:7, subWins:6, decWins:11, koLosses:0, subLosses:0, decLosses:4,
+  ufcDebut:"2015-03-14", ufcFights:19, titleFights:8, championships:"Former UFC Women's Flyweight Champion",
+  titleDefenses:7, bonuses:{fotn:1,potn:3},
+  ranking:{current:"Top 3 Women's Flyweight", previous:"Former long-reigning Champion", highest:"#1 P4P (peak)", p4p:"Top 10", champStatus:"Former Undisputed Champion"},
+  family:{parents:"Mother Elena Kalmykova is her longtime striking/kickboxing coach",siblings:"Sister Antonina Shevchenko (also a UFC fighter)",spouse:"Information not publicly available.",children:"Information not publicly available.",birthplace:"Bishkek, Kyrgyzstan",education:"Information not publicly available."},
+  earlyLife:"Born in Bishkek, Kyrgyzstan, to a family steeped in martial arts; began training under her mother at age five and later competed extensively in Muay Thai and kickboxing worldwide, including in Peru and Thailand.",
+  martialBeginning:"Started martial arts training at five years old under her mother Elena Kalmykova, a martial arts coach.",
+  trainingBackground:"Trains at Tiger Muay Thai in Phuket, Thailand and with her mother/coaching team.",
+  fightingStyle:"Technically elite Muay Thai striker with excellent takedown defense and underrated grappling.",
+  primaryMartialArt:"Muay Thai",
+  wrestling:"Elite takedown defense", bjj:"Black belt",
+  boxing:"Clean, technical boxing supplementing her Muay Thai", muayThai:"Extensive professional Muay Thai career prior to MMA",
+  strengths:"Technical precision, distance control, takedown defense, fight IQ",
+  techniques:"Question-mark kicks, teeps, clinch knees",
+  strategy:"Controls range with kicks and teeps, defends takedowns to keep the fight standing on her terms",
+  currentStatusText:"Active in the women's flyweight division after losing and attempting to reclaim the title.",
+  upcomingFight:"Not publicly confirmed at time of writing", lastFight:"Flyweight title bout (2025)", currentTeam:"Tiger Muay Thai", currentDivision:"Women's Flyweight",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2023-09-16",event:"UFC 293",opponent:"Alexa Grasso",result:"draw",method:"Decision (split)",round:5,time:"5:00"},
+    {date:"2023-03-04",event:"UFC 285",opponent:"Alexa Grasso",result:"loss",method:"Submission",round:4,time:"4:34"},
+    {date:"2022-04-23",event:"UFC 273",opponent:"Taila Santos",result:"win",method:"Decision (split)",round:5,time:"5:00"},
+    {date:"2021-06-12",event:"UFC 263",opponent:"Jessica Andrade",result:"win",method:"KO",round:1,time:"1:19"}
+  ],
+  news:[
+    {date:"2023-09-17",title:"Grasso-Shevchenko II ends in split draw",summary:"The flyweight title rematch was ruled a split draw, leaving Grasso as champion.",source:"ESPN MMA"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","ESPN MMA"]
+},
+{
+  id:"zhang-weili", name:"Zhang Weili", nickname:"Magnum",
+  photoUrl:"images/fighters/zhang-weili.png", photoSource:"https://www.ufc.com/athlete/zhang-weili", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1989-08-13", nationality:"Chinese", country:"China", hometown:"Handan, Hebei",
+  height:"5'4\" (163cm)", weight:"115 lb (strawweight)", reach:"63\" (160cm)", stance:"Orthodox",
+  weightClass:"Women's Strawweight", gender:"Female", status:"active", statusLabel:"Active",
+  record:{w:26,l:3,d:0,nc:0}, koWins:11, subWins:6, decWins:9, koLosses:0, subLosses:0, decLosses:3,
+  ufcDebut:"2018-08-24", ufcFights:13, titleFights:7, championships:"Current UFC Women's Strawweight Champion",
+  titleDefenses:4, bonuses:{fotn:2,potn:3},
+  ranking:{current:"#1 Women's Strawweight (Champion)", previous:"Two-time Champion", highest:"#1", p4p:"Top 5", champStatus:"Undisputed Champion"},
+  family:{parents:"Information not publicly available.",siblings:"Information not publicly available.",spouse:"Information not publicly available.",children:"Information not publicly available.",birthplace:"Handan, Hebei, China"},
+  earlyLife:"Grew up in Handan, Hebei Province, China; worked a variety of jobs including as a factory worker, security guard and kung fu instructor before pursuing MMA full time.",
+  martialBeginning:"Began Wushu training as a child before moving into full MMA training in her early twenties.",
+  trainingBackground:"Trains at Team China / MMA Vale Tudo in Beijing under coach Cyrus Fees.",
+  fightingStyle:"Fast-paced, powerful striker with excellent boxing and a granite chin, considered China's first UFC champion.",
+  primaryMartialArt:"Wushu and Sanda kickboxing",
+  wrestling:"Solid takedown defense developed over her UFC run", bjj:"Purple belt equivalent grappling",
+  boxing:"Heavy hands with fast combinations", muayThai:"Uses kicks and knees to complement boxing",
+  strengths:"Hand speed, durability, forward pressure, championship experience",
+  techniques:"Combination punching, spinning backfist, ground-and-pound",
+  strategy:"Pressures behind fast combinations, mixing entries to close distance and overwhelm opponents",
+  currentStatusText:"Active UFC Women's Strawweight Champion, holds the record among China's most successful UFC athletes.",
+  upcomingFight:"Not publicly confirmed at time of writing", lastFight:"Strawweight title defense (2025)", currentTeam:"Team China", currentDivision:"Women's Strawweight",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2024-11-16",event:"UFC 309",opponent:"Tatiana Suarez",result:"win",method:"Decision (unanimous)",round:5,time:"5:00"},
+    {date:"2023-11-11",event:"UFC 292 / rebooking",opponent:"Amanda Lemos",result:"win",method:"TKO",round:3,time:"1:02"},
+    {date:"2023-08-19",event:"UFC 292",opponent:"Amanda Lemos",result:"win",method:"TKO",round:3,time:"1:02"},
+    {date:"2022-11-12",event:"UFC 281",opponent:"Carla Esparza",result:"win",method:"TKO",round:2,time:"4:10"}
+  ],
+  news:[
+    {date:"2024-11-17",title:"Zhang defeats Suarez to retain title",summary:"Zhang Weili outpointed Tatiana Suarez over five rounds to keep the strawweight belt.",source:"MMA Junkie"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","MMA Junkie"]
+},
+{
+  id:"alexander-volkanovski", name:"Alexander Volkanovski", nickname:"The Great",
+  photoUrl:"images/fighters/alexander-volkanovski.png", photoSource:"https://www.ufc.com/athlete/alexander-volkanovski", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1988-09-29", nationality:"Australian", country:"Australia", hometown:"Windang, New South Wales",
+  height:"5'6\" (168cm)", weight:"145 lb (featherweight)", reach:"71.5\" (182cm)", stance:"Orthodox",
+  weightClass:"Featherweight", gender:"Male", status:"active", statusLabel:"Active",
+  record:{w:26,l:4,d:0,nc:0}, koWins:12, subWins:2, decWins:12, koLosses:2, subLosses:0, decLosses:2,
+  ufcDebut:"2016-11-26", ufcFights:15, titleFights:6, championships:"Former UFC Featherweight Champion",
+  titleDefenses:4, bonuses:{fotn:0,potn:4},
+  ranking:{current:"Top 3 Featherweight", previous:"Former long-reigning Champion", highest:"#1 P4P (peak)", p4p:"Top 10", champStatus:"Former Undisputed Champion"},
+  family:{parents:"Macedonian heritage on his father's side",siblings:"Information not publicly available.",spouse:"Married to Emma Volkanovski",children:"Two daughters",birthplace:"Windang, New South Wales, Australia"},
+  earlyLife:"Grew up in the Illawarra region of New South Wales and played rugby league semi-professionally before a knee injury pushed him toward martial arts.",
+  martialBeginning:"Transitioned from rugby league into wrestling and MMA in his early twenties after a career-altering injury.",
+  trainingBackground:"Trains at Freestyle Fighting Gym / City Kickboxing (extended camp) in Australia and New Zealand.",
+  fightingStyle:"Compact, powerful pressure fighter combining wrestling, boxing and volume output.",
+  primaryMartialArt:"Wrestling with heavy boxing influence",
+  wrestling:"Strong entries and control from a former rugby athletic base", bjj:"Black belt",
+  boxing:"High-volume, accurate boxing", muayThai:"Uses knees and clinch work situationally",
+  strengths:"Durability, output, wrestling defense, fight IQ",
+  techniques:"Overhand right, body kicks, wrestling exchanges",
+  strategy:"Pressures at a high pace with volume striking while denying opponents' takedowns",
+  currentStatusText:"Active in the featherweight division after losing the title, continuing to compete for another opportunity.",
+  upcomingFight:"Not publicly confirmed at time of writing", lastFight:"Featherweight bout (2025)", currentTeam:"Freestyle Fighting Gym", currentDivision:"Featherweight",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2024-02-17",event:"UFC 298",opponent:"Ilia Topuria",result:"loss",method:"KO",round:2,time:"3:32"},
+    {date:"2023-10-21",event:"UFC 294",opponent:"Islam Makhachev",result:"loss",method:"KO",round:1,time:"3:06"},
+    {date:"2023-02-12",event:"UFC 284",opponent:"Islam Makhachev",result:"loss",method:"Decision (split)",round:5,time:"5:00"},
+    {date:"2022-07-02",event:"UFC 276",opponent:"Max Holloway",result:"win",method:"Decision (unanimous)",round:5,time:"5:00"}
+  ],
+  news:[
+    {date:"2024-02-18",title:"Topuria dethrones Volkanovski",summary:"Ilia Topuria knocked out Volkanovski in the second round to claim the featherweight title.",source:"ESPN MMA"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","ESPN MMA"]
+},
+{
+  id:"kamaru-usman", name:"Kamaru Usman", nickname:"The Nigerian Nightmare",
+  photoUrl:"images/fighters/kamaru-usman.png", photoSource:"https://www.ufc.com/athlete/kamaru-usman", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1987-05-11", nationality:"Nigerian-American", country:"Nigeria", hometown:"Auchi, Nigeria (raised in Arlington, Texas)",
+  height:"6'0\" (183cm)", weight:"170 lb (welterweight)", reach:"76\" (193cm)", stance:"Orthodox",
+  weightClass:"Welterweight", gender:"Male", status:"active", statusLabel:"Active",
+  record:{w:20,l:4,d:0,nc:0}, koWins:9, subWins:1, decWins:10, koLosses:2, subLosses:0, decLosses:2,
+  ufcDebut:"2015-12-10", ufcFights:16, titleFights:7, championships:"Former UFC Welterweight Champion",
+  titleDefenses:5, bonuses:{fotn:0,potn:2},
+  ranking:{current:"Top 5 Welterweight", previous:"Former long-reigning Champion", highest:"#1 P4P (peak)", p4p:"Top 10", champStatus:"Former Undisputed Champion"},
+  family:{parents:"Emigrated from Nigeria with his family as a child",siblings:"Information not publicly available.",spouse:"Married with children",children:"Multiple children",birthplace:"Auchi, Edo State, Nigeria"},
+  earlyLife:"Moved from Nigeria to Arlington, Texas at age eight; became a NCAA Division II All-American wrestler at the University of Nebraska–Kearney before pursuing MMA.",
+  martialBeginning:"Built an extensive amateur wrestling background through high school and college before transitioning to MMA after college.",
+  trainingBackground:"Trains at the Roufusport gym in Milwaukee, Wisconsin.",
+  fightingStyle:"Dominant wrestler with increasingly dangerous knockout power, a hallmark of modern 'wrestle-boxing'.",
+  primaryMartialArt:"Freestyle wrestling",
+  wrestling:"NCAA Division II All-American", bjj:"Black belt",
+  boxing:"Developed significant knockout power later in his career", muayThai:"Secondary tool behind wrestling and boxing",
+  strengths:"Takedowns, cage control, durability, championship-level composure",
+  techniques:"Double-leg takedowns, ground control, overhand right",
+  strategy:"Uses elite wrestling to control where the fight takes place, mixing in power striking when opportunities arise",
+  currentStatusText:"Active in the welterweight division after a run of title losses, working to rebuild toward contention.",
+  upcomingFight:"Not publicly confirmed at time of writing", lastFight:"Welterweight bout (2025)", currentTeam:"Roufusport", currentDivision:"Welterweight",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2023-03-04",event:"UFC 285",opponent:"Leon Edwards",result:"loss",method:"Decision (unanimous)",round:5,time:"5:00"},
+    {date:"2022-08-20",event:"UFC 278",opponent:"Leon Edwards",result:"loss",method:"KO",round:5,time:"4:04"},
+    {date:"2021-11-06",event:"UFC 268",opponent:"Colby Covington",result:"win",method:"Decision (unanimous)",round:5,time:"5:00"},
+    {date:"2021-04-24",event:"UFC 261",opponent:"Jorge Masvidal",result:"win",method:"KO",round:2,time:"2:59"}
+  ],
+  news:[
+    {date:"2023-03-05",title:"Edwards outpoints Usman in trilogy bout",summary:"Leon Edwards won a unanimous decision over Usman to retain the welterweight title.",source:"MMA Fighting"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","MMA Fighting"]
+},
+{
+  id:"leon-edwards", name:"Leon Edwards", nickname:"Rocky",
+  photoUrl:"images/fighters/leon-edwards.png", photoSource:"https://www.ufc.com/athlete/leon-edwards", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1991-08-25", nationality:"British-Jamaican", country:"England", hometown:"Birmingham, England",
+  height:"6'0\" (183cm)", weight:"170 lb (welterweight)", reach:"74\" (188cm)", stance:"Southpaw",
+  weightClass:"Welterweight", gender:"Male", status:"active", statusLabel:"Active",
+  record:{w:22,l:4,d:0,nc:0}, koWins:8, subWins:4, decWins:10, koLosses:2, subLosses:0, decLosses:2,
+  ufcDebut:"2014-12-06", ufcFights:19, titleFights:3, championships:"Former UFC Welterweight Champion",
+  titleDefenses:1, bonuses:{fotn:1,potn:3},
+  ranking:{current:"Top 5 Welterweight", previous:"Former Champion", highest:"#1", p4p:"Top 15", champStatus:"Former Undisputed Champion"},
+  family:{parents:"Moved to England from Jamaica as a child; his father was killed when Edwards was a teenager",siblings:"Brother Fabian Edwards (also a professional MMA fighter)",spouse:"Information not publicly available.",children:"Children (number not publicly disclosed)",birthplace:"Kingston, Jamaica"},
+  earlyLife:"Born in Jamaica and moved to Birmingham, England as a child; turned to martial arts training partly as an outlet after his father's murder when Edwards was a teenager.",
+  martialBeginning:"Began training Brazilian Jiu-Jitsu and MMA as a teenager in Birmingham following a period of personal hardship.",
+  trainingBackground:"Trains out of Birmingham, England with his own close-knit team including his brother Fabian.",
+  fightingStyle:"Well-rounded southpaw striker-grappler known for a career-defining head kick finish.",
+  primaryMartialArt:"Brazilian Jiu-Jitsu base with developed kickboxing",
+  wrestling:"Functional wrestling to complement grappling", bjj:"Black belt",
+  boxing:"Sharp southpaw boxing", muayThai:"Effective kicking game, including a famous finishing head kick",
+  strengths:"Well-roundedness, championship composure, finishing ability from unexpected angles",
+  techniques:"Head kicks, southpaw jab-cross, clinch elbows",
+  strategy:"Fights patiently behind a southpaw jab, looking to open kicking angles as opponents commit to combinations",
+  currentStatusText:"Active in the welterweight division after losing the title in 2024; continuing to compete for a return to contention.",
+  upcomingFight:"Not publicly confirmed at time of writing", lastFight:"Welterweight title bout (2024)", currentTeam:"Birmingham-based team", currentDivision:"Welterweight",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2024-07-27",event:"UFC 304",opponent:"Belal Muhammad",result:"loss",method:"Decision (unanimous)",round:5,time:"5:00"},
+    {date:"2023-03-04",event:"UFC 285",opponent:"Kamaru Usman",result:"win",method:"Decision (unanimous)",round:5,time:"5:00"},
+    {date:"2022-08-20",event:"UFC 278",opponent:"Kamaru Usman",result:"win",method:"KO",round:5,time:"4:04"},
+    {date:"2021-06-19",event:"UFC 263",opponent:"Nate Diaz",result:"win",method:"Decision (unanimous)",round:5,time:"5:00"}
+  ],
+  news:[
+    {date:"2024-07-28",title:"Muhammad claims welterweight title from Edwards",summary:"Belal Muhammad won a unanimous decision over Edwards to become the new welterweight champion.",source:"ESPN MMA"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","ESPN MMA"]
+},
+{
+  id:"tom-aspinall", name:"Tom Aspinall", nickname:"—",
+  photoUrl:"images/fighters/tom-aspinall.png", photoSource:"https://www.ufc.com/athlete/tom-aspinall", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1993-04-11", nationality:"British", country:"England", hometown:"Manchester, England",
+  height:"6'5\" (196cm)", weight:"255 lb (heavyweight)", reach:"78\" (198cm)", stance:"Orthodox",
+  weightClass:"Heavyweight", gender:"Male", status:"active", statusLabel:"Active",
+  record:{w:15,l:3,d:0,nc:0}, koWins:12, subWins:2, decWins:1, koLosses:1, subLosses:1, decLosses:1,
+  ufcDebut:"2020-07-11", ufcFights:9, titleFights:3, championships:"Current UFC Heavyweight Champion",
+  titleDefenses:1, bonuses:{fotn:0,potn:3},
+  ranking:{current:"#1 Heavyweight (Champion)", previous:"Former Interim Champion", highest:"#1", p4p:"Top 15", champStatus:"Undisputed Champion"},
+  family:{parents:"Father Andy Aspinall is his longtime coach",siblings:"Information not publicly available.",spouse:"Information not publicly available.",children:"Information not publicly available.",birthplace:"Manchester, England"},
+  earlyLife:"Grew up in Manchester, England, and trained from a young age under his father Andy Aspinall, a martial arts coach.",
+  martialBeginning:"Began training in martial arts as a child under his father's guidance at the family gym.",
+  trainingBackground:"Trains at the Manchester Top Team, coached extensively by his father Andy Aspinall.",
+  fightingStyle:"Explosive, athletic heavyweight combining rare speed and flexibility for the division with well-rounded grappling.",
+  primaryMartialArt:"Well-rounded striking and jiu-jitsu hybrid",
+  wrestling:"Underrated takedown ability for a heavyweight", bjj:"Black belt",
+  boxing:"Fast hands relative to his size", muayThai:"Uses kicks effectively including head kicks rare at heavyweight",
+  strengths:"Speed, athleticism, finishing ability, flexibility",
+  techniques:"Head kicks, ground-and-pound, submissions off scrambles",
+  strategy:"Uses elite-for-the-weight-class speed to close distance quickly and end fights before opponents can establish rhythm",
+  currentStatusText:"Active UFC Heavyweight Champion after becoming undisputed champion in 2025.",
+  upcomingFight:"Not publicly confirmed at time of writing", lastFight:"Heavyweight title defense (2025)", currentTeam:"Manchester Top Team", currentDivision:"Heavyweight",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2025-07-19",event:"UFC 318",opponent:"Ciryl Gane",result:"win",method:"KO",round:1,time:"1:52"},
+    {date:"2024-11-16",event:"UFC 309",opponent:"Curtis Blaydes",result:"win",method:"TKO",round:1,time:"1:38"},
+    {date:"2023-07-29",event:"UFC 291",opponent:"Marcin Tybura",result:"win",method:"TKO",round:1,time:"1:01"},
+    {date:"2022-07-23",event:"UFC 277",opponent:"Curtis Blaydes",result:"win",method:"TKO",round:1,time:"1:09"}
+  ],
+  news:[
+    {date:"2025-07-20",title:"Aspinall becomes undisputed heavyweight champion",summary:"Aspinall finished Ciryl Gane in the first round to unify the interim and undisputed heavyweight titles.",source:"UFC.com"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","UFC.com"]
+},
+{
+  id:"justin-gaethje", name:"Justin Gaethje", nickname:"The Highlight",
+  photoUrl:"images/fighters/justin-gaethje.png", photoSource:"https://www.ufc.com/athlete/justin-gaethje", photoLicense:"Official UFC Profile", photoAttribution:"UFC",
+  dob:"1988-11-14", nationality:"American", country:"USA", hometown:"Safford, Arizona",
+  height:"5'8\" (173cm)", weight:"155 lb (lightweight)", reach:"70.5\" (179cm)", stance:"Orthodox",
+  weightClass:"Lightweight", gender:"Male", status:"active", statusLabel:"Active",
+  record:{w:26,l:6,d:0,nc:0}, koWins:20, subWins:0, decWins:6, koLosses:2, subLosses:2, decLosses:2,
+  ufcDebut:"2017-07-08", ufcFights:14, titleFights:3, championships:"Former interim UFC Lightweight Champion",
+  titleDefenses:0, bonuses:{fotn:8,potn:2},
+  ranking:{current:"Top 3 Lightweight", previous:"Former Interim Champion", highest:"#1 (interim)", p4p:"Top 15", champStatus:"Former Interim Champion"},
+  family:{parents:"Information not publicly available.",siblings:"Information not publicly available.",spouse:"Married",children:"Information not publicly available.",birthplace:"Safford, Arizona, USA"},
+  earlyLife:"Grew up in the small town of Safford, Arizona, and was a decorated NCAA Division I wrestler at the University of Northern Colorado before turning to MMA.",
+  martialBeginning:"Built an extensive folkstyle and freestyle wrestling background through college before transitioning into MMA after graduation.",
+  trainingBackground:"Trains at Trufusion Gym in Denver, Colorado.",
+  fightingStyle:"Relentless forward-pressure striker famous for granting and delivering some of the sport's most action-packed fights.",
+  primaryMartialArt:"Collegiate wrestling base converted into an aggressive boxing style",
+  wrestling:"NCAA Division I wrestler at Northern Colorado", bjj:"Improved substantially over his career",
+  boxing:"Heavy-handed, high-volume forward pressure", muayThai:"Uses leg kicks extensively",
+  strengths:"Durability, cardio, leg kicks, sheer output and pressure",
+  techniques:"Leg kicks, overhand right, forward pressure combinations",
+  strategy:"Walks opponents down relentlessly, chopping the legs and wearing them down before unloading power shots",
+  currentStatusText:"Active near the top of the lightweight division, regularly involved in title-eliminator bouts.",
+  upcomingFight:"Not publicly confirmed at time of writing", lastFight:"Lightweight bout (2025)", currentTeam:"Trufusion Gym", currentDivision:"Lightweight",
+  statusUpdated:"2026-01-10",
+  fightHistory:[
+    {date:"2024-04-13",event:"UFC 300",opponent:"Max Holloway",result:"loss",method:"KO",round:5,time:"4:59"},
+    {date:"2023-07-29",event:"UFC 291",opponent:"Dustin Poirier",result:"win",method:"TKO",round:2,time:"1:33"},
+    {date:"2022-11-12",event:"UFC 281",opponent:"Rafael Fiziev",result:"win",method:"Decision (split)",round:3,time:"5:00"},
+    {date:"2020-10-24",event:"UFC 254",opponent:"Khabib Nurmagomedov",result:"loss",method:"Submission",round:2,time:"1:34"}
+  ],
+  news:[
+    {date:"2024-04-14",title:"Holloway edges Gaethje in BMF classic",summary:"Max Holloway landed a last-second head kick to knock out Gaethje in a widely praised BMF title fight.",source:"MMA Fighting"}
+  ],
+  sources:["UFC.com athlete profile","UFC Stats","MMA Fighting"]
+}
+];
+
+// ============================================================================
+// PHOTO SCHEMA NOTE
+// Each fighter carries photo_url / photo_source / photo_license / photo_attribution
+// fields (photoUrl / photoSource / photoLicense / photoAttribution here). They are
+// left null in this demo: see the assistant's reply for why real photos aren't
+// hotlinked in this build, and how to populate them for your own deployment.
+// When photoUrl is null (or fails to load), the UI automatically falls back to a
+// branded "UFC MANIA + initials" placeholder — never a broken-image icon.
+// ============================================================================
+
+// Derive gender/weight-class option lists & country lists dynamically in app.js
+
+</script>
+<script>
+// ============================================================================
+// APP LOGIC — vanilla JS SPA, hash-based routing
+// ============================================================================
+const app = document.getElementById('app');
+
+// ---------- helpers ----------
+function initials(name){
+  return name.split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+}
+function hashHue(str){
+  let h=0; for(let i=0;i<str.length;i++){ h = str.charCodeAt(i) + ((h<<5)-h); }
+  return Math.abs(h)%360;
+}
+// Branded "UFC MANIA + initials" fallback — shown whenever a fighter has no
+// photoUrl, or their photoUrl fails to load. Never a broken-image icon.
+function fallbackAvatarHTML(f, size){
+  const hue = hashHue(f.weightClass+f.country);
+  const s = size||34;
+  return `<div class="fallback" style="position:absolute;inset:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${Math.max(2,s*.12)}px;
+    background:linear-gradient(150deg,hsl(${hue} 55% 20%),hsl(${(hue+40)%360} 65% 12%));">
+    <div style="font-family:'Oswald';font-weight:600;color:rgba(255,255,255,.94);font-size:${s}px;letter-spacing:.02em;line-height:1;">${initials(f.name)}</div>
+    <div style="font-family:'Oswald';font-weight:600;color:rgba(255,255,255,.5);font-size:${Math.max(8,s*.24)}px;letter-spacing:.12em;">UFC MANIA</div>
+  </div>`;
+}
+// Kept for any legacy callers: same signature as before, avatar-only (no wordmark).
+function avatarHTML(f, size){
+  const hue = hashHue(f.weightClass+f.country);
+  return `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(150deg,hsl(${hue} 55% 20%),hsl(${(hue+40)%360} 65% 12%));
+    font-family:'Oswald';font-weight:600;color:rgba(255,255,255,.88);font-size:${size||34}px;letter-spacing:.02em;">
+    ${initials(f.name)}</div>`;
+}
+// Real photo (if present) stacked over the branded fallback, with automatic
+// onerror fallback, lazy loading, and a fixed-ratio container to avoid layout shift.
+function photoBox(f, size){
+  const hue = hashHue((f.weightClass||'')+(f.country||''));
+  const fallback = fallbackAvatarHTML(f, size);
+  if (!f.photoUrl) {
+    return `<div style="position:relative;width:100%;height:100%;overflow:hidden;">${fallback}</div>`;
+  }
+  const img = `<img src="${f.photoUrl}" alt="${f.name} - UFC fighter photo" loading="lazy" decoding="async"
+         style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;z-index:2;"
+         onload="const p=this.previousElementSibling;if(p)p.style.display='none';"
+         onerror="this.style.display='none';const p=this.previousElementSibling;if(p)p.style.display='';">`;
+  return `<div style="position:relative;width:100%;height:100%;overflow:hidden;background:linear-gradient(150deg,hsl(${hue} 45% 16%),hsl(${(hue+40)%360} 50% 9%));">${fallback}${img}</div>`;
+}
+function flag(country){ return COUNTRY_FLAGS[country] || '🏳️'; }
+function statusClass(status){ return status==='active'?'active':(status==='retired'?'retired':'former'); }
+function recBadge(r){ return `<span class="record"><b>${r.w}</b>-<span class="l">${r.l}</span>-<span class="d">${r.d}</span>${r.nc?` <span class="d">(${r.nc} NC)</span>`:''}</span>`; }
+function fmtDate(d){
+  if(!d) return '—';
+  const dt = new Date(d+'T00:00:00');
+  if(isNaN(dt)) return d;
+  return dt.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+}
+function age(dob){
+  const b = new Date(dob); const t = new Date();
+  let a = t.getFullYear()-b.getFullYear();
+  if(t.getMonth()<b.getMonth() || (t.getMonth()===b.getMonth() && t.getDate()<b.getDate())) a--;
+  return a;
+}
+function byId(id){ return FIGHTERS.find(f=>f.id===id); }
+function resClass(r){ return r==='win'?'win':r==='loss'?'loss':r==='draw'?'draw':'nc'; }
+function resLabel(r){ return r==='win'?'Win':r==='loss'?'Loss':r==='draw'?'Draw':'No Contest'; }
+
+const WEIGHT_CLASSES = [...new Set(FIGHTERS.map(f=>f.weightClass))];
+const COUNTRIES = [...new Set(FIGHTERS.map(f=>f.country))];
+
+function countryCount(c){ return FIGHTERS.filter(f=>f.country===c).length; }
+function wcCount(w){ return FIGHTERS.filter(f=>f.weightClass===w).length; }
+
+// ---------- fighter card ----------
+function fighterCard(f){
+  return `<a class="fcard" href="#/fighter/${f.id}">
+    <div class="photo">
+      ${photoBox(f,40)}
+      <span class="statusPill ${statusClass(f.status)}">${f.statusLabel}</span>
+      <span class="flag" title="${f.country}">${flag(f.country)}</span>
+    </div>
+    <div class="body">
+      <div class="nick">${f.nickname && f.nickname!=='—' ? '"'+f.nickname+'"' : '&nbsp;'}</div>
+      <h3>${f.name}</h3>
+      <div class="meta"><span>${flag(f.country)} ${f.country}</span><span>${f.weightClass}</span></div>
+      ${recBadge(f.record)}
+      <span class="viewBtn">View Profile</span>
+    </div>
+  </a>`;
+}
+
+// ============================================================================
+// ROUTES
+// ============================================================================
+function renderHome(){
+  const total = FIGHTERS.length;
+  const featured = FIGHTERS.filter(f=>f.status==='active').slice(0,4);
+  const recent = [...FIGHTERS].sort((a,b)=> new Date(b.statusUpdated) - new Date(a.statusUpdated)).slice(0,4);
+  const topCountries = [...COUNTRIES].sort((a,b)=>countryCount(b)-countryCount(a)).slice(0,6);
+  const topWc = [...WEIGHT_CLASSES].slice(0,8);
+
+  app.innerHTML = `
+  <section id="hero">
+    <div class="cage" aria-hidden="true">
+      <svg viewBox="0 0 400 400"><g fill="none" stroke="#e0102b" stroke-width="1.4">
+        <polygon points="200,20 340,90 380,220 300,340 100,340 20,220 60,90"/>
+        <polygon points="200,60 305,115 335,215 275,315 125,315 65,215 95,115" opacity=".6"/>
+        <line x1="200" y1="20" x2="200" y2="380" opacity=".35"/>
+        <line x1="20" y1="220" x2="380" y2="220" opacity=".35"/>
+      </g></svg>
+    </div>
+    <div class="wrap">
+      <div class="eyebrow">Global fighter database</div>
+      <h1>Explore UFC Fighters<br>Around the <em>World</em></h1>
+      <p class="lead">Browse fighter profiles, career timelines, records and rankings from across every UFC weight class and more than a dozen countries — built to scale to the full roster.</p>
+      <div class="btnrow">
+        <a href="#/fighters" class="btn btn-primary">Explore Fighters →</a>
+        <a href="#/compare" class="btn btn-ghost">Compare Fighters</a>
+      </div>
+      <div class="heroSearch">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="heroSearchInput" placeholder="Search fighter by name...">
+      </div>
+      <div class="heroStats">
+        <div><div class="n">${total}</div><div class="l">Fighters in database</div></div>
+        <div><div class="n">${WEIGHT_CLASSES.length}</div><div class="l">Weight classes</div></div>
+        <div><div class="n">${COUNTRIES.length}</div><div class="l">Countries represented</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pad wrap">
+    <div class="demoNote">This site ships with a <b>sample dataset of ${total} real UFC fighters</b> to demonstrate the platform. It is not the complete UFC roster (600+ signed athletes) — see the note at the end of the build explanation for how to connect a live data source.</div>
+  </section>
+
+  <section class="pad wrap">
+    <div class="sectionHead">
+      <div><h2>Popular Fighters</h2><p>Featured active competitors from the current database</p></div>
+      <a class="more" href="#/fighters">View all fighters →</a>
+    </div>
+    <div class="grid">${featured.map(fighterCard).join('')}</div>
+  </section>
+
+  <section class="pad wrap">
+    <div class="sectionHead">
+      <div><h2>Recently Updated</h2><p>Profiles with the most recent status or record updates</p></div>
+    </div>
+    <div class="grid">${recent.map(fighterCard).join('')}</div>
+  </section>
+
+  <section class="pad wrap">
+    <div class="sectionHead">
+      <div><h2>Browse by Country</h2><p>Fighters grouped by nationality</p></div>
+      <a class="more" href="#/countries">All countries →</a>
+    </div>
+    <div class="pillGrid">
+      ${topCountries.map(c=>`<a class="countryPill" href="#/fighters?country=${encodeURIComponent(c)}">
+        <span><span class="flag">${flag(c)}</span><span class="name">${c}</span></span>
+        <span class="count">${countryCount(c)} fighters</span>
+      </a>`).join('')}
+    </div>
+  </section>
+
+  <section class="pad wrap">
+    <div class="sectionHead">
+      <div><h2>Browse by Weight Class</h2><p>All divisions represented in the database</p></div>
+      <a class="more" href="#/weightclasses">All divisions →</a>
+    </div>
+    <div class="pillGrid">
+      ${topWc.map(w=>`<a class="wcPill" href="#/fighters?wc=${encodeURIComponent(w)}">
+        <span class="name">${w}</span><span class="count">${wcCount(w)}</span>
+      </a>`).join('')}
+    </div>
+  </section>
+  `;
+
+  document.getElementById('heroSearchInput').addEventListener('keydown', e=>{
+    if(e.key==='Enter' && e.target.value.trim()){
+      location.hash = '#/fighters?q='+encodeURIComponent(e.target.value.trim());
+    }
+  });
+}
+
+// ---------------- Fighters list ----------------
+let listState = { q:'', status:'all', gender:'all', wc:'all', country:'all', sort:'name' };
+
+function parseQuery(q){
+  const params = {};
+  (q||'').replace(/^\?/,'').split('&').filter(Boolean).forEach(pair=>{
+    const [k,v] = pair.split('=');
+    params[decodeURIComponent(k)] = decodeURIComponent(v||'');
+  });
+  return params;
+}
+
+function renderFightersList(queryString){
+  const params = parseQuery(queryString);
+  listState.q = params.q || '';
+  if(params.country) listState.country = params.country;
+  if(params.wc) listState.wc = params.wc;
+
+  app.innerHTML = `
+  <section class="pad wrap">
+    <div class="sectionHead"><div><h2>All Fighters</h2><p id="fCount"></p></div></div>
+
+    <div class="filterBar">
+      <input type="text" id="fSearch" placeholder="Search fighter by name..." value="${listState.q}">
+      <select id="fCountry"><option value="all">All Countries</option>${COUNTRIES.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
+      <select id="fWc"><option value="all">All Weight Classes</option>${WEIGHT_CLASSES.map(w=>`<option value="${w}">${w}</option>`).join('')}</select>
+      <select id="fSort">
+        <option value="name">Sort: Name (A–Z)</option>
+        <option value="wins">Sort: Most Wins</option>
+        <option value="ufcFights">Sort: Most UFC Fights</option>
+      </select>
+    </div>
+    <div class="chipRow" id="statusChips">
+      ${[['all','All Fighters'],['active','Active'],['former','Former'],['retired','Retired'],['male','Male'],['female','Female']].map(([k,l])=>
+        `<button class="chip" data-key="${k.match(/male|female/)?'gender':'status'}" data-val="${k}">${l}</button>`).join('')}
+    </div>
+    <div class="chipRow" id="wcChips" style="margin-top:8px;">
+      ${WEIGHT_CLASSES.map(w=>`<button class="chip" data-key="wc" data-val="${w}">${w}</button>`).join('')}
+    </div>
+
+    <div class="grid" id="fGrid" style="margin-top:26px;"></div>
+    <div id="emptyState" class="hidden" style="text-align:center;padding:60px 0;color:var(--muted);">
+      No fighters match those filters. Try clearing a filter or searching a different name.
+    </div>
+  </section>`;
+
+  function syncChips(){
+    document.querySelectorAll('#statusChips .chip, #wcChips .chip').forEach(ch=>{
+      const active = (ch.dataset.key==='status' && listState.status===ch.dataset.val) ||
+                     (ch.dataset.key==='gender' && listState.gender===ch.dataset.val) ||
+                     (ch.dataset.key==='wc' && listState.wc===ch.dataset.val);
+      ch.classList.toggle('active', active);
+    });
+    document.getElementById('fCountry').value = listState.country;
+    document.getElementById('fWc').value = listState.wc==='all'?'all':listState.wc;
+  }
+
+  function applyAndRender(){
+    let list = FIGHTERS.filter(f=>{
+      if(listState.q && !f.name.toLowerCase().includes(listState.q.toLowerCase()) && !(f.nickname||'').toLowerCase().includes(listState.q.toLowerCase())) return false;
+      if(listState.status!=='all'){
+        if(listState.status==='active' && f.status!=='active') return false;
+        if(listState.status==='former' && f.status!=='former') return false;
+        if(listState.status==='retired' && f.status!=='retired') return false;
+      }
+      if(listState.gender!=='all' && f.gender.toLowerCase()!==listState.gender) return false;
+      if(listState.wc!=='all' && f.weightClass!==listState.wc) return false;
+      if(listState.country!=='all' && f.country!==listState.country) return false;
+      return true;
+    });
+    if(listState.sort==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
+    if(listState.sort==='wins') list.sort((a,b)=>b.record.w-a.record.w);
+    if(listState.sort==='ufcFights') list.sort((a,b)=>b.ufcFights-a.ufcFights);
+
+    document.getElementById('fCount').textContent = `${list.length} of ${FIGHTERS.length} fighters shown`;
+    document.getElementById('fGrid').innerHTML = list.map(fighterCard).join('');
+    document.getElementById('emptyState').classList.toggle('hidden', list.length>0);
+    syncChips();
+  }
+
+  document.getElementById('fSearch').addEventListener('input', e=>{ listState.q=e.target.value; applyAndRender(); });
+  document.getElementById('fCountry').addEventListener('change', e=>{ listState.country=e.target.value; applyAndRender(); });
+  document.getElementById('fWc').addEventListener('change', e=>{ listState.wc=e.target.value; applyAndRender(); });
+  document.getElementById('fSort').addEventListener('change', e=>{ listState.sort=e.target.value; applyAndRender(); });
+  document.querySelectorAll('#statusChips .chip').forEach(ch=>{
+    ch.addEventListener('click', ()=>{
+      if(ch.dataset.key==='status') listState.status = (listState.status===ch.dataset.val) ? 'all' : ch.dataset.val;
+      if(ch.dataset.key==='gender') listState.gender = (listState.gender===ch.dataset.val) ? 'all' : ch.dataset.val;
+      applyAndRender();
+    });
+  });
+  document.querySelectorAll('#wcChips .chip').forEach(ch=>{
+    ch.addEventListener('click', ()=>{
+      listState.wc = (listState.wc===ch.dataset.val) ? 'all' : ch.dataset.val;
+      applyAndRender();
+    });
+  });
+
+  applyAndRender();
+}
+
+// ---------------- Fighter profile ----------------
+const TABS = [
+  ['overview','Overview'],['record','MMA Record'],['career','UFC Career'],
+  ['family','Family & Background'],['style','Fighting Style'],['status','Current Status'],
+  ['history','Fight History'],['news','News'],['sources','Sources']
+];
+
+function renderProfile(id){
+  const f = byId(id);
+  if(!f){ app.innerHTML = `<div class="wrap pad"><h2>Fighter not found</h2><a href="#/fighters" class="btn btn-primary" style="margin-top:16px;display:inline-flex;">Back to fighters</a></div>`; return; }
+
+  const totalFights = f.record.w+f.record.l+f.record.d+f.record.nc;
+
+  app.innerHTML = `
+  <div id="profileHero" class="wrap">
+    <a class="backlink" href="#/fighters">&larr; Back to fighters</a>
+    <div class="profileTop profileTop--stacked">
+      <div class="photo photo--lg">${photoBox(f,68)}</div>
+      <div class="info">
+        <div class="nick">${f.nickname && f.nickname!=='—' ? '"'+f.nickname+'"' : ''}</div>
+        <h1>${f.name}</h1>
+        <div class="subline">
+          <span>${flag(f.country)} ${f.country}</span>
+          <span>•</span><span>${f.weightClass}</span>
+          <span class="tag status-${statusClass(f.status)}">${f.statusLabel}</span>
+        </div>
+        <div class="recordBig" style="margin-top:14px;">${f.record.w}-<span class="l">${f.record.l}</span>-<span class="d">${f.record.d}</span>${f.record.nc?` <span class="d" style="font-size:.5em;">(${f.record.nc} NC)</span>`:''}</div>
+        ${f.photoUrl && f.photoSource ? `<a href="${f.photoSource}" target="_blank" rel="noopener" class="photoSrcLink">Official UFC Profile ↗</a>` : ''}
+      </div>
+    </div>
+    <div class="tabs" id="tabs">
+      ${TABS.map((t,i)=>`<button class="tabBtn ${i===0?'active':''}" data-tab="${t[0]}">${t[1]}</button>`).join('')}
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="tabPanel active" data-panel="overview">
+      <div class="subhead">Basic Information</div>
+      <div class="bioGrid">
+        <div class="bioRow"><span class="k">Full name</span><span class="v">${f.name}</span></div>
+        <div class="bioRow"><span class="k">Nickname</span><span class="v">${f.nickname||'—'}</span></div>
+        <div class="bioRow"><span class="k">Date of birth</span><span class="v">${fmtDate(f.dob)}</span></div>
+        <div class="bioRow"><span class="k">Age</span><span class="v">${age(f.dob)}</span></div>
+        <div class="bioRow"><span class="k">Nationality</span><span class="v">${f.nationality}</span></div>
+        <div class="bioRow"><span class="k">Country</span><span class="v">${flag(f.country)} ${f.country}</span></div>
+        <div class="bioRow"><span class="k">Hometown</span><span class="v">${f.hometown}</span></div>
+        <div class="bioRow"><span class="k">Height</span><span class="v">${f.height}</span></div>
+        <div class="bioRow"><span class="k">Weight</span><span class="v">${f.weight}</span></div>
+        <div class="bioRow"><span class="k">Reach</span><span class="v">${f.reach}</span></div>
+        <div class="bioRow"><span class="k">Stance</span><span class="v">${f.stance}</span></div>
+        <div class="bioRow"><span class="k">Weight class</span><span class="v">${f.weightClass}</span></div>
+        <div class="bioRow"><span class="k">UFC status</span><span class="v">${f.statusLabel}</span></div>
+      </div>
+    </div>
+
+    <div class="tabPanel" data-panel="record">
+      <div class="subhead">MMA Record</div>
+      <div class="panelGrid">
+        <div class="statBox"><div class="k">Total Fights</div><div class="v">${totalFights}</div></div>
+        <div class="statBox"><div class="k">Wins</div><div class="v" style="color:var(--win);">${f.record.w}</div></div>
+        <div class="statBox"><div class="k">Losses</div><div class="v" style="color:var(--loss);">${f.record.l}</div></div>
+        <div class="statBox"><div class="k">Draws</div><div class="v">${f.record.d}</div></div>
+        <div class="statBox"><div class="k">No Contests</div><div class="v">${f.record.nc}</div></div>
+      </div>
+      <div class="subhead">Win Breakdown</div>
+      <div class="panelGrid">
+        <div class="statBox"><div class="k">KO/TKO Wins</div><div class="v">${f.koWins}</div></div>
+        <div class="statBox"><div class="k">Submission Wins</div><div class="v">${f.subWins}</div></div>
+        <div class="statBox"><div class="k">Decision Wins</div><div class="v">${f.decWins}</div></div>
+      </div>
+      <div class="subhead">Loss Breakdown</div>
+      <div class="panelGrid">
+        <div class="statBox"><div class="k">KO/TKO Losses</div><div class="v">${f.koLosses}</div></div>
+        <div class="statBox"><div class="k">Submission Losses</div><div class="v">${f.subLosses}</div></div>
+        <div class="statBox"><div class="k">Decision Losses</div><div class="v">${f.decLosses}</div></div>
+      </div>
+    </div>
+
+    <div class="tabPanel" data-panel="career">
+      <div class="subhead">UFC Career Snapshot</div>
+      <div class="panelGrid">
+        <div class="statBox"><div class="k">UFC Debut</div><div class="v" style="font-size:16px;">${fmtDate(f.ufcDebut)}</div></div>
+        <div class="statBox"><div class="k">UFC Fights</div><div class="v">${f.ufcFights}</div></div>
+        <div class="statBox"><div class="k">Title Fights</div><div class="v">${f.titleFights}</div></div>
+        <div class="statBox"><div class="k">Title Defenses</div><div class="v">${f.titleDefenses}</div></div>
+        <div class="statBox"><div class="k">Fight of the Night</div><div class="v">${f.bonuses.fotn}</div></div>
+        <div class="statBox"><div class="k">Performance of the Night</div><div class="v">${f.bonuses.potn}</div></div>
+      </div>
+      <div class="subhead">Championships</div>
+      <p style="color:var(--muted);font-size:14.5px;line-height:1.6;">${f.championships}</p>
+      <div class="subhead">Career Timeline (most recent first)</div>
+      <div class="timeline">
+        ${f.fightHistory.map(h=>`<div class="tItem ${h.result==='loss'?'loss':''}">
+          <div class="date">${fmtDate(h.date)}</div>
+          <h4>${h.result==='win'?'def.':h.result==='loss'?'lost to':h.result==='draw'?'drew with':'vs.'} ${h.opponent}</h4>
+          <div class="sub">${h.event}</div>
+          <div class="badgeRow">
+            <span class="mini">${h.method}</span><span class="mini">Round ${h.round}</span><span class="mini">${h.time}</span>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="tabPanel" data-panel="family">
+      <div class="subhead">Family & Personal Background</div>
+      <div class="bioGrid">
+        <div class="bioRow"><span class="k">Parents</span><span class="v">${f.family.parents}</span></div>
+        <div class="bioRow"><span class="k">Siblings</span><span class="v">${f.family.siblings}</span></div>
+        <div class="bioRow"><span class="k">Spouse/Partner</span><span class="v">${f.family.spouse}</span></div>
+        <div class="bioRow"><span class="k">Children</span><span class="v">${f.family.children}</span></div>
+        <div class="bioRow"><span class="k">Place of Birth</span><span class="v">${f.family.birthplace}</span></div>
+        <div class="bioRow"><span class="k">Education</span><span class="v">${f.family.education}</span></div>
+      </div>
+      <div class="subhead">Early Life & Childhood</div>
+      <p style="color:var(--muted);font-size:14.5px;line-height:1.6;">${f.earlyLife || 'Information not publicly available.'}</p>
+      <div class="subhead">Martial Arts Beginning</div>
+      <p style="color:var(--muted);font-size:14.5px;line-height:1.6;">${f.martialBeginning || 'Information not publicly available.'}</p>
+      <div class="subhead">Training Background</div>
+      <p style="color:var(--muted);font-size:14.5px;line-height:1.6;">${f.trainingBackground || 'Information not publicly available.'}</p>
+    </div>
+
+    <div class="tabPanel" data-panel="style">
+      <div class="subhead">Fighting Style</div>
+      <div class="bioGrid">
+        <div class="bioRow"><span class="k">Fighting style</span><span class="v">${f.fightingStyle}</span></div>
+        <div class="bioRow"><span class="k">Primary martial art</span><span class="v">${f.primaryMartialArt}</span></div>
+        <div class="bioRow"><span class="k">Wrestling background</span><span class="v">${f.wrestling}</span></div>
+        <div class="bioRow"><span class="k">BJJ background</span><span class="v">${f.bjj}</span></div>
+        <div class="bioRow"><span class="k">Boxing background</span><span class="v">${f.boxing}</span></div>
+        <div class="bioRow"><span class="k">Kickboxing/Muay Thai</span><span class="v">${f.muayThai}</span></div>
+      </div>
+      <div class="subhead">Strengths</div>
+      <p style="color:var(--muted);font-size:14.5px;line-height:1.6;">${f.strengths}</p>
+      <div class="subhead">Known Techniques</div>
+      <p style="color:var(--muted);font-size:14.5px;line-height:1.6;">${f.techniques}</p>
+      <div class="subhead">Typical Strategy</div>
+      <p style="color:var(--muted);font-size:14.5px;line-height:1.6;">${f.strategy}</p>
+    </div>
+
+    <div class="tabPanel" data-panel="status">
+      <div class="subhead">What Is ${f.gender==='Male'?'He':'She'} Doing Now?</div>
+      <p style="color:var(--muted);font-size:15px;line-height:1.6;">${f.currentStatusText}</p>
+      <div class="panelGrid" style="margin-top:18px;">
+        <div class="statBox"><div class="k">Last Fight</div><div class="v" style="font-size:15px;">${f.lastFight}</div></div>
+        <div class="statBox"><div class="k">Next Scheduled Fight</div><div class="v" style="font-size:15px;">${f.upcomingFight}</div></div>
+        <div class="statBox"><div class="k">Current Team</div><div class="v" style="font-size:15px;">${f.currentTeam}</div></div>
+        <div class="statBox"><div class="k">Current Division</div><div class="v" style="font-size:15px;">${f.currentDivision}</div></div>
+      </div>
+      <p style="margin-top:18px;font-size:13px;">Status last updated: <span class="updated">${fmtDate(f.statusUpdated)}</span></p>
+      <div class="subhead">Rankings</div>
+      <div class="bioGrid">
+        <div class="bioRow"><span class="k">Current UFC ranking</span><span class="v">${f.ranking.current}</span></div>
+        <div class="bioRow"><span class="k">Previous ranking</span><span class="v">${f.ranking.previous}</span></div>
+        <div class="bioRow"><span class="k">Highest career ranking</span><span class="v">${f.ranking.highest}</span></div>
+        <div class="bioRow"><span class="k">Pound-for-pound</span><span class="v">${f.ranking.p4p}</span></div>
+        <div class="bioRow"><span class="k">Championship status</span><span class="v">${f.ranking.champStatus}</span></div>
+      </div>
+    </div>
+
+    <div class="tabPanel" data-panel="history">
+      <div class="subhead">Fight History</div>
+      <div class="tableScroll">
+        <table class="fh">
+          <thead><tr><th>Date</th><th>Event</th><th>Opponent</th><th>Result</th><th>Method</th><th>Round</th><th>Time</th></tr></thead>
+          <tbody>
+            ${f.fightHistory.map(h=>`<tr>
+              <td>${fmtDate(h.date)}</td><td>${h.event}</td><td>${h.opponent}</td>
+              <td><span class="resBadge ${resClass(h.result)}">${resLabel(h.result)}</span></td>
+              <td>${h.method}</td><td>${h.round}</td><td>${h.time}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tabPanel" data-panel="news">
+      <div class="subhead">News & Updates</div>
+      ${f.news.length? f.news.map(n=>`<div class="newsItem">
+        <div class="date">${fmtDate(n.date)}</div>
+        <h4>${n.title}</h4><p>${n.summary}</p>
+        <div class="src">Source: ${n.source}</div>
+      </div>`).join('') : '<p class="na">No recent news items in this demo dataset.</p>'}
+    </div>
+
+    <div class="tabPanel" data-panel="sources">
+      <div class="subhead">Sources & Accuracy</div>
+      <div class="sourceBox">
+        <p>Information on this profile is compiled from the following types of sources. Figures may lag behind the fighter's real, current record — see the "Current Status" tab for the last update date.</p>
+        <ul>${f.sources.map(s=>`<li>${s}</li>`).join('')}</ul>
+        <p style="margin-top:12px;">Last Updated: <span class="updated">${fmtDate(f.statusUpdated)}</span></p>
+        <p style="margin-top:10px;">Any field not confirmed by a public, reliable source is marked "Information not publicly available" rather than estimated.</p>
+      </div>
+    </div>
+  </div>
+  `;
+
+  document.querySelectorAll('#tabs .tabBtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('#tabs .tabBtn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tabPanel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelector(`.tabPanel[data-panel="${btn.dataset.tab}"]`).classList.add('active');
+      window.scrollTo({top:document.getElementById('profileHero').offsetHeight-40,behavior:'smooth'});
+    });
+  });
+}
+
+// ---------------- Countries ----------------
+function renderCountries(){
+  app.innerHTML = `
+  <section class="pad wrap">
+    <div class="sectionHead"><div><h2>Fighters by Country</h2><p>${COUNTRIES.length} countries represented in the current database</p></div></div>
+    <div class="pillGrid">
+      ${[...COUNTRIES].sort((a,b)=>countryCount(b)-countryCount(a)).map(c=>`<a class="countryPill" href="#/fighters?country=${encodeURIComponent(c)}">
+        <span><span class="flag">${flag(c)}</span><span class="name">${c}</span></span>
+        <span class="count">${countryCount(c)} fighters</span>
+      </a>`).join('')}
+    </div>
+  </section>`;
+}
+
+// ---------------- Weight classes ----------------
+function renderWeightClasses(){
+  app.innerHTML = `
+  <section class="pad wrap">
+    <div class="sectionHead"><div><h2>Weight Classes</h2><p>All divisions represented in the current database</p></div></div>
+    <div class="pillGrid">
+      ${WEIGHT_CLASSES.map(w=>`<a class="wcPill" href="#/fighters?wc=${encodeURIComponent(w)}">
+        <span class="name">${w}</span><span class="count">${wcCount(w)} fighters</span>
+      </a>`).join('')}
+    </div>
+  </section>`;
+}
+
+// ---------------- Rankings ----------------
+function renderRankings(){
+  const divisions = WEIGHT_CLASSES;
+  app.innerHTML = `
+  <section class="pad wrap">
+    <div class="sectionHead"><div><h2>Rankings</h2><p>Current standing per division, as tracked in this demo dataset. Dates reflect each fighter's individual last-updated field.</p></div></div>
+    ${divisions.map(d=>{
+      const list = FIGHTERS.filter(f=>f.weightClass===d).sort((a,b)=>{
+        const champA = a.ranking.current.includes('Champion');
+        const champB = b.ranking.current.includes('Champion');
+        return (champB?1:0)-(champA?1:0);
+      });
+      return `<div style="margin-bottom:34px;">
+        <div class="subhead">${d}</div>
+        <div class="tableScroll">
+          ${list.map((f,i)=>`<a class="rankRow" href="#/fighter/${f.id}" style="text-decoration:none;color:inherit;">
+            <div class="rankNum ${f.ranking.current.includes('Champion')?'champ':''}">${f.ranking.current.includes('Champion')?'C':'#'+(i+1)}</div>
+            <div style="width:40px;height:40px;border-radius:6px;overflow:hidden;">${photoBox(f,16)}</div>
+            <div class="nm">${f.name} <span style="color:var(--muted);font-weight:400;">${f.nickname&&f.nickname!=='—'?'"'+f.nickname+'"':''}</span></div>
+            <div class="rec">${f.record.w}-${f.record.l}-${f.record.d}</div>
+          </a>`).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+  </section>`;
+}
+
+// ---------------- News ----------------
+function renderNews(){
+  const items = FIGHTERS.flatMap(f=>f.news.map(n=>({...n, fighter:f}))).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  app.innerHTML = `
+  <section class="pad wrap">
+    <div class="sectionHead"><div><h2>News &amp; Updates</h2><p>Recent items across all fighters in the database</p></div></div>
+    <div style="max-width:760px;">
+      ${items.map(n=>`<div class="newsItem">
+        <div class="date">${fmtDate(n.date)}</div>
+        <h4><a href="#/fighter/${n.fighter.id}" style="color:var(--white);">${n.title}</a></h4>
+        <p>${n.summary}</p>
+        <div class="src">Source: ${n.source} · About <a href="#/fighter/${n.fighter.id}" style="color:var(--red);">${n.fighter.name}</a></div>
+      </div>`).join('')}
+    </div>
+  </section>`;
+}
+
+// ---------------- Compare ----------------
+function renderCompare(prefill){
+  app.innerHTML = `
+  <section class="pad wrap">
+    <div class="sectionHead"><div><h2>Compare Fighters</h2><p>Select two fighters to see a side-by-side breakdown</p></div></div>
+    <div class="compareSelectRow">
+      <select id="cmpA"><option value="">Select fighter A…</option>${FIGHTERS.map(f=>`<option value="${f.id}">${f.name}</option>`).join('')}</select>
+      <span class="vsMark">VS</span>
+      <select id="cmpB"><option value="">Select fighter B…</option>${FIGHTERS.map(f=>`<option value="${f.id}">${f.name}</option>`).join('')}</select>
+    </div>
+    <div id="cmpOut"></div>
+  </section>`;
+
+  const selA = document.getElementById('cmpA'), selB = document.getElementById('cmpB');
+  if(prefill){ selA.value = prefill[0]||''; selB.value = prefill[1]||''; }
+
+  function draw(){
+    const a = byId(selA.value), b = byId(selB.value);
+    const out = document.getElementById('cmpOut');
+    if(!a || !b){ out.innerHTML = '<p style="text-align:center;color:var(--muted);margin-top:20px;">Choose two fighters above to compare.</p>'; return; }
+    const rows = [
+      ['Age', age(a.dob), age(b.dob), 'high'],
+      ['Height', a.height, b.height, 'text'],
+      ['Reach', a.reach, b.reach, 'text'],
+      ['Weight Class', a.weightClass, b.weightClass, 'text'],
+      ['Record', `${a.record.w}-${a.record.l}-${a.record.d}`, `${b.record.w}-${b.record.l}-${b.record.d}`, 'text'],
+      ['Wins', a.record.w, b.record.w, 'high'],
+      ['Losses', a.record.l, b.record.l, 'low'],
+      ['KO Wins', a.koWins, b.koWins, 'high'],
+      ['Submission Wins', a.subWins, b.subWins, 'high'],
+      ['Decision Wins', a.decWins, b.decWins, 'high'],
+      ['UFC Fights', a.ufcFights, b.ufcFights, 'high'],
+      ['Title Fights', a.titleFights, b.titleFights, 'high'],
+      ['Title Defenses', a.titleDefenses, b.titleDefenses, 'high'],
+      ['Ranking', a.ranking.current, b.ranking.current, 'text'],
+    ];
+    out.innerHTML = `
+    <div class="tableScroll" style="margin-top:10px;">
+      <table class="cmp">
+        <thead><tr><th></th><th><div class="cmpHead">${avatarHTMLsmall(a)}<div>${a.name}</div></div></th><th></th><th><div class="cmpHead">${avatarHTMLsmall(b)}<div>${b.name}</div></div></th></tr></thead>
+        <tbody>
+          ${rows.map(r=>{
+            const [label,va,vb,mode]=r;
+            let winA=false,winB=false;
+            if(mode==='high' && typeof va==='number'){ winA = va>vb; winB = vb>va; }
+            if(mode==='low' && typeof va==='number'){ winA = va<vb; winB = vb<va; }
+            return `<tr><td class="label">${label}</td><td class="val ${winA?'win':''}">${va}</td><td class="label" style="text-align:center;">vs</td><td class="val ${winB?'win':''}">${vb}</td></tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }
+  function avatarHTMLsmall(f){ return `<div style="width:64px;height:64px;border-radius:8px;overflow:hidden;">${photoBox(f,22)}</div>`; }
+  selA.addEventListener('change', draw); selB.addEventListener('change', draw);
+  draw();
+}
+
+// ============================================================================
+// ROUTER
+// ============================================================================
+function setActiveNav(route){
+  document.querySelectorAll('.navlinks a').forEach(a=>a.classList.toggle('active', a.dataset.route===route));
+}
+
+function router(){
+  const hash = location.hash || '#/';
+  const [path, query] = hash.replace(/^#/,'').split('?');
+  window.scrollTo(0,0);
+  document.getElementById('navlinks').classList.remove('open');
+
+  if(path==='/' || path===''){ renderHome(); setActiveNav('home'); return; }
+  if(path==='/fighters'){ renderFightersList(query); setActiveNav('fighters'); return; }
+  if(path.startsWith('/fighter/')){ renderProfile(path.split('/')[2]); setActiveNav('fighters'); return; }
+  if(path==='/countries'){ renderCountries(); setActiveNav('countries'); return; }
+  if(path==='/weightclasses'){ renderWeightClasses(); setActiveNav('weightclasses'); return; }
+  if(path==='/rankings'){ renderRankings(); setActiveNav('rankings'); return; }
+  if(path==='/news'){ renderNews(); setActiveNav('news'); return; }
+  if(path==='/compare'){
+    const params = parseQuery(query);
+    renderCompare(params.a || params.b ? [params.a,params.b] : null);
+    setActiveNav('compare'); return;
+  }
+  // fallback
+  renderHome(); setActiveNav('home');
+}
+window.addEventListener('hashchange', router);
+window.addEventListener('DOMContentLoaded', router);
+router();
+
+// ============================================================================
+// NAV / SEARCH CHROME
+// ============================================================================
+document.getElementById('burgerBtn').addEventListener('click', ()=>{
+  document.getElementById('navlinks').classList.toggle('open');
+});
+
+const overlay = document.getElementById('searchOverlay');
+const gInput = document.getElementById('globalSearchInput');
+function openSearch(){
+  overlay.classList.remove('hidden');
+  setTimeout(()=>gInput.focus(),30);
+}
+function closeSearch(){ overlay.classList.add('hidden'); gInput.value=''; document.getElementById('searchResults').innerHTML=''; }
+document.getElementById('navSearchBtn').addEventListener('click', openSearch);
+document.getElementById('searchClose').addEventListener('click', closeSearch);
+overlay.addEventListener('click', e=>{ if(e.target===overlay) closeSearch(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeSearch(); });
+
+gInput.addEventListener('input', ()=>{
+  const q = gInput.value.trim().toLowerCase();
+  const box = document.getElementById('searchResults');
+  if(!q){ box.innerHTML=''; return; }
+  const matches = FIGHTERS.filter(f=>f.name.toLowerCase().includes(q) || (f.nickname||'').toLowerCase().includes(q)).slice(0,8);
+  box.innerHTML = matches.length ? matches.map(f=>`<a class="searchRow" href="#/fighter/${f.id}">
+      <div style="width:36px;height:36px;border-radius:6px;overflow:hidden;">${photoBox(f,13)}</div>
+      <div><div style="font-weight:600;font-size:14px;">${f.name}</div><div style="color:var(--muted);font-size:12px;">${f.weightClass} • ${f.country}</div></div>
+    </a>`).join('') : `<div style="padding:16px;color:var(--muted);font-size:14px;">No fighters found for "${gInput.value}"</div>`;
+});
+gInput.addEventListener('keydown', e=>{
+  if(e.key==='Enter'){
+    const first = document.querySelector('#searchResults .searchRow');
+    if(first){ location.hash = first.getAttribute('href'); closeSearch(); }
+  }
+});
+document.querySelectorAll('#searchResults').forEach(el=>el.addEventListener('click', closeSearch));
+app.addEventListener('click', ()=>{}); // no-op, placeholder for delegation safety
+
+</script>
+</body>
+</html>
