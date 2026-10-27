@@ -1,9 +1,8 @@
 @echo off
-set "PATH=%LOCALAPPDATA%\Programs\MinGit\cmd;%PATH%"
-cd /d "c:\Users\yash sharma\Desktop\ufc maina"
+cd /d "%~dp0"
 echo ===================================================
 echo Pushing UFC Mania to GitHub...
 echo ===================================================
-git push -u origin main
+powershell -ExecutionPolicy Bypass -File "%~dp0git_push.ps1"
 echo ===================================================
 pause
