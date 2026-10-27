@@ -314,6 +314,420 @@ footer{border-top:1px solid var(--line);padding:40px 0;margin-top:40px;color:var
 footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;}
 .demoNote{background:rgba(201,162,39,.08);border:1px solid rgba(201,162,39,.35);color:#d8bd5f;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:28px;line-height:1.55;}
 
+/* ===== UFC SHOPPING & E-COMMERCE STYLES ===== */
+.navCartBtn{
+  position:relative;background:rgba(224,16,43,.12);border:1px solid rgba(224,16,43,.35);
+  color:var(--white);width:38px;height:38px;border-radius:8px;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:all .2s;text-decoration:none;
+}
+.navCartBtn:hover{
+  border-color:var(--red);background:rgba(224,16,43,.25);
+  box-shadow:0 0 14px rgba(224,16,43,.4);color:#fff;transform:translateY(-1px);
+}
+.cartBadge{
+  position:absolute;top:-6px;right:-6px;
+  background:linear-gradient(135deg,#ff1a2e,#e0102b);
+  color:#fff;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;
+  min-width:18px;height:18px;padding:0 5px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--bg);box-shadow:0 2px 6px rgba(0,0,0,.6);
+  transition:transform .2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.cartBadge.bounce{animation:badge-bounce .45s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+@keyframes badge-bounce{0%{transform:scale(1);}40%{transform:scale(1.55);}100%{transform:scale(1);}}
+
+/* Toast notification */
+.toastContainer{
+  position:fixed;bottom:24px;right:24px;z-index:9999;
+  display:flex;flex-direction:column;gap:10px;pointer-events:none;
+  max-width:min(420px, calc(100vw - 32px));
+}
+.toast{
+  pointer-events:auto;background:rgba(20,20,24,.95);backdrop-filter:blur(14px);
+  border:1px solid rgba(224,16,43,.4);border-left:4px solid var(--red);
+  border-radius:10px;padding:14px 16px;color:var(--white);
+  box-shadow:0 12px 36px rgba(0,0,0,.6), 0 0 15px rgba(224,16,43,.2);
+  display:flex;align-items:center;gap:12px;font-size:13.5px;
+  animation:toast-in .3s ease forwards;
+}
+.toast.toast-success{border-left-color:var(--win);}
+.toast.toast-info{border-left-color:var(--gold);}
+.toast.toast-error{border-left-color:var(--loss);}
+@keyframes toast-in{from{opacity:0;transform:translateY(20px) scale(.95);}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes toast-out{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(20px);}}
+.toast .toastIcon{font-size:18px;flex-shrink:0;}
+.toast .toastContent{flex:1;line-height:1.4;}
+.toast .toastBtn{
+  background:rgba(224,16,43,.2);border:1px solid var(--red);color:#fff;
+  padding:5px 10px;border-radius:6px;font-size:12px;font-weight:700;
+  text-transform:uppercase;cursor:pointer;flex-shrink:0;text-decoration:none;
+}
+.toast .toastBtn:hover{background:var(--red);}
+.toast .toastClose{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:0 4px;margin-left:4px;}
+.toast .toastClose:hover{color:#fff;}
+
+/* Store Banner & Notices */
+.storeNotice{
+  background:linear-gradient(90deg,rgba(224,16,43,.12),rgba(201,162,39,.12));
+  border:1px solid rgba(224,16,43,.3);border-radius:10px;padding:12px 18px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  margin-bottom:28px;flex-wrap:wrap;font-size:13px;color:#f0e6d2;
+}
+.storeNotice b{color:var(--gold);}
+.storeNotice .tagline{display:flex;align-items:center;gap:8px;}
+
+/* Shop Hero */
+.shopHero{
+  position:relative;padding:50px 0 40px;background:
+    radial-gradient(ellipse 60% 50% at 75% 10%, rgba(224,16,43,.18), transparent 60%),
+    radial-gradient(ellipse 40% 40% at 20% 90%, rgba(201,162,39,.08), transparent 50%),
+    var(--bg);
+  border-bottom:1px solid var(--line);
+}
+.shopHero h1{font-size:clamp(32px,5vw,52px);font-weight:700;}
+.shopHero h1 span{color:var(--red);}
+.shopHero p.shopLead{color:var(--muted);font-size:16px;max-width:640px;margin-top:10px;line-height:1.55;}
+
+/* Shop Controls / Filter Bar */
+.shopControls{
+  display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+  justify-content:space-between;margin:28px 0;background:var(--surface);
+  border:1px solid var(--line);border-radius:12px;padding:16px;
+}
+.shopSearchBox{position:relative;flex:1;min-width:240px;}
+.shopSearchBox input{
+  width:100%;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:8px;padding:10px 14px 10px 38px;color:var(--white);font-size:14px;outline:none;
+}
+.shopSearchBox input:focus{border-color:var(--red);}
+.shopSearchBox svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);}
+.shopFilterSelects{display:flex;gap:10px;flex-wrap:wrap;}
+.shopFilterSelects select{
+  background:var(--surface-2);border:1px solid var(--line);
+  border-radius:8px;padding:10px 14px;color:var(--white);font-size:13.5px;outline:none;cursor:pointer;
+}
+.shopCatBar{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:24px;}
+.shopCatPill{
+  padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;
+  background:var(--surface);border:1px solid var(--line);color:var(--muted);
+  cursor:pointer;white-space:nowrap;transition:all .18s;
+}
+.shopCatPill:hover{color:var(--white);border-color:var(--muted-2);}
+.shopCatPill.active{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 0 12px rgba(224,16,43,.4);}
+
+/* Product Grid */
+.productGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:22px;}
+.productCard{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;display:flex;flex-direction:column;transition:transform .2s,border-color .2s,box-shadow .2s;
+  position:relative;
+}
+.productCard:hover{
+  transform:translateY(-5px);border-color:rgba(224,16,43,.45);
+  box-shadow:0 10px 28px rgba(0,0,0,.6),0 0 16px rgba(224,16,43,.15);
+}
+.productImgWrap{
+  position:relative;height:240px;background:linear-gradient(145deg,#1f1f24,#0e0e11);
+  overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.productImgWrap img{
+  width:100%;height:100%;object-fit:cover;object-position:center;
+  transition:transform .35s ease;
+}
+.productCard:hover .productImgWrap img{transform:scale(1.06);}
+.productBadge{
+  position:absolute;top:10px;left:10px;padding:4px 9px;border-radius:6px;
+  font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+  z-index:2;background:rgba(10,10,12,.85);backdrop-filter:blur(6px);
+  border:1px solid var(--line);color:var(--white);
+}
+.productBadge.badge-gold{color:#ffe066;border-color:var(--gold);background:rgba(201,162,39,.2);}
+.productBadge.badge-red{color:#ff8080;border-color:var(--red);background:rgba(224,16,43,.25);}
+.productCardBody{padding:16px;display:flex;flex-direction:column;flex:1;}
+.productCatLabel{color:var(--red);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.productTitle{
+  font-size:17.5px;font-weight:600;margin:4px 0 6px;line-height:1.25;
+  cursor:pointer;transition:color .18s;
+}
+.productTitle:hover{color:var(--red);}
+.productSubtitle{color:var(--muted);font-size:12.5px;line-height:1.4;margin-bottom:10px;}
+.productRatingRow{display:flex;align-items:center;gap:6px;font-size:12.5px;margin-bottom:12px;}
+.stars{color:var(--gold);letter-spacing:1px;}
+.reviewCount{color:var(--muted);font-size:11.5px;}
+.productPriceRow{display:flex;align-items:baseline;gap:8px;margin-top:auto;margin-bottom:14px;}
+.priceCurrent{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;color:var(--white);}
+.priceOriginal{font-size:13px;color:var(--muted);text-decoration:line-through;}
+.priceDiscount{color:var(--win);font-size:11.5px;font-weight:700;}
+.productSpecsPills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px;}
+.specPill{font-size:11px;background:var(--surface-2);border:1px solid var(--line);padding:2px 7px;border-radius:4px;color:var(--muted);}
+.productCardActions{display:grid;grid-template-columns:1fr auto;gap:8px;}
+.btnAddToCart{
+  background:linear-gradient(135deg,#ff1a2e,#e0102b);color:#fff;border:none;
+  border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.04em;font-family:'Oswald',sans-serif;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  gap:6px;transition:all .18s;box-shadow:0 3px 12px rgba(224,16,43,.3);
+}
+.btnAddToCart:hover{filter:brightness(1.15);box-shadow:0 4px 18px rgba(224,16,43,.5);}
+.btnAddToCart:active{transform:scale(.97);}
+.btnQuickView{
+  background:var(--surface-2);border:1px solid var(--line);color:var(--white);
+  border-radius:8px;padding:10px 12px;font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .18s;display:inline-flex;align-items:center;justify-content:center;
+}
+.btnQuickView:hover{border-color:var(--muted);background:rgba(255,255,255,.08);}
+
+/* Product Details Modal */
+.productModal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.productModalOverlay{position:absolute;inset:0;background:rgba(6,6,8,.88);backdrop-filter:blur(8px);}
+.productModalContent{
+  position:relative;z-index:2;background:var(--surface);border:1px solid rgba(224,16,43,.35);
+  border-radius:14px;max-width:880px;width:100%;max-height:90vh;overflow-y:auto;
+  box-shadow:0 24px 70px rgba(0,0,0,.9),0 0 30px rgba(224,16,43,.2);padding:28px;
+}
+.productModalClose{
+  position:absolute;top:16px;right:18px;background:none;border:none;
+  color:var(--muted);font-size:28px;line-height:1;cursor:pointer;transition:color .18s;z-index:5;
+}
+.productModalClose:hover{color:#fff;}
+.modalProductGrid{display:grid;grid-template-columns:1fr 1.15fr;gap:30px;}
+@media(max-width:768px){.modalProductGrid{grid-template-columns:1fr;}}
+.modalImgWrap{
+  position:relative;border-radius:10px;overflow:hidden;background:#18181c;
+  height:360px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+}
+.modalImgWrap img{width:100%;height:100%;object-fit:cover;}
+.modalDetailsCol{display:flex;flex-direction:column;}
+.modalDetailsCol .productTitle{font-size:26px;}
+.selectorLabel{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px;}
+.sizeSelectorRow,.colorSelectorRow{display:flex;gap:8px;flex-wrap:wrap;}
+.sizeBtn{
+  padding:7px 14px;border-radius:6px;font-size:12.5px;font-weight:600;
+  background:var(--surface-2);border:1px solid var(--line);color:var(--white);cursor:pointer;transition:all .15s;
+}
+.sizeBtn:hover{border-color:var(--muted);}
+.sizeBtn.active{background:var(--red);border-color:var(--red);color:#fff;}
+.colorSwatch{
+  width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;
+  transition:all .15s;position:relative;
+}
+.colorSwatch.active{border-color:#fff;box-shadow:0 0 10px rgba(255,255,255,.5);transform:scale(1.15);}
+.qtyStepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);overflow:hidden;}
+.qtyBtn{
+  background:none;border:none;color:var(--white);width:36px;height:36px;
+  font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.qtyBtn:hover{background:rgba(255,255,255,.08);}
+.qtyInput{
+  width:42px;text-align:center;background:none;border:none;color:var(--white);
+  font-weight:700;font-size:14px;font-family:'Oswald',sans-serif;
+}
+.modalFeaturesList{margin:16px 0;padding-left:18px;color:var(--muted);font-size:13.5px;line-height:1.6;}
+.modalFeaturesList li{margin-bottom:4px;}
+.modalActionRow{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;}
+.modalActionRow .btnAddToCart{flex:1;padding:13px 20px;}
+.btnBuyNow{
+  background:linear-gradient(135deg,#c9a227,#e6be3e);color:#111;border:none;
+  border-radius:8px;padding:13px 22px;font-size:13.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.04em;font-family:'Oswald',sans-serif;
+  cursor:pointer;flex:1;transition:filter .18s;
+}
+.btnBuyNow:hover{filter:brightness(1.15);}
+
+/* Customer Reviews in Modal */
+.reviewsSummaryBox{
+  background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+  padding:14px 16px;margin-top:20px;display:flex;align-items:center;gap:16px;
+}
+.reviewsSummaryScore{font-family:'Oswald';font-size:36px;font-weight:700;color:var(--gold);}
+.customerReviewItem{border-top:1px solid var(--line);padding:12px 0;}
+.customerReviewHeader{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;}
+.customerReviewAuthor{font-weight:600;color:var(--white);}
+.customerReviewDate{color:var(--muted-2);}
+.customerReviewComment{color:var(--muted);font-size:13px;line-height:1.45;}
+
+/* ===== SHOPPING CART PAGE ===== */
+.cartLayout{display:grid;grid-template-columns:1fr 380px;gap:30px;align-items:start;}
+@media(max-width:960px){.cartLayout{grid-template-columns:1fr;}}
+.cartHeader{
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;
+  border-bottom:1px solid var(--line);padding-bottom:14px;
+}
+.freeShippingProgress{
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:14px 18px;margin-bottom:22px;font-size:13.5px;
+}
+.freeShippingProgress .progressBar{
+  height:7px;background:var(--surface-2);border-radius:4px;overflow:hidden;margin-top:8px;
+}
+.freeShippingProgress .progressFill{
+  height:100%;background:linear-gradient(90deg,var(--gold),#2f9e5b);
+  border-radius:4px;transition:width .4s ease;
+}
+.cartItemRow{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:16px;display:grid;grid-template-columns:90px 1fr auto;gap:18px;
+  align-items:center;margin-bottom:14px;transition:border-color .15s;
+}
+.cartItemRow:hover{border-color:var(--muted-2);}
+.cartItemThumb{width:90px;height:90px;border-radius:8px;overflow:hidden;background:#18181c;flex-shrink:0;}
+.cartItemThumb img{width:100%;height:100%;object-fit:cover;}
+.cartItemDetails h4{font-size:16px;margin-bottom:4px;}
+.cartItemMeta{display:flex;gap:8px;color:var(--muted);font-size:12.5px;margin-bottom:8px;}
+.cartItemMeta span{background:var(--surface-2);padding:2px 6px;border-radius:4px;}
+.cartItemUnitPrice{color:var(--muted);font-size:13px;}
+.cartItemSubtotal{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:var(--white);text-align:right;}
+.cartItemRemoveBtn{
+  background:none;border:none;color:var(--muted-2);cursor:pointer;padding:6px;
+  border-radius:6px;transition:all .15s;display:inline-flex;align-items:center;
+}
+.cartItemRemoveBtn:hover{color:var(--loss);background:rgba(201,55,44,.1);}
+@media(max-width:600px){
+  .cartItemRow{grid-template-columns:70px 1fr;gap:12px;}
+  .cartItemThumb{width:70px;height:70px;}
+  .cartItemActions{grid-column:1 / -1;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:10px;}
+}
+
+/* Cart Summary Card */
+.cartSummaryCard{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:22px;position:sticky;top:84px;
+}
+.cartSummaryCard h3{font-size:20px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:10px;}
+.summaryLine{display:flex;justify-content:space-between;font-size:14px;margin-bottom:12px;color:var(--muted);}
+.summaryLine.total{
+  border-top:1px solid var(--line);padding-top:14px;margin-top:14px;
+  font-size:18px;font-weight:700;color:var(--white);
+}
+.summaryLine.total .amount{font-family:'Oswald',sans-serif;font-size:26px;color:var(--red);}
+.couponBox{display:flex;gap:8px;margin:18px 0;}
+.couponBox input{
+  flex:1;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:8px;padding:9px 12px;color:var(--white);font-size:13px;text-transform:uppercase;
+}
+.couponBox button{
+  background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+  padding:9px 14px;color:var(--white);font-size:12.5px;font-weight:700;cursor:pointer;
+}
+.couponBox button:hover{border-color:var(--gold);color:var(--gold);}
+.couponAppliedBadge{
+  background:rgba(47,158,91,.15);border:1px solid var(--win);color:var(--win);
+  border-radius:6px;padding:6px 10px;font-size:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;
+}
+.btnCheckout{
+  width:100%;background:linear-gradient(135deg,#ff1a2e,#e0102b,#b80d22);
+  color:#fff;border:none;border-radius:10px;padding:15px;font-size:15px;
+  font-weight:700;font-family:'Oswald',sans-serif;letter-spacing:.05em;
+  text-transform:uppercase;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:8px;transition:all .18s;margin-top:16px;
+  box-shadow:0 4px 18px rgba(224,16,43,.4);
+}
+.btnCheckout:hover{filter:brightness(1.12);box-shadow:0 6px 24px rgba(224,16,43,.6);}
+.trustBadges{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;
+  padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);
+}
+.trustBadgeItem{display:flex;align-items:center;gap:6px;}
+
+/* Empty Cart State */
+.emptyCartState{
+  text-align:center;padding:70px 20px;background:var(--surface);
+  border:1px solid var(--line);border-radius:14px;max-width:640px;margin:20px auto;
+}
+.emptyCartIcon{width:80px;height:80px;margin:0 auto 18px;color:var(--muted-2);}
+.emptyCartState h3{font-size:26px;margin-bottom:8px;}
+.emptyCartState p{color:var(--muted);font-size:15px;max-width:420px;margin:0 auto 24px;line-height:1.5;}
+
+/* ===== CHECKOUT PAGE ===== */
+.checkoutProgress{
+  display:flex;justify-content:center;align-items:center;gap:18px;
+  margin-bottom:34px;flex-wrap:wrap;
+}
+.checkoutStepItem{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);}
+.checkoutStepItem.active{color:var(--white);font-weight:700;}
+.checkoutStepItem.done{color:var(--win);}
+.stepCircle{
+  width:26px;height:26px;border-radius:50%;background:var(--surface-2);
+  border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;
+}
+.checkoutStepItem.active .stepCircle{background:var(--red);border-color:var(--red);color:#fff;}
+.checkoutStepItem.done .stepCircle{background:var(--win);border-color:var(--win);color:#fff;}
+.stepDivider{width:30px;height:1px;background:var(--line);}
+
+.checkoutGrid{display:grid;grid-template-columns:1.35fr 1fr;gap:30px;align-items:start;}
+@media(max-width:900px){.checkoutGrid{grid-template-columns:1fr;}}
+
+.checkoutCard{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:24px;margin-bottom:20px;
+}
+.checkoutCardTitle{
+  font-size:18px;font-weight:700;margin-bottom:18px;display:flex;
+  align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px;
+}
+.formRow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+@media(max-width:600px){.formRow{grid-template-columns:1fr;}}
+.formGroup{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.formGroup.full{grid-column:1 / -1;}
+.formLabel{font-size:12.5px;font-weight:600;color:var(--muted);}
+.formLabel span.req{color:var(--red);}
+.formInput,.formSelect{
+  background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+  padding:11px 14px;color:var(--white);font-size:14px;outline:none;transition:border-color .15s;
+}
+.formInput:focus,.formSelect:focus{border-color:var(--red);box-shadow:0 0 10px rgba(224,16,43,.2);}
+.formInput.error,.formSelect.error{border-color:var(--loss);}
+.fieldError{color:var(--loss);font-size:11.5px;margin-top:2px;display:none;}
+.fieldError.show{display:block;}
+
+/* Payment Method Options */
+.paymentOptionRow{
+  border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px;
+  cursor:pointer;transition:all .15s;background:var(--surface-2);
+}
+.paymentOptionRow:hover{border-color:var(--muted-2);}
+.paymentOptionRow.selected{border-color:var(--red);background:rgba(224,16,43,.08);}
+.paymentOptionHeader{display:flex;align-items:center;gap:12px;}
+.paymentOptionHeader input[type=radio]{accent-color:var(--red);width:16px;height:16px;}
+.paymentOptionBody{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);}
+
+/* Order Confirmation Page */
+.confirmationCard{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:36px;max-width:820px;margin:20px auto;box-shadow:0 14px 40px rgba(0,0,0,.7);
+}
+.successCheckWrap{
+  width:68px;height:68px;border-radius:50%;background:rgba(47,158,91,.18);
+  border:2px solid var(--win);color:var(--win);display:flex;align-items:center;
+  justify-content:center;margin:0 auto 18px;font-size:32px;
+}
+.orderIdPill{
+  display:inline-block;padding:6px 16px;background:var(--surface-2);
+  border:1px solid rgba(201,162,39,.4);color:var(--gold);font-family:'Oswald',sans-serif;
+  font-size:16px;font-weight:700;border-radius:20px;letter-spacing:.05em;margin:8px 0 18px;
+}
+.orderDetailGrid{
+  display:grid;grid-template-columns:1fr 1fr;gap:20px;text-align:left;
+  margin:24px 0;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:18px;
+}
+@media(max-width:600px){.orderDetailGrid{grid-template-columns:1fr;}}
+.orderSummaryTable{width:100%;border-collapse:collapse;margin:20px 0;font-size:13.5px;}
+.orderSummaryTable th{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px;text-transform:uppercase;}
+.orderSummaryTable td{padding:12px;border-bottom:1px solid var(--line);}
+
+/* Print invoice rules */
+@media print{
+  #nav,#searchOverlay,footer,.toastContainer,.btnAddToCart,.btnCheckout,.btnrow,button:not(.btnInvoicePrint){display:none !important;}
+  body{background:#fff !important;color:#000 !important;}
+  .confirmationCard{border:1px solid #ddd;box-shadow:none;background:#fff;color:#000;padding:0;}
+  .orderDetailGrid,.orderSummaryTable{background:#f9f9f9;color:#000;border-color:#ccc;}
+  .orderSummaryTable td,.orderSummaryTable th{color:#000;border-color:#ddd;}
+  .orderIdPill{color:#000;border-color:#000;}
+  .storeNotice{display:none;}
+}
+
 @media(max-width:640px){
   .wrap{padding:0 16px;}
   #hero{padding:64px 0 56px;}
@@ -336,11 +750,20 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
       <a href="#/countries" data-route="countries">Countries</a>
       <a href="#/compare" data-route="compare">Compare</a>
       <a href="#/news" data-route="news">News</a>
+      <a href="#/shop" data-route="shop">Shop</a>
     </div>
     <div class="navtools">
       <button id="navSearchBtn" title="Search fighters" aria-label="Search fighters">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
+      <a href="#/cart" id="navCartBtn" class="navCartBtn" title="Shopping Cart" aria-label="Shopping Cart">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        <span class="cartBadge" id="navCartBadge">0</span>
+      </a>
       <button class="burger" id="burgerBtn" aria-label="Menu">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
@@ -361,9 +784,16 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
 <footer>
   <div class="wrap">
     <span>UFC Mania — demo build. Not affiliated with the UFC or Zuffa LLC.</span>
-    <span>Sample dataset · Last updated January 2026</span>
+    <span>Sample dataset &amp; Demo UFC Store · Last updated January 2026</span>
   </div>
 </footer>
+
+<div id="productModal" class="productModal hidden" role="dialog" aria-modal="true" aria-label="Product Details">
+  <div class="productModalOverlay" id="productModalOverlay"></div>
+  <div class="productModalContent" id="productModalContent"></div>
+</div>
+
+<div id="toastContainer" class="toastContainer" aria-live="polite"></div>
 
 <script>
 // ============================================================================
@@ -1004,6 +1434,751 @@ const FIGHTERS = [
 // ============================================================================
 const app = document.getElementById('app');
 
+// ============================================================================
+// UFC E-COMMERCE & SHOPPING SYSTEM
+// ============================================================================
+
+const INDIAN_STATES = [
+  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
+  "Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand",
+  "Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur",
+  "Meghalaya","Mizoram","Nagaland","Odisha","Punjab",
+  "Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura",
+  "Uttar Pradesh","Uttarakhand","West Bengal",
+  "Andaman and Nicobar Islands","Chandigarh","Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi (NCT)","Jammu and Kashmir","Ladakh","Lakshadweep","Puducherry"
+];
+
+const UFC_PRODUCTS = [
+  {
+    id: "ufc-championship-belt",
+    name: "UFC Undisputed Legacy Championship Replica Belt",
+    subtitle: "Full-Scale 50\" Official Heavyweight Belt • 24k Gold Electroplated Zinc Alloy",
+    category: "collectibles",
+    categoryLabel: "Belts & Collectibles",
+    price: 24999,
+    originalPrice: 34999,
+    rating: 4.9,
+    reviewsCount: 384,
+    badge: "CHAMPION GRADE",
+    image: "images/products/ufc-championship-belt.jpg",
+    inStock: true,
+    stockCount: 7,
+    sizes: ["Standard 50\" (Fits up to 46\" waist)"],
+    colors: [{ name: "Gold & Black Leather", code: "#c9a227", active: true }],
+    description: "The crown jewel of mixed martial arts. Handcrafted full-scale 50-inch championship belt featuring heavy cast 24k gold-plated plates, handset ruby-red synthetic gems, genuine hand-stitched leather strap, and custom engraved UFC side plates. Fits waist sizes up to 46 inches.",
+    features: [
+      "Full-scale 50\" length, 8.5 lbs true championship heft",
+      "High-polished 24K gold-plated zinc alloy main & side plates",
+      "Hand-stitched genuine leather strap with embossed Octagon motifs",
+      "Includes deluxe embroidered velvet UFC presentation carrying bag",
+      "Serialized authenticity hologram plate with individual registration"
+    ],
+    reviews: [
+      { author: "Vikram R.", rating: 5, date: "2026-01-14", comment: "The quality is unreal. Heavy, detailed, and looks identical to what Khabib and Jon Jones held." },
+      { author: "Arjun M.", rating: 5, date: "2026-01-08", comment: "Centerpiece of my MMA room. Delivery was seamless and packaging was pristine." },
+      { author: "Karan S.", rating: 5, date: "2025-12-22", comment: "Absolute masterpiece. You feel like a champion just holding it." }
+    ]
+  },
+  {
+    id: "ufc-fight-gloves",
+    name: "Official UFC Pro Leather Fight Gloves (4 oz)",
+    subtitle: "Competition Grade Open-Finger Octagon Fight Gloves",
+    category: "equipment",
+    categoryLabel: "MMA & Fight Gear",
+    price: 4499,
+    originalPrice: 5999,
+    rating: 4.9,
+    reviewsCount: 520,
+    badge: "OFFICIAL FIGHT GEAR",
+    image: "images/products/ufc-fight-gloves.jpg",
+    inStock: true,
+    stockCount: 24,
+    sizes: ["Small", "Medium", "Large", "XL"],
+    colors: [
+      { name: "Octagon Black & Red", code: "#e0102b", active: true },
+      { name: "Stealth All-Black", code: "#1a1a1a", active: false },
+      { name: "Champion Gold & Black", code: "#c9a227", active: false }
+    ],
+    description: "Step into the cage with the exact gloves worn on UFC Fight Nights. Engineered from premium full-grain cowhide leather with multi-layer high-density EVA foam contouring over the knuckles for maximum protection without sacrificing grappling dexterity.",
+    features: [
+      "Official 4-ounce competition specification",
+      "Pre-curved anatomical finger loops reduce hand fatigue",
+      "Rigid hook-and-loop wrap-around wrist support for stabilization",
+      "Moisture-wicking antimicrobial comfort lining",
+      "Debossed UFC & Octagon competition branding"
+    ],
+    reviews: [
+      { author: "Rohan D.", rating: 5, date: "2026-01-18", comment: "Best MMA gloves I have used. Leather is supple yet gives supreme wrist lockdown." },
+      { author: "Sahil K.", rating: 5, date: "2026-01-02", comment: "Perfect for MMA sparring and pad work. The padding density is championship level." }
+    ]
+  },
+  {
+    id: "ufc-walkout-hoodie",
+    name: "UFC Octagon Walkout Full-Zip Performance Hoodie",
+    subtitle: "Authentic Fighter Walkout Jacket with Gold Octagon Crest",
+    category: "apparel",
+    categoryLabel: "Apparel & Hoodies",
+    price: 3899,
+    originalPrice: 4999,
+    rating: 4.8,
+    reviewsCount: 412,
+    badge: "BESTSELLER",
+    image: "images/products/ufc-walkout-hoodie.jpg",
+    inStock: true,
+    stockCount: 35,
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    colors: [
+      { name: "Champion Black & Gold", code: "#c9a227", active: true },
+      { name: "Octagon Crimson Red", code: "#e0102b", active: false },
+      { name: "Combat Stealth Grey", code: "#4a4a52", active: false }
+    ],
+    description: "The signature walkout hoodie worn by championship fighters making their entrance to the Octagon. Built from heavyweight brushed poly-cotton fleece with water-resistant shoulder overlays, heat-sealed bonded zip pockets, and ergonomic raglan sleeves.",
+    features: [
+      "Athletic tailored silhouette with scuba drawcord hood",
+      "Embroidered 3D gold UFC Octagon chest badge",
+      "High-stretch ribbed storm cuffs and hem",
+      "Concealed media zip pocket inside left chest",
+      "Brushed micro-fleece interior for superior thermal warmth"
+    ],
+    reviews: [
+      { author: "Aakash T.", rating: 5, date: "2026-01-10", comment: "Fabric is ultra-comfortable, fit is athletic, and the gold badge looks premium." }
+    ]
+  },
+  {
+    id: "ufc-graphic-tee",
+    name: "UFC Classic Octagon Combat Vintage Heavyweight T-Shirt",
+    subtitle: "100% Pre-Shrunk Carded Cotton • Distressed Graphic Print",
+    category: "apparel",
+    categoryLabel: "Apparel & Hoodies",
+    price: 1499,
+    originalPrice: 1999,
+    rating: 4.7,
+    reviewsCount: 340,
+    badge: "FAN FAVORITE",
+    image: "images/products/ufc-graphic-tee.jpg",
+    inStock: true,
+    stockCount: 60,
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    colors: [
+      { name: "Washed Vintage Black", code: "#222226", active: true },
+      { name: "Classic UFC Red", code: "#e0102b", active: false },
+      { name: "Distressed White", code: "#dedede", active: false }
+    ],
+    description: "Timeless MMA heritage aesthetic. Crafted from premium 240 GSM heavyweight combed cotton with vintage wash treatment. Features high-definition screen printed vintage Octagon Combat artwork and a durable double-needle ribbed collar.",
+    features: [
+      "240 GSM heavy combed cotton, soft washed finish",
+      "Drop-shoulder relaxed combat boxy fit",
+      "Screen printed distressed graphics that will not crack or peel",
+      "Reinforced shoulder-to-shoulder interior neck tape",
+      "Official UFC woven hem label"
+    ],
+    reviews: [
+      { author: "Dev P.", rating: 5, date: "2026-01-05", comment: "Heavyweight tee feels like pure quality. Wash hasn't faded the print at all." }
+    ]
+  },
+  {
+    id: "ufc-snapback-cap",
+    name: "UFC Championship 3D Embroidered Snapback Cap",
+    subtitle: "Structured 6-Panel Wool Blend with Metallic Gold Emblem",
+    category: "accessories",
+    categoryLabel: "Caps & Accessories",
+    price: 1299,
+    originalPrice: 1799,
+    rating: 4.8,
+    reviewsCount: 295,
+    badge: "TOP RATED",
+    image: "images/products/ufc-snapback-cap.jpg",
+    inStock: true,
+    stockCount: 42,
+    sizes: ["One Size Fits All (Adjustable 54-62cm)"],
+    colors: [
+      { name: "Stealth Black & Gold", code: "#c9a227", active: true },
+      { name: "All-Black Murdered Out", code: "#111111", active: false },
+      { name: "Crimson Red / Black", code: "#e0102b", active: false }
+    ],
+    description: "Top off your fight kit with this premium structured 6-panel snapback. Features high-density 3D metallic gold thread UFC embroidery, custom contrast red underbill, and a breathable anti-sweat moisture wicking band.",
+    features: [
+      "Premium wool-acrylic structural blend",
+      "High-relief metallic gold 3D embroidery",
+      "Contrast crimson red under-visor reduces glare",
+      "7-position heavy-duty snapback closure",
+      "Embroidered eyelets for ventilation"
+    ],
+    reviews: [
+      { author: "Gaurav N.", rating: 5, date: "2025-12-30", comment: "Crown height and embroidery are crisp. Gets compliments every gym session." }
+    ]
+  },
+  {
+    id: "ufc-fight-poster-300",
+    name: "UFC 300 Historic Fight Night Framed Collector's Poster",
+    subtitle: "Gallery Framed 24x36\" Archival Commemorative Print",
+    category: "collectibles",
+    categoryLabel: "Belts & Collectibles",
+    price: 2199,
+    originalPrice: 2999,
+    rating: 4.9,
+    reviewsCount: 186,
+    badge: "LIMITED EDITION",
+    image: "images/products/ufc-fight-poster.svg",
+    inStock: true,
+    stockCount: 15,
+    sizes: ["18x24\" Framed", "24x36\" Gallery Deluxe"],
+    colors: [{ name: "Sleek Matte Black Frame", code: "#1a1a1e", active: true }],
+    description: "Commemorate the greatest fight card in combat sports history. High-gamut giclée archival print on 300 GSM cotton rag paper, mounted inside a handcrafted matte black aluminum gallery frame with UV-protective museum-grade acrylic glass.",
+    features: [
+      "Museum-grade 300 GSM acid-free fine art paper",
+      "Pre-installed heavy gauge hanging wire ready to display",
+      "Official UFC holographic stamp with serial number",
+      "Includes full fight card summary plaque on lower mat",
+      "Limited numbered release"
+    ],
+    reviews: [
+      { author: "Manish B.", rating: 5, date: "2026-01-09", comment: "Framing is rock solid and glass doesn't glare. UFC 300 was unforgettable." }
+    ]
+  },
+  {
+    id: "ufc-training-shin-guards",
+    name: "UFC Contender MMA Impact Gel Shin Guards",
+    subtitle: "Dual-Strap Ergonomic Shin & Instep Kick Defense Pads",
+    category: "equipment",
+    categoryLabel: "MMA & Fight Gear",
+    price: 3299,
+    originalPrice: 4199,
+    rating: 4.8,
+    reviewsCount: 215,
+    badge: "PRO SPARRING",
+    image: "images/products/ufc-shin-guards.svg",
+    inStock: true,
+    stockCount: 19,
+    sizes: ["Medium", "Large", "X-Large"],
+    colors: [
+      { name: "Combat Black & Red", code: "#e0102b", active: true },
+      { name: "Stealth All-Black", code: "#1f1f24", active: false }
+    ],
+    description: "Designed for grueling kickboxing and MMA sparring sessions. Dual layer shock-absorbing gel and multi-density compressed foam disperse impact from heavy kicks and shin checks while keeping the guard locked in position without spinning.",
+    features: [
+      "Injected shock-absorbing gel protection over tibia ridge",
+      "Dual heavy-duty hook-and-loop rear straps with D-ring loops",
+      "Under-foot and Achilles elastic bands prevent twisting",
+      "Ultra-durable synthetic leather with anti-tear stitching",
+      "Moisture-resistant inner lining prevents odor buildup"
+    ],
+    reviews: [
+      { author: "Pranav J.", rating: 5, date: "2026-01-03", comment: "Took full power leg kicks with zero bone bruising. High recommended." }
+    ]
+  },
+  {
+    id: "ufc-steel-water-bottle",
+    name: "UFC Octagon 1000ml Vacuum Insulated Sports Bottle",
+    subtitle: "Triple-Insulated 18/8 Stainless Steel with Chug Spout",
+    category: "accessories",
+    categoryLabel: "Caps & Accessories",
+    price: 1199,
+    originalPrice: 1599,
+    rating: 4.7,
+    reviewsCount: 278,
+    badge: "GYM ESSENTIAL",
+    image: "images/products/ufc-steel-bottle.svg",
+    inStock: true,
+    stockCount: 50,
+    sizes: ["1000 ml (34 oz)"],
+    colors: [
+      { name: "Matte Black Powdercoat", code: "#18181c", active: true },
+      { name: "Octagon Crimson Red", code: "#e0102b", active: false },
+      { name: "Brushed Steel", code: "#888890", active: false }
+    ],
+    description: "Engineered for intense training sessions in the gym. Double-wall copper vacuum insulation keeps your fluids ice-cold for up to 24 hours. Features a leak-proof flip-top spout, wide-mouth ice opening, and a silicone protective bumper base.",
+    features: [
+      "1000ml (34oz) capacity with volume measurement marks",
+      "24 hours icy cold, 12 hours steaming hot",
+      "100% BPA and toxin free 18/8 kitchen grade steel",
+      "Textured matte powder coat provides non-slip grip with sweaty hands",
+      "Ergonomic wide carry loop handle"
+    ],
+    reviews: [
+      { author: "Aditya S.", rating: 5, date: "2025-12-19", comment: "Still had ice cubes after 18 hours in the gym bag. Tough build." }
+    ]
+  },
+  {
+    id: "ufc-pro-gel-mouthguard",
+    name: "UFC Dual-Density Gel Combat Mouthguard with Case",
+    subtitle: "Custom Boil & Bite Jaw Protection with Storage Case",
+    category: "accessories",
+    categoryLabel: "Caps & Accessories",
+    price: 799,
+    originalPrice: 1099,
+    rating: 4.6,
+    reviewsCount: 310,
+    badge: "SAFETY CERTIFIED",
+    image: "images/products/ufc-gel-mouthguard.svg",
+    inStock: true,
+    stockCount: 75,
+    sizes: ["Senior (Age 12+)"],
+    colors: [
+      { name: "Red & Black Dual Gel", code: "#e0102b", active: true },
+      { name: "White & Gold Champion", code: "#c9a227", active: false },
+      { name: "Stealth Black", code: "#111111", active: false }
+    ],
+    description: "Protect your smile during hard sparring and competition. Dual-density design features a rigid outer chassis to deflect concussive forces and a pliable inner gel channel that molds tightly around your teeth in minutes with simple boiling water.",
+    features: [
+      "Multi-layer impact dispersion architecture",
+      "Boil & bite technology for custom moldable fit",
+      "Low profile breathing channels facilitate oxygen intake",
+      "Built-in jaw-stabilizing molar pads reduce concussion risk",
+      "Includes ventilated antimicrobial travel case"
+    ],
+    reviews: [
+      { author: "Tarun V.", rating: 4, date: "2026-01-11", comment: "Molded easily on the first try. Easy to breathe and talk with it in." }
+    ]
+  },
+  {
+    id: "ufc-combat-shorts",
+    name: "UFC Fight Night Pro Octagon Combat Shorts",
+    subtitle: "4-Way Stretch Lightweight Sublimated Competition Shorts",
+    category: "apparel",
+    categoryLabel: "Apparel & Hoodies",
+    price: 2799,
+    originalPrice: 3499,
+    rating: 4.8,
+    reviewsCount: 260,
+    badge: "CHAMPION EDITION",
+    image: "images/products/ufc-combat-shorts.svg",
+    inStock: true,
+    stockCount: 28,
+    sizes: ["30\"", "32\"", "34\"", "36\"", "38\""],
+    colors: [
+      { name: "Champion Black & Gold", code: "#c9a227", active: true },
+      { name: "Octagon Red & Black", code: "#e0102b", active: false }
+    ],
+    description: "Built specifically to the demands of mixed martial arts. Features ultra-lightweight 4-way stretch micro-polyester with deep lateral side splits for unrestricted high kicks and grappling mobility. Equipped with dual internal drawstrings and an anti-slip silicone waist.",
+    features: [
+      "4-way multidirectional stretch fabric (92% poly, 8% spandex)",
+      "Reinforced thermal bonded lateral leg slits",
+      "Internal hook-and-loop closure plus drawstring lock",
+      "Crotch elastic mesh insert for air circulation",
+      "Fully sublimated graphics never fade or crack"
+    ],
+    reviews: [
+      { author: "Nikhil G.", rating: 5, date: "2026-01-07", comment: "No restriction on high kicks and doesn't slide during wrestling drills." }
+    ]
+  },
+  {
+    id: "ufc-heavy-bag",
+    name: "UFC 70lb Pro Heavy Vinyl Striking Punching Bag",
+    subtitle: "Heavy-Duty Reinforced Commercial Grade Training Bag",
+    category: "equipment",
+    categoryLabel: "MMA & Fight Gear",
+    price: 6499,
+    originalPrice: 8499,
+    rating: 4.9,
+    reviewsCount: 145,
+    badge: "PRO GYM GRADE",
+    image: "images/products/ufc-heavy-bag.svg",
+    inStock: true,
+    stockCount: 10,
+    sizes: ["70 lbs (46\" Height x 14\" Dia)"],
+    colors: [{ name: "UFC Red & Black Pro", code: "#e0102b", active: true }],
+    description: "Turn any space into a fight gym. Built with tear-proof reinforced vinyl shell and filled with specially blended sanitized synthetic and natural fibers surrounded by a 2-inch foam liner to protect hands and wrists from harsh impact spikes.",
+    features: [
+      "Commercial grade 70-pound filled bag",
+      "Reinforced nylon web hanging straps with steel swivel chain",
+      "Target landing zones printed for striking accuracy drills",
+      "Bottom tie-down D-ring to limit excessive bag swing",
+      "Durable double-stitched seams with heavy gauge thread"
+    ],
+    reviews: [
+      { author: "Harsh B.", rating: 5, date: "2025-12-15", comment: "Solid resistance without stone-hard spots. Essential for conditioning." }
+    ]
+  }
+];
+
+// ---------- Shopping Cart & Store Helpers ----------
+function fmtINR(val){
+  return '₹' + Number(val || 0).toLocaleString('en-IN');
+}
+
+function renderStarsHTML(r){
+  const full = Math.floor(r);
+  const half = (r - full) >= 0.5 ? 1 : 0;
+  let str = '★'.repeat(full);
+  if(half) str += '½';
+  while(str.length < 5) str += '☆';
+  return str;
+}
+
+function getProductById(id){
+  return UFC_PRODUCTS.find(p => p.id === id);
+}
+
+function getCart(){
+  try{
+    const stored = localStorage.getItem('ufc_mania_cart');
+    return stored ? JSON.parse(stored) : [];
+  }catch(e){
+    console.error('Error reading cart from localStorage', e);
+    return [];
+  }
+}
+
+function saveCart(cart){
+  try{
+    localStorage.setItem('ufc_mania_cart', JSON.stringify(cart));
+    updateNavCartBadge();
+  }catch(e){
+    console.error('Error saving cart to localStorage', e);
+  }
+}
+
+function updateNavCartBadge(){
+  const cart = getCart();
+  const count = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  const badge = document.getElementById('navCartBadge');
+  if(badge){
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'flex' : 'none';
+  }
+}
+
+function addToCart(productId, size, color, qty = 1){
+  const product = getProductById(productId);
+  if(!product) return;
+  const s = size || (product.sizes && product.sizes[0]) || 'Standard';
+  const c = color || (product.colors && product.colors[0] && product.colors[0].name) || 'Default';
+  const cart = getCart();
+  const key = `${productId}__${s}__${c}`;
+  const existing = cart.find(item => item.key === key);
+
+  if(existing){
+    existing.quantity = (existing.quantity || 1) + qty;
+  } else {
+    cart.push({
+      key,
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      image: product.image,
+      size: s,
+      color: c,
+      quantity: qty
+    });
+  }
+
+  saveCart(cart);
+
+  const badge = document.getElementById('navCartBadge');
+  if(badge){
+    badge.classList.remove('bounce');
+    void badge.offsetWidth;
+    badge.classList.add('bounce');
+  }
+
+  showToast(`Added to cart: ${product.name} (${s})`, 'success', 'View Cart', '#/cart');
+}
+
+function removeFromCart(key){
+  let cart = getCart();
+  const item = cart.find(i => i.key === key);
+  cart = cart.filter(i => i.key !== key);
+  saveCart(cart);
+  showToast(item ? `Removed ${item.name} from cart` : 'Item removed', 'info');
+  if(location.hash === '#/cart'){
+    renderCart();
+  }
+}
+
+function updateCartQty(key, delta){
+  const cart = getCart();
+  const item = cart.find(i => i.key === key);
+  if(!item) return;
+  item.quantity = (item.quantity || 1) + delta;
+  if(item.quantity <= 0){
+    removeFromCart(key);
+    return;
+  }
+  saveCart(cart);
+  if(location.hash === '#/cart'){
+    renderCart();
+  }
+}
+
+function clearCart(){
+  saveCart([]);
+  if(location.hash === '#/cart'){
+    renderCart();
+  }
+}
+
+function getActiveCoupon(){
+  try{ return localStorage.getItem('ufc_mania_coupon') || null; }catch(e){ return null; }
+}
+function setActiveCoupon(code){
+  try{
+    if(code) localStorage.setItem('ufc_mania_coupon', code);
+    else localStorage.removeItem('ufc_mania_coupon');
+  }catch(e){}
+}
+
+function getCartTotals(coupon){
+  const cart = getCart();
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const deliveryFee = subtotal >= 1999 || subtotal === 0 ? 0 : 99;
+  
+  let discount = 0;
+  const applied = coupon || getActiveCoupon();
+  if(applied === 'UFCINDIA'){
+    discount = Math.round(subtotal * 0.10);
+  } else if(applied === 'CHAMPION'){
+    discount = Math.min(500, subtotal);
+  } else if(applied === 'KNOCKOUT'){
+    discount = Math.round(subtotal * 0.15);
+  }
+
+  const grandTotal = Math.max(0, subtotal - discount + deliveryFee);
+  return {
+    subtotal,
+    itemCount,
+    deliveryFee,
+    discount,
+    grandTotal,
+    appliedCoupon: applied,
+    freeDeliveryThreshold: 1999,
+    freeDeliveryDiff: Math.max(0, 1999 - subtotal)
+  };
+}
+
+// ---------- Toast Notification System ----------
+function showToast(msg, type = 'info', actionText = null, actionHash = null){
+  const container = document.getElementById('toastContainer');
+  if(!container) return;
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  
+  let icon = 'ℹ️';
+  if(type === 'success') icon = '✔';
+  if(type === 'error') icon = '✕';
+
+  toast.innerHTML = `
+    <span class="toastIcon">${icon}</span>
+    <span class="toastContent">${msg}</span>
+    ${actionText && actionHash ? `<a href="${actionHash}" class="toastBtn">${actionText}</a>` : ''}
+    <button class="toastClose" aria-label="Close notification">&times;</button>
+  `;
+
+  container.appendChild(toast);
+
+  const close = () => {
+    toast.style.animation = 'toast-out .25s ease forwards';
+    setTimeout(() => toast.remove(), 250);
+  };
+
+  toast.querySelector('.toastClose').addEventListener('click', close);
+  if(actionHash){
+    const btn = toast.querySelector('.toastBtn');
+    if(btn) btn.addEventListener('click', close);
+  }
+
+  setTimeout(close, 4200);
+}
+
+// ---------- Product Modal & Quick View ----------
+function openProductModal(productId){
+  const p = getProductById(productId);
+  if(!p) return;
+
+  const modal = document.getElementById('productModal');
+  const content = document.getElementById('productModalContent');
+  if(!modal || !content) return;
+
+  let selectedSize = p.sizes[0] || 'Standard';
+  let selectedColor = p.colors[0] ? p.colors[0].name : 'Default';
+  let quantity = 1;
+
+  const discountPercent = p.originalPrice > p.price ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
+
+  content.innerHTML = `
+    <button class="productModalClose" id="modalCloseBtn" aria-label="Close product view">&times;</button>
+    <div class="modalProductGrid">
+      <div class="modalImgWrap">
+        <img src="${p.image}" alt="${p.name}" onerror="this.src='images/products/ufc-fight-gloves.jpg';">
+        <span class="productBadge ${p.badge.includes('CHAMPION')?'badge-gold':'badge-red'}">${p.badge}</span>
+      </div>
+      <div class="modalDetailsCol">
+        <span class="productCatLabel">${p.categoryLabel}</span>
+        <h2 class="productTitle" style="font-size:24px;margin-top:6px;">${p.name}</h2>
+        <div class="productRatingRow">
+          <span class="stars">${renderStarsHTML(p.rating)}</span>
+          <span style="font-weight:700;color:var(--white);">${p.rating}</span>
+          <span class="reviewCount">(${p.reviewsCount} customer reviews)</span>
+          <span class="tag status-active" style="margin-left:auto;font-size:11px;">In Stock • Express Dispatch</span>
+        </div>
+        <div class="productPriceRow" style="margin:12px 0 16px;">
+          <span class="priceCurrent" style="font-size:28px;">${fmtINR(p.price)}</span>
+          ${p.originalPrice > p.price ? `<span class="priceOriginal" style="font-size:16px;">${fmtINR(p.originalPrice)}</span><span class="priceDiscount" style="font-size:13px;">${discountPercent}% OFF (Save ${fmtINR(p.originalPrice - p.price)})</span>` : ''}
+        </div>
+        <p style="color:var(--muted);font-size:14px;line-height:1.55;margin-bottom:14px;">${p.description}</p>
+        
+        ${p.sizes.length > 0 ? `
+          <div class="selectorLabel">Select Size / Fit: <span id="modalSelectedSizeText" style="color:var(--white);">${selectedSize}</span></div>
+          <div class="sizeSelectorRow" id="modalSizesRow">
+            ${p.sizes.map((s, idx) => `<button class="sizeBtn ${idx===0?'active':''}" data-size="${s}">${s}</button>`).join('')}
+          </div>
+        ` : ''}
+
+        ${p.colors.length > 0 ? `
+          <div class="selectorLabel">Select Color / Edition: <span id="modalSelectedColorText" style="color:var(--white);">${selectedColor}</span></div>
+          <div class="colorSelectorRow" id="modalColorsRow">
+            ${p.colors.map((c, idx) => `
+              <div class="colorSwatch ${idx===0?'active':''}" data-color="${c.name}" style="background:${c.code};" title="${c.name}"></div>
+            `).join('')}
+          </div>
+        ` : ''}
+
+        <div style="display:flex;align-items:center;gap:14px;margin-top:16px;">
+          <div class="selectorLabel" style="margin:0;">Quantity:</div>
+          <div class="qtyStepper">
+            <button class="qtyBtn" id="modalQtyMinus">-</button>
+            <span class="qtyInput" id="modalQtyVal">1</span>
+            <button class="qtyBtn" id="modalQtyPlus">+</button>
+          </div>
+        </div>
+
+        <div class="modalActionRow">
+          <button class="btnAddToCart" id="modalAddToCartBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            Add to Cart
+          </button>
+          <button class="btnBuyNow" id="modalBuyNowBtn">Buy Now (Instant Checkout)</button>
+        </div>
+
+        <ul class="modalFeaturesList">
+          ${p.features.map(f => `<li>${f}</li>`).join('')}
+        </ul>
+
+        <div class="subhead" style="margin-top:18px;">Customer Reviews &amp; Ratings</div>
+        <div class="reviewsSummaryBox">
+          <div class="reviewsSummaryScore">${p.rating}</div>
+          <div>
+            <div class="stars">${renderStarsHTML(p.rating)}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">Verified Fan Reviews across India (${p.reviewsCount})</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;">
+          ${p.reviews.map(r => `
+            <div class="customerReviewItem">
+              <div class="customerReviewHeader">
+                <span class="customerReviewAuthor">✔ ${r.author} <span style="color:#7ee0a1;font-weight:400;font-size:11px;">(Verified Buyer)</span></span>
+                <span class="customerReviewDate">${r.date}</span>
+              </div>
+              <div class="stars" style="font-size:11px;margin-bottom:3px;">${'★'.repeat(r.rating)}</div>
+              <div class="customerReviewComment">${r.comment}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+
+  // Wire events
+  document.getElementById('modalCloseBtn').addEventListener('click', closeProductModal);
+  document.getElementById('productModalOverlay').addEventListener('click', closeProductModal);
+
+  document.querySelectorAll('#modalSizesRow .sizeBtn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#modalSizesRow .sizeBtn').forEach(btn => btn.classList.remove('active'));
+      b.classList.add('active');
+      selectedSize = b.dataset.size;
+      const t = document.getElementById('modalSelectedSizeText');
+      if(t) t.textContent = selectedSize;
+    });
+  });
+
+  document.querySelectorAll('#modalColorsRow .colorSwatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      document.querySelectorAll('#modalColorsRow .colorSwatch').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+      selectedColor = sw.dataset.color;
+      const t = document.getElementById('modalSelectedColorText');
+      if(t) t.textContent = selectedColor;
+    });
+  });
+
+  document.getElementById('modalQtyMinus').addEventListener('click', () => {
+    if(quantity > 1){
+      quantity--;
+      document.getElementById('modalQtyVal').textContent = quantity;
+    }
+  });
+  document.getElementById('modalQtyPlus').addEventListener('click', () => {
+    quantity++;
+    document.getElementById('modalQtyVal').textContent = quantity;
+  });
+
+  document.getElementById('modalAddToCartBtn').addEventListener('click', () => {
+    addToCart(p.id, selectedSize, selectedColor, quantity);
+    closeProductModal();
+  });
+
+  document.getElementById('modalBuyNowBtn').addEventListener('click', () => {
+    addToCart(p.id, selectedSize, selectedColor, quantity);
+    closeProductModal();
+    location.hash = '#/checkout';
+  });
+}
+
+function closeProductModal(){
+  const modal = document.getElementById('productModal');
+  if(modal) modal.classList.add('hidden');
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') closeProductModal();
+});
+
+// ---------- Product Card Component HTML ----------
+function productCardHTML(p){
+  const discountPercent = p.originalPrice > p.price ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
+  return `
+  <div class="productCard" data-product-id="${p.id}">
+    <div class="productImgWrap" onclick="openProductModal('${p.id}')">
+      <img src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.src='images/products/ufc-fight-gloves.jpg';">
+      <span class="productBadge ${p.badge.includes('CHAMPION')?'badge-gold':'badge-red'}">${p.badge}</span>
+    </div>
+    <div class="productCardBody">
+      <span class="productCatLabel">${p.categoryLabel}</span>
+      <h3 class="productTitle" onclick="openProductModal('${p.id}')">${p.name}</h3>
+      <p class="productSubtitle">${p.subtitle}</p>
+      <div class="productRatingRow">
+        <span class="stars">${renderStarsHTML(p.rating)}</span>
+        <span style="font-weight:700;color:var(--white);">${p.rating}</span>
+        <span class="reviewCount">(${p.reviewsCount})</span>
+      </div>
+      <div class="productSpecsPills">
+        ${p.sizes.slice(0,3).map(s=>`<span class="specPill">${s}</span>`).join('')}
+        ${p.sizes.length > 3 ? `<span class="specPill">+${p.sizes.length-3} more</span>` : ''}
+      </div>
+      <div class="productPriceRow">
+        <span class="priceCurrent">${fmtINR(p.price)}</span>
+        ${p.originalPrice > p.price ? `<span class="priceOriginal">${fmtINR(p.originalPrice)}</span><span class="priceDiscount">${discountPercent}% OFF</span>` : ''}
+      </div>
+      <div class="productCardActions">
+        <button class="btnAddToCart" onclick="addToCart('${p.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          Add to Cart
+        </button>
+        <button class="btnQuickView" onclick="openProductModal('${p.id}')" title="View details &amp; options">
+          Details
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+
 // ---------- helpers ----------
 function initials(name){
   return name.split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase();
@@ -1617,6 +2792,570 @@ function renderCompare(prefill){
 }
 
 // ============================================================================
+// SHOP PAGE
+// ============================================================================
+function renderShop(){
+  const categories = ['all', ...new Set(UFC_PRODUCTS.map(p => p.category))];
+  const catLabels = { all:'All Products', apparel:'Apparel & Hoodies', equipment:'MMA & Fight Gear', accessories:'Caps & Accessories', collectibles:'Belts & Collectibles' };
+
+  app.innerHTML = `
+  <div class="shopHero">
+    <div class="wrap">
+      <div class="eyebrow">Official UFC Mania Store</div>
+      <h1>UFC <span>Fight Shop</span></h1>
+      <p class="shopLead">Premium UFC merchandise, authentic fight gear, championship collectibles, and MMA training equipment — delivered across India. All prices in ₹ (INR). This is a demo store with sample products.</p>
+    </div>
+  </div>
+
+  <section class="pad wrap">
+    <div class="storeNotice">
+      <span class="tagline">🏷️ <b>DEMO STORE</b> — Products, prices and checkout are for demonstration only. No real transactions are processed.</span>
+      <span style="font-size:12px;color:var(--muted);">Free delivery on orders over ₹1,999</span>
+    </div>
+
+    <div class="shopControls">
+      <div class="shopSearchBox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="shopSearchInput" placeholder="Search UFC merchandise..." autocomplete="off">
+      </div>
+      <div class="shopFilterSelects">
+        <select id="shopSortSelect">
+          <option value="featured">Sort: Featured</option>
+          <option value="price-low">Price: Low → High</option>
+          <option value="price-high">Price: High → Low</option>
+          <option value="rating">Top Rated</option>
+          <option value="name">Name (A–Z)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="shopCatBar" id="shopCatBar">
+      ${categories.map(c => `<button class="shopCatPill ${c==='all'?'active':''}" data-cat="${c}">${catLabels[c] || c}</button>`).join('')}
+    </div>
+
+    <div id="shopResultCount" class="resultCount"></div>
+    <div class="productGrid" id="shopProductGrid"></div>
+    <div id="shopEmptyState" class="hidden" style="text-align:center;padding:60px 0;color:var(--muted);font-size:16px;">
+      No products match your search. Try a different keyword or category.
+    </div>
+  </section>`;
+
+  let shopFilter = { cat: 'all', search: '', sort: 'featured' };
+
+  function filterAndRender(){
+    let list = UFC_PRODUCTS.filter(p => {
+      if(shopFilter.cat !== 'all' && p.category !== shopFilter.cat) return false;
+      if(shopFilter.search){
+        const q = shopFilter.search.toLowerCase();
+        if(!p.name.toLowerCase().includes(q) && !p.subtitle.toLowerCase().includes(q) && !p.categoryLabel.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+
+    if(shopFilter.sort === 'price-low') list.sort((a,b) => a.price - b.price);
+    else if(shopFilter.sort === 'price-high') list.sort((a,b) => b.price - a.price);
+    else if(shopFilter.sort === 'rating') list.sort((a,b) => b.rating - a.rating);
+    else if(shopFilter.sort === 'name') list.sort((a,b) => a.name.localeCompare(b.name));
+
+    document.getElementById('shopResultCount').textContent = `Showing ${list.length} of ${UFC_PRODUCTS.length} products`;
+    document.getElementById('shopProductGrid').innerHTML = list.map(productCardHTML).join('');
+    document.getElementById('shopEmptyState').classList.toggle('hidden', list.length > 0);
+  }
+
+  document.getElementById('shopSearchInput').addEventListener('input', e => {
+    shopFilter.search = e.target.value.trim();
+    filterAndRender();
+  });
+
+  document.getElementById('shopSortSelect').addEventListener('change', e => {
+    shopFilter.sort = e.target.value;
+    filterAndRender();
+  });
+
+  document.querySelectorAll('#shopCatBar .shopCatPill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#shopCatBar .shopCatPill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      shopFilter.cat = btn.dataset.cat;
+      filterAndRender();
+    });
+  });
+
+  filterAndRender();
+}
+
+// ============================================================================
+// CART PAGE
+// ============================================================================
+function renderCart(){
+  const cart = getCart();
+  const totals = getCartTotals();
+
+  if(cart.length === 0){
+    app.innerHTML = `
+    <section class="pad wrap">
+      <div class="emptyCartState">
+        <div class="emptyCartIcon">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+        </div>
+        <h3>Your Cart is Empty</h3>
+        <p>Looks like you haven't added any UFC merchandise to your cart yet. Browse our fight shop and gear up!</p>
+        <a href="#/shop" class="btn btn-primary" style="display:inline-flex;animation:none;">Explore UFC Shop →</a>
+      </div>
+    </section>`;
+    return;
+  }
+
+  app.innerHTML = `
+  <section class="pad wrap">
+    <div class="cartHeader">
+      <h2 style="font-size:28px;">Shopping Cart</h2>
+      <span style="color:var(--muted);font-size:14px;">${totals.itemCount} item${totals.itemCount!==1?'s':''}</span>
+    </div>
+
+    ${totals.freeDeliveryDiff > 0 ? `
+    <div class="freeShippingProgress">
+      <span>Add <b style="color:var(--gold);">${fmtINR(totals.freeDeliveryDiff)}</b> more for <b style="color:var(--win);">FREE delivery</b></span>
+      <div class="progressBar"><div class="progressFill" style="width:${Math.min(100, (totals.subtotal / totals.freeDeliveryThreshold) * 100)}%;"></div></div>
+    </div>` : `
+    <div class="freeShippingProgress" style="border-color:var(--win);">
+      <span style="color:var(--win);">🎉 You've unlocked <b>FREE delivery!</b></span>
+    </div>`}
+
+    <div class="cartLayout">
+      <div id="cartItemsList">
+        ${cart.map(item => {
+          const subtotal = item.price * item.quantity;
+          return `
+          <div class="cartItemRow" data-key="${item.key}">
+            <div class="cartItemThumb">
+              <img src="${item.image}" alt="${item.name}" onerror="this.src='images/products/ufc-fight-gloves.jpg';">
+            </div>
+            <div class="cartItemDetails">
+              <h4>${item.name}</h4>
+              <div class="cartItemMeta">
+                <span>${item.size}</span>
+                <span>${item.color}</span>
+              </div>
+              <div class="cartItemUnitPrice">${fmtINR(item.price)} each</div>
+              <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
+                <div class="qtyStepper">
+                  <button class="qtyBtn" onclick="updateCartQty('${item.key}', -1)">−</button>
+                  <span class="qtyInput">${item.quantity}</span>
+                  <button class="qtyBtn" onclick="updateCartQty('${item.key}', 1)">+</button>
+                </div>
+                <button class="cartItemRemoveBtn" onclick="removeFromCart('${item.key}')" title="Remove item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14H7L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  Remove
+                </button>
+              </div>
+            </div>
+            <div class="cartItemSubtotal">${fmtINR(subtotal)}</div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <div class="cartSummaryCard">
+        <h3>Order Summary</h3>
+        <div class="summaryLine"><span>Subtotal (${totals.itemCount} items)</span><span>${fmtINR(totals.subtotal)}</span></div>
+        <div class="summaryLine"><span>Delivery</span><span style="color:${totals.deliveryFee===0?'var(--win)':'var(--white)'};">${totals.deliveryFee===0?'FREE':fmtINR(totals.deliveryFee)}</span></div>
+        ${totals.discount > 0 ? `
+        <div class="couponAppliedBadge">
+          <span>🏷️ ${totals.appliedCoupon} applied — you save ${fmtINR(totals.discount)}</span>
+          <button style="background:none;border:none;color:var(--win);cursor:pointer;font-weight:700;" onclick="setActiveCoupon(null);renderCart();">✕</button>
+        </div>` : ''}
+        ${totals.discount > 0 ? `<div class="summaryLine"><span>Discount</span><span style="color:var(--win);">-${fmtINR(totals.discount)}</span></div>` : ''}
+        <div class="summaryLine total"><span>Total</span><span class="amount">${fmtINR(totals.grandTotal)}</span></div>
+
+        ${!totals.appliedCoupon ? `
+        <div class="couponBox">
+          <input type="text" id="couponInput" placeholder="Enter coupon code...">
+          <button id="applyCouponBtn">Apply</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted-2);margin-bottom:10px;">Try: UFCINDIA (10%), CHAMPION (₹500 off), KNOCKOUT (15%)</div>
+        ` : ''}
+
+        <button class="btnCheckout" onclick="location.hash='#/checkout'">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          Proceed to Checkout
+        </button>
+        <a href="#/shop" style="display:block;text-align:center;margin-top:12px;font-size:13px;color:var(--muted);text-decoration:underline;">← Continue Shopping</a>
+
+        <div class="trustBadges">
+          <div class="trustBadgeItem">🔒 Secure Checkout</div>
+          <div class="trustBadgeItem">📦 Express Shipping</div>
+          <div class="trustBadgeItem">↩️ Easy Returns</div>
+          <div class="trustBadgeItem">✅ Genuine Products</div>
+        </div>
+      </div>
+    </div>
+  </section>`;
+
+  // Wire coupon
+  const couponBtn = document.getElementById('applyCouponBtn');
+  if(couponBtn){
+    couponBtn.addEventListener('click', () => {
+      const input = document.getElementById('couponInput');
+      const code = (input.value || '').trim().toUpperCase();
+      if(['UFCINDIA','CHAMPION','KNOCKOUT'].includes(code)){
+        setActiveCoupon(code);
+        showToast(`Coupon "${code}" applied successfully!`, 'success');
+        renderCart();
+      } else {
+        showToast('Invalid coupon code. Try UFCINDIA, CHAMPION or KNOCKOUT.', 'error');
+      }
+    });
+  }
+}
+
+// ============================================================================
+// CHECKOUT PAGE
+// ============================================================================
+function renderCheckout(){
+  const cart = getCart();
+  if(cart.length === 0){
+    location.hash = '#/cart';
+    return;
+  }
+  const totals = getCartTotals();
+
+  app.innerHTML = `
+  <section class="pad wrap">
+    <div class="checkoutProgress">
+      <div class="checkoutStepItem done"><span class="stepCircle">✓</span><span>Cart</span></div>
+      <div class="stepDivider"></div>
+      <div class="checkoutStepItem active"><span class="stepCircle">2</span><span>Delivery & Payment</span></div>
+      <div class="stepDivider"></div>
+      <div class="checkoutStepItem"><span class="stepCircle">3</span><span>Confirmation</span></div>
+    </div>
+
+    <div class="storeNotice" style="margin-bottom:24px;">
+      <span class="tagline">🔒 <b>DEMO CHECKOUT</b> — No real payment will be charged. This is for demonstration purposes only.</span>
+    </div>
+
+    <div class="checkoutGrid">
+      <div>
+        <!-- Delivery Address -->
+        <div class="checkoutCard">
+          <div class="checkoutCardTitle">📍 Delivery Address</div>
+          <div class="formRow">
+            <div class="formGroup">
+              <label class="formLabel">Full Name <span class="req">*</span></label>
+              <input type="text" class="formInput" id="coName" placeholder="Enter your full name" autocomplete="name">
+              <div class="fieldError" id="errName">Please enter your full name</div>
+            </div>
+            <div class="formGroup">
+              <label class="formLabel">Mobile Number <span class="req">*</span></label>
+              <input type="tel" class="formInput" id="coMobile" placeholder="10-digit Indian mobile number" maxlength="10" autocomplete="tel">
+              <div class="fieldError" id="errMobile">Enter a valid 10-digit Indian mobile number</div>
+            </div>
+          </div>
+          <div class="formGroup">
+            <label class="formLabel">Email Address <span class="req">*</span></label>
+            <input type="email" class="formInput" id="coEmail" placeholder="your@email.com" autocomplete="email">
+            <div class="fieldError" id="errEmail">Enter a valid email address</div>
+          </div>
+          <div class="formGroup">
+            <label class="formLabel">House/Flat Number, Building <span class="req">*</span></label>
+            <input type="text" class="formInput" id="coHouse" placeholder="e.g. Flat 301, Tower B, Sunrise Apartments" autocomplete="address-line1">
+            <div class="fieldError" id="errHouse">Please enter your house/flat details</div>
+          </div>
+          <div class="formGroup">
+            <label class="formLabel">Street / Locality <span class="req">*</span></label>
+            <input type="text" class="formInput" id="coStreet" placeholder="e.g. MG Road, Sector 12" autocomplete="address-line2">
+            <div class="fieldError" id="errStreet">Please enter your street or locality</div>
+          </div>
+          <div class="formRow">
+            <div class="formGroup">
+              <label class="formLabel">City <span class="req">*</span></label>
+              <input type="text" class="formInput" id="coCity" placeholder="City" autocomplete="address-level2">
+              <div class="fieldError" id="errCity">Please enter your city</div>
+            </div>
+            <div class="formGroup">
+              <label class="formLabel">State <span class="req">*</span></label>
+              <select class="formSelect" id="coState" autocomplete="address-level1">
+                <option value="">Select State...</option>
+                ${INDIAN_STATES.map(s => `<option value="${s}">${s}</option>`).join('')}
+              </select>
+              <div class="fieldError" id="errState">Please select your state</div>
+            </div>
+          </div>
+          <div class="formRow">
+            <div class="formGroup">
+              <label class="formLabel">PIN Code <span class="req">*</span></label>
+              <input type="text" class="formInput" id="coPincode" placeholder="6-digit PIN code" maxlength="6" autocomplete="postal-code">
+              <div class="fieldError" id="errPincode">Enter a valid 6-digit PIN code</div>
+            </div>
+            <div class="formGroup">
+              <label class="formLabel">Country</label>
+              <input type="text" class="formInput" id="coCountry" value="India" readonly style="opacity:.7;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Method -->
+        <div class="checkoutCard">
+          <div class="checkoutCardTitle">💳 Payment Method</div>
+          <div id="paymentMethods">
+            <div class="paymentOptionRow selected" data-method="cod" onclick="selectPayment('cod')">
+              <div class="paymentOptionHeader">
+                <input type="radio" name="payMethod" value="cod" checked>
+                <div>
+                  <div style="font-weight:700;">Cash on Delivery (COD)</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px;">Pay when your order arrives — no advance payment needed</div>
+                </div>
+              </div>
+            </div>
+            <div class="paymentOptionRow" data-method="upi" onclick="selectPayment('upi')">
+              <div class="paymentOptionHeader">
+                <input type="radio" name="payMethod" value="upi">
+                <div>
+                  <div style="font-weight:700;">UPI / Google Pay / PhonePe</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px;">⚠️ Demo only — real UPI payment gateway not connected</div>
+                </div>
+              </div>
+            </div>
+            <div class="paymentOptionRow" data-method="card" onclick="selectPayment('card')">
+              <div class="paymentOptionHeader">
+                <input type="radio" name="payMethod" value="card">
+                <div>
+                  <div style="font-weight:700;">Credit / Debit Card</div>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px;">⚠️ Demo only — no card details are collected or stored</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p style="font-size:11.5px;color:var(--muted-2);margin-top:14px;line-height:1.5;">
+            🔒 This is a demo checkout. No real payment will be processed. In production, a secure payment gateway (e.g. Razorpay) would handle real transactions. We never collect or store raw card numbers, CVVs, UPI PINs, or banking passwords.
+          </p>
+        </div>
+
+        <button class="btnCheckout" id="placeOrderBtn" style="max-width:100%;margin-bottom:24px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Place Order — ${fmtINR(totals.grandTotal)}
+        </button>
+      </div>
+
+      <!-- Order Summary Sidebar -->
+      <div>
+        <div class="cartSummaryCard">
+          <h3>Order Summary</h3>
+          ${cart.map(item => `
+          <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;">
+            <div style="width:50px;height:50px;border-radius:6px;overflow:hidden;flex-shrink:0;background:#18181c;">
+              <img src="${item.image}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='images/products/ufc-fight-gloves.jpg';">
+            </div>
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:12.5px;line-height:1.3;">${item.name}</div>
+              <div style="color:var(--muted);font-size:11px;margin-top:2px;">${item.size} · ${item.color} · Qty: ${item.quantity}</div>
+            </div>
+            <div style="font-family:'Oswald';font-weight:700;white-space:nowrap;">${fmtINR(item.price * item.quantity)}</div>
+          </div>`).join('')}
+
+          <div style="margin-top:14px;">
+            <div class="summaryLine"><span>Subtotal</span><span>${fmtINR(totals.subtotal)}</span></div>
+            <div class="summaryLine"><span>Delivery</span><span style="color:${totals.deliveryFee===0?'var(--win)':'var(--white)'};">${totals.deliveryFee===0?'FREE':fmtINR(totals.deliveryFee)}</span></div>
+            ${totals.discount > 0 ? `<div class="summaryLine"><span>Discount (${totals.appliedCoupon})</span><span style="color:var(--win);">-${fmtINR(totals.discount)}</span></div>` : ''}
+            <div class="summaryLine total"><span>Payable</span><span class="amount">${fmtINR(totals.grandTotal)}</span></div>
+          </div>
+          <a href="#/cart" style="display:block;text-align:center;margin-top:12px;font-size:13px;color:var(--muted);text-decoration:underline;">← Edit Cart</a>
+        </div>
+      </div>
+    </div>
+  </section>`;
+
+  // Place order handler
+  document.getElementById('placeOrderBtn').addEventListener('click', () => {
+    if(validateCheckoutForm()){
+      processOrder();
+    }
+  });
+}
+
+// Payment method selector
+function selectPayment(method){
+  document.querySelectorAll('.paymentOptionRow').forEach(row => {
+    row.classList.toggle('selected', row.dataset.method === method);
+    const radio = row.querySelector('input[type=radio]');
+    if(radio) radio.checked = row.dataset.method === method;
+  });
+}
+
+// Form validation
+function validateCheckoutForm(){
+  let valid = true;
+  const fields = [
+    { id:'coName', err:'errName', test: v => v.trim().length >= 2 },
+    { id:'coMobile', err:'errMobile', test: v => /^[6-9]\d{9}$/.test(v.trim()) },
+    { id:'coEmail', err:'errEmail', test: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) },
+    { id:'coHouse', err:'errHouse', test: v => v.trim().length >= 2 },
+    { id:'coStreet', err:'errStreet', test: v => v.trim().length >= 2 },
+    { id:'coCity', err:'errCity', test: v => v.trim().length >= 2 },
+    { id:'coState', err:'errState', test: v => v.trim().length > 0 },
+    { id:'coPincode', err:'errPincode', test: v => /^\d{6}$/.test(v.trim()) }
+  ];
+
+  fields.forEach(f => {
+    const el = document.getElementById(f.id);
+    const errEl = document.getElementById(f.err);
+    if(!el || !errEl) return;
+    const ok = f.test(el.value);
+    el.classList.toggle('error', !ok);
+    errEl.classList.toggle('show', !ok);
+    if(!ok) valid = false;
+  });
+
+  if(!valid){
+    showToast('Please fill in all required fields correctly.', 'error');
+    const firstError = document.querySelector('.formInput.error, .formSelect.error');
+    if(firstError) firstError.scrollIntoView({ behavior:'smooth', block:'center' });
+  }
+
+  return valid;
+}
+
+// Process order
+function processOrder(){
+  const cart = getCart();
+  const totals = getCartTotals();
+  const paymentMethod = document.querySelector('input[name=payMethod]:checked')?.value || 'cod';
+  const paymentLabels = { cod:'Cash on Delivery', upi:'UPI / GPay / PhonePe (Demo)', card:'Credit/Debit Card (Demo)' };
+
+  const orderData = {
+    orderId: 'UFC' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2,4).toUpperCase(),
+    date: new Date().toLocaleString('en-IN', { dateStyle:'full', timeStyle:'short' }),
+    items: [...cart],
+    totals: { ...totals },
+    payment: paymentLabels[paymentMethod] || paymentMethod,
+    address: {
+      name: document.getElementById('coName').value.trim(),
+      mobile: document.getElementById('coMobile').value.trim(),
+      email: document.getElementById('coEmail').value.trim(),
+      house: document.getElementById('coHouse').value.trim(),
+      street: document.getElementById('coStreet').value.trim(),
+      city: document.getElementById('coCity').value.trim(),
+      state: document.getElementById('coState').value.trim(),
+      pincode: document.getElementById('coPincode').value.trim(),
+      country: 'India'
+    }
+  };
+
+  // Save order for confirmation page
+  try { localStorage.setItem('ufc_mania_last_order', JSON.stringify(orderData)); } catch(e){}
+
+  // Clear cart
+  setActiveCoupon(null);
+  saveCart([]);
+
+  location.hash = '#/order-confirmation';
+}
+
+// ============================================================================
+// ORDER CONFIRMATION PAGE
+// ============================================================================
+function renderOrderConfirmation(){
+  let order;
+  try { order = JSON.parse(localStorage.getItem('ufc_mania_last_order')); } catch(e){}
+
+  if(!order){
+    app.innerHTML = `
+    <section class="pad wrap" style="text-align:center;">
+      <h2>No Order Found</h2>
+      <p style="color:var(--muted);margin:10px 0 24px;">There is no recent order to display.</p>
+      <a href="#/shop" class="btn btn-primary" style="display:inline-flex;animation:none;">Browse UFC Shop →</a>
+    </section>`;
+    return;
+  }
+
+  const addr = order.address;
+
+  app.innerHTML = `
+  <section class="pad wrap">
+    <div class="checkoutProgress">
+      <div class="checkoutStepItem done"><span class="stepCircle">✓</span><span>Cart</span></div>
+      <div class="stepDivider"></div>
+      <div class="checkoutStepItem done"><span class="stepCircle">✓</span><span>Delivery & Payment</span></div>
+      <div class="stepDivider"></div>
+      <div class="checkoutStepItem done"><span class="stepCircle">✓</span><span>Confirmed</span></div>
+    </div>
+
+    <div class="confirmationCard" style="text-align:center;">
+      <div class="successCheckWrap">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2 style="font-size:28px;margin-bottom:4px;">Order Placed Successfully! 🎉</h2>
+      <p style="color:var(--muted);font-size:15px;">Thank you for shopping at UFC Mania</p>
+      <div class="orderIdPill">${order.orderId}</div>
+
+      <div class="storeNotice" style="margin:18px auto;max-width:600px;text-align:left;">
+        <span class="tagline">⚠️ <b>DEMO ORDER</b> — This is not a real order. No payment has been charged and no product will be delivered. This confirmation is for demonstration purposes only.</span>
+      </div>
+
+      <div class="orderDetailGrid" style="text-align:left;">
+        <div>
+          <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Delivery Address</div>
+          <div style="font-weight:600;">${addr.name}</div>
+          <div style="color:var(--muted);font-size:13.5px;line-height:1.5;margin-top:4px;">
+            ${addr.house}<br>
+            ${addr.street}<br>
+            ${addr.city}, ${addr.state} — ${addr.pincode}<br>
+            ${addr.country}<br>
+            📱 ${addr.mobile} &nbsp;·&nbsp; ✉️ ${addr.email}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Order Details</div>
+          <div class="bioRow" style="padding:6px 0;"><span class="k">Order ID</span><span class="v" style="color:var(--gold);">${order.orderId}</span></div>
+          <div class="bioRow" style="padding:6px 0;"><span class="k">Date</span><span class="v">${order.date}</span></div>
+          <div class="bioRow" style="padding:6px 0;"><span class="k">Payment</span><span class="v">${order.payment}</span></div>
+          <div class="bioRow" style="padding:6px 0;"><span class="k">Status</span><span class="v" style="color:var(--win);">✓ Confirmed (Demo)</span></div>
+          <div class="bioRow" style="padding:6px 0;"><span class="k">Est. Delivery</span><span class="v">3–5 Business Days (Demo)</span></div>
+        </div>
+      </div>
+
+      <div style="text-align:left;margin-top:8px;">
+        <div class="subhead">Items Ordered</div>
+        <table class="orderSummaryTable">
+          <thead><tr><th>Product</th><th>Size / Color</th><th>Qty</th><th style="text-align:right;">Amount</th></tr></thead>
+          <tbody>
+            ${order.items.map(item => `
+            <tr>
+              <td style="display:flex;align-items:center;gap:10px;">
+                <div style="width:44px;height:44px;border-radius:6px;overflow:hidden;flex-shrink:0;background:#18181c;">
+                  <img src="${item.image}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='images/products/ufc-fight-gloves.jpg';">
+                </div>
+                <span style="font-weight:600;font-size:13px;">${item.name}</span>
+              </td>
+              <td style="font-size:12.5px;color:var(--muted);">${item.size}<br>${item.color}</td>
+              <td style="text-align:center;">${item.quantity}</td>
+              <td style="text-align:right;font-family:'Oswald';font-weight:700;">${fmtINR(item.price * item.quantity)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+
+        <div style="max-width:320px;margin-left:auto;margin-top:10px;">
+          <div class="summaryLine"><span>Subtotal</span><span>${fmtINR(order.totals.subtotal)}</span></div>
+          <div class="summaryLine"><span>Delivery</span><span>${order.totals.deliveryFee === 0 ? 'FREE' : fmtINR(order.totals.deliveryFee)}</span></div>
+          ${order.totals.discount > 0 ? `<div class="summaryLine"><span>Discount</span><span style="color:var(--win);">-${fmtINR(order.totals.discount)}</span></div>` : ''}
+          <div class="summaryLine total"><span>Total Paid</span><span class="amount">${fmtINR(order.totals.grandTotal)}</span></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:14px;justify-content:center;margin-top:30px;flex-wrap:wrap;">
+        <a href="#/shop" class="btn btn-primary" style="display:inline-flex;animation:none;">Continue Shopping →</a>
+        <button class="btn btn-ghost btnInvoicePrint" onclick="window.print()">🖨️ Print Invoice</button>
+        <a href="#/" class="btn btn-ghost" style="display:inline-flex;">Back to Home</a>
+      </div>
+    </div>
+  </section>`;
+}
+
+
+// ============================================================================
 // ROUTER
 // ============================================================================
 function setActiveNav(route){
@@ -1641,12 +3380,17 @@ function router(){
     renderCompare(params.a || params.b ? [params.a,params.b] : null);
     setActiveNav('compare'); return;
   }
+  if(path==='/shop'){ renderShop(); setActiveNav('shop'); return; }
+  if(path==='/cart'){ renderCart(); setActiveNav('shop'); return; }
+  if(path==='/checkout'){ renderCheckout(); setActiveNav('shop'); return; }
+  if(path==='/order-confirmation'){ renderOrderConfirmation(); setActiveNav('shop'); return; }
   // fallback
   renderHome(); setActiveNav('home');
 }
 window.addEventListener('hashchange', router);
-window.addEventListener('DOMContentLoaded', router);
+window.addEventListener('DOMContentLoaded', () => { updateNavCartBadge(); router(); });
 router();
+updateNavCartBadge();
 
 // ============================================================================
 // NAV / SEARCH CHROME

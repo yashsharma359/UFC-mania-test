@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mgBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141418"/>
+      <stop offset="100%" stop-color="#08080a"/>
+    </linearGradient>
+    <linearGradient id="caseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2c2c34"/>
+      <stop offset="100%" stop-color="#121216"/>
+    </linearGradient>
+    <linearGradient id="gelRed" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff1a2e"/>
+      <stop offset="100%" stop-color="#aa081a"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#mgBg)"/>
+  <!-- Antimicrobial Case backdrop -->
+  <path d="M150,140 C150,90 450,90 450,140 L440,320 C440,380 160,380 160,320 Z" fill="url(#caseGrad)" stroke="#383842" stroke-width="3"/>
+  <rect x="250" y="85" width="100" height="18" rx="6" fill="#e0102b"/>
+  <!-- Mouthguard Horseshoe Arc Shape -->
+  <g transform="translate(180, 160)">
+    <!-- Outer Shock Frame -->
+    <path d="M20,160 C10,90 40,30 120,20 C200,30 230,90 220,160 C210,140 190,70 120,65 C50,70 30,140 20,160 Z" fill="#18181c" stroke="#333" stroke-width="2"/>
+    <!-- Dual-Density Gel Lining (Red) -->
+    <path d="M30,150 C25,95 50,45 120,35 C190,45 215,95 210,150 C200,135 180,80 120,75 C60,80 40,135 30,150 Z" fill="url(#gelRed)"/>
+    <!-- Molar bite pads -->
+    <ellipse cx="40" cy="120" rx="12" ry="18" fill="#e0102b" opacity="0.8"/>
+    <ellipse cx="200" cy="120" rx="12" ry="18" fill="#e0102b" opacity="0.8"/>
+    <!-- Logo on Front Lip -->
+    <text x="120" y="55" font-family="'Oswald', sans-serif" font-weight="700" font-size="18" fill="#ffffff" text-anchor="middle" letter-spacing="2">UFC</text>
+  </g>
+  <!-- Lower Label -->
+  <text x="300" y="440" font-family="'Oswald', sans-serif" font-weight="700" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="3">DUAL-DENSITY GEL FIT</text>
+  <text x="300" y="475" font-family="'Inter', sans-serif" font-weight="600" font-size="14" fill="#e0102b" text-anchor="middle" letter-spacing="2">BOIL &amp; BITE CUSTOM JAW ALIGNMENT</text>
+  <text x="300" y="520" font-family="'Oswald', sans-serif" font-weight="600" font-size="14" fill="#c9a227" text-anchor="middle" letter-spacing="2">INCLUDES VENTILATED ANTIMICROBIAL STORAGE CASE</text>
+</svg>

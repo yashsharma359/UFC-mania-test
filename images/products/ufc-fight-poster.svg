@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141418"/>
+      <stop offset="100%" stop-color="#08080a"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe270"/>
+      <stop offset="50%" stop-color="#c9a227"/>
+      <stop offset="100%" stop-color="#8a6b10"/>
+    </linearGradient>
+    <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff2640"/>
+      <stop offset="100%" stop-color="#b0081d"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  <rect width="600" height="600" fill="url(#bgGrad)"/>
+  <!-- Wooden frame outer -->
+  <rect x="80" y="40" width="440" height="520" rx="6" fill="#1c1c20" stroke="#333338" stroke-width="4"/>
+  <!-- Frame inner bevel -->
+  <rect x="96" y="56" width="408" height="488" fill="#0d0d10" stroke="#111" stroke-width="3"/>
+  <!-- Matting border -->
+  <rect x="110" y="70" width="380" height="460" fill="#18181c" stroke="#2a2a30" stroke-width="1.5"/>
+  <!-- Poster Artwork Canvas -->
+  <rect x="126" y="86" width="348" height="428" fill="#0c0a0c"/>
+  <!-- Octagon background graphic -->
+  <polygon points="300,120 400,160 440,260 400,360 300,400 200,360 160,260 200,160" fill="none" stroke="rgba(224,16,43,0.3)" stroke-width="3"/>
+  <polygon points="300,140 380,175 410,260 380,345 300,380 220,345 190,260 220,175" fill="rgba(224,16,43,0.08)" stroke="rgba(201,162,39,0.35)" stroke-width="1.5"/>
+  <!-- Radial light effect -->
+  <circle cx="300" cy="260" r="120" fill="rgba(224,16,43,0.18)" filter="url(#glow)"/>
+  <!-- Text Elements -->
+  <text x="300" y="145" font-family="'Oswald', sans-serif" font-weight="700" font-size="20" fill="#c9a227" text-anchor="middle" letter-spacing="4">HISTORIC FIGHT NIGHT</text>
+  <text x="300" y="220" font-family="'Oswald', sans-serif" font-weight="800" font-size="82" fill="url(#redGrad)" text-anchor="middle" letter-spacing="2" filter="url(#glow)">UFC 300</text>
+  <text x="300" y="270" font-family="'Oswald', sans-serif" font-weight="700" font-size="22" fill="#ffffff" text-anchor="middle" letter-spacing="3">PEREIRA VS HILL</text>
+  <text x="300" y="295" font-family="'Inter', sans-serif" font-weight="600" font-size="13" fill="#9a9aa1" text-anchor="middle" letter-spacing="2">UNDISPUTED WORLD LIGHT HEAVYWEIGHT CHAMPIONSHIP</text>
+  <line x1="160" y1="315" x2="440" y2="315" stroke="rgba(201,162,39,0.5)" stroke-width="1.5"/>
+  <text x="300" y="345" font-family="'Oswald', sans-serif" font-weight="600" font-size="16" fill="#e0102b" text-anchor="middle" letter-spacing="2">ZHANG VS YAN • GAETHJE VS HOLLOWAY</text>
+  <text x="300" y="375" font-family="'Inter', sans-serif" font-weight="500" font-size="12" fill="#777780" text-anchor="middle">T-MOBILE ARENA • LAS VEGAS, NEVADA</text>
+  <text x="300" y="475" font-family="'Oswald', sans-serif" font-weight="600" font-size="13" fill="url(#goldGrad)" text-anchor="middle" letter-spacing="4">OFFICIAL LIMITED EDITION COLLECTOR'S PLAQUE</text>
+  <!-- Glass Sheen overlay -->
+  <polygon points="126,86 380,86 220,514 126,514" fill="rgba(255,255,255,0.04)"/>
+</svg>

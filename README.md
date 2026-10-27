@@ -29,10 +29,19 @@ because it's plain HTML/CSS/JS with no platform-specific code, and requires
 no login to view.
 
 ## Files in this package
-- `index.html` — the entire website
+- `index.html` — the entire website including fighter database and complete UFC store
+- `images/products/` — official UFC product images and vector artwork
 - `vercel.json` — Vercel config (routes all paths to `index.html`, sets cache headers)
 - `netlify.toml` — equivalent config if you use Netlify instead
 - `package.json` — lets Vercel/Netlify recognize this as a project named `ufcmania`
+
+## UFC Fight Shop & E-commerce System
+- **Shop Catalog (`#/shop`):** 11 UFC merchandise items (replica championship belt, 4 oz fight gloves, walkout hoodies, rashguards, caps, heavy bags, etc.) with category filter pills, real-time search, and price/rating sorting. All prices in Indian Rupees (₹).
+- **Product Details Modal:** High-resolution product images, size & color selectors, stock status, ratings, fan reviews, and quantity steppers with animated toast notifications.
+- **Shopping Cart (`#/cart`):** Item list, quantity adjustments, item removal, free shipping progress bar (orders over ₹1,999), and coupon system (`UFCINDIA` - 10%, `CHAMPION` - ₹500 off, `KNOCKOUT` - 15%). Persisted via `localStorage`.
+- **Checkout (`#/checkout`):** 3-step progress bar, Indian delivery address validation (10-digit mobile, 6-digit PIN code, state selector), payment method selection (Cash on Delivery, Demo UPI, Demo Card), and comprehensive demo safety notices.
+- **Order Confirmation (`#/order-confirmation`):** Unique UFC Order ID generator, itemized breakdown, invoice print functionality (`window.print()`), delivery details, and automatic cart clearing.
+
 
 ---
 

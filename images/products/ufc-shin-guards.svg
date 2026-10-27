@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="sgBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141418"/>
+      <stop offset="100%" stop-color="#08080a"/>
+    </linearGradient>
+    <linearGradient id="guardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a2a30"/>
+      <stop offset="50%" stop-color="#18181c"/>
+      <stop offset="100%" stop-color="#0e0e12"/>
+    </linearGradient>
+    <linearGradient id="redAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e0102b"/>
+      <stop offset="100%" stop-color="#8c0c1c"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#sgBg)"/>
+  <!-- Ambient Octagon ring -->
+  <polygon points="300,60 480,130 540,310 480,490 300,560 120,490 60,310 120,130" fill="none" stroke="rgba(224,16,43,0.12)" stroke-width="2"/>
+  <!-- Left Guard -->
+  <g transform="translate(140, 80)">
+    <!-- Shin padding -->
+    <path d="M40,20 C80,10 110,10 130,20 C145,100 140,280 120,340 C105,370 70,370 50,340 C30,280 25,100 40,20 Z" fill="url(#guardGrad)" stroke="#3a3a42" stroke-width="3"/>
+    <!-- Instep / Foot Guard -->
+    <path d="M50,340 C70,350 100,350 120,340 C135,375 140,410 110,430 C80,445 45,435 35,405 C30,375 40,350 50,340 Z" fill="url(#guardGrad)" stroke="#3a3a42" stroke-width="2.5"/>
+    <!-- Red contrast stripes -->
+    <path d="M42,120 Q85,110 128,120" stroke="url(#redAccent)" stroke-width="6" fill="none"/>
+    <path d="M44,220 Q85,210 126,220" stroke="url(#redAccent)" stroke-width="6" fill="none"/>
+    <!-- Straps on back -->
+    <rect x="25" y="150" width="120" height="20" rx="4" fill="#121214" stroke="#e0102b" stroke-width="1.5"/>
+    <rect x="30" y="270" width="110" height="20" rx="4" fill="#121214" stroke="#e0102b" stroke-width="1.5"/>
+    <!-- Logo -->
+    <text x="85" y="80" font-family="'Oswald', sans-serif" font-weight="700" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="2">UFC</text>
+    <text x="85" y="100" font-family="'Inter', sans-serif" font-weight="700" font-size="10" fill="#e0102b" text-anchor="middle" letter-spacing="1.5">CONTENDER GEL</text>
+  </g>
+  <!-- Right Guard -->
+  <g transform="translate(300, 80)">
+    <!-- Shin padding -->
+    <path d="M40,20 C80,10 110,10 130,20 C145,100 140,280 120,340 C105,370 70,370 50,340 C30,280 25,100 40,20 Z" fill="url(#guardGrad)" stroke="#3a3a42" stroke-width="3"/>
+    <!-- Instep / Foot Guard -->
+    <path d="M50,340 C70,350 100,350 120,340 C135,375 140,410 110,430 C80,445 45,435 35,405 C30,375 40,350 50,340 Z" fill="url(#guardGrad)" stroke="#3a3a42" stroke-width="2.5"/>
+    <!-- Red contrast stripes -->
+    <path d="M42,120 Q85,110 128,120" stroke="url(#redAccent)" stroke-width="6" fill="none"/>
+    <path d="M44,220 Q85,210 126,220" stroke="url(#redAccent)" stroke-width="6" fill="none"/>
+    <!-- Straps on back -->
+    <rect x="25" y="150" width="120" height="20" rx="4" fill="#121214" stroke="#e0102b" stroke-width="1.5"/>
+    <rect x="30" y="270" width="110" height="20" rx="4" fill="#121214" stroke="#e0102b" stroke-width="1.5"/>
+    <!-- Logo -->
+    <text x="85" y="80" font-family="'Oswald', sans-serif" font-weight="700" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="2">UFC</text>
+    <text x="85" y="100" font-family="'Inter', sans-serif" font-weight="700" font-size="10" fill="#e0102b" text-anchor="middle" letter-spacing="1.5">CONTENDER GEL</text>
+  </g>
+  <!-- Highlight reflection -->
+  <text x="300" y="550" font-family="'Oswald', sans-serif" font-weight="600" font-size="15" fill="#c9a227" text-anchor="middle" letter-spacing="3">HIGH IMPACT SHOCK ABSORPTION • GENUINE SYNTHETIC LEATHER</text>
+</svg>

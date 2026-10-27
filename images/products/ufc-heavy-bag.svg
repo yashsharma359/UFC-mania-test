@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="hbBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141418"/>
+      <stop offset="100%" stop-color="#08080a"/>
+    </linearGradient>
+    <linearGradient id="bagCylinder" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a1a20"/>
+      <stop offset="25%" stop-color="#32323a"/>
+      <stop offset="50%" stop-color="#1e1e24"/>
+      <stop offset="80%" stop-color="#383842"/>
+      <stop offset="100%" stop-color="#141418"/>
+    </linearGradient>
+    <linearGradient id="redAccent2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff1a2e"/>
+      <stop offset="100%" stop-color="#a00818"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#hbBg)"/>
+  <!-- Ceiling mount & swivel chains -->
+  <circle cx="300" cy="40" r="12" fill="#555" stroke="#777" stroke-width="2"/>
+  <line x1="300" y1="52" x2="300" y2="90" stroke="#888" stroke-width="6"/>
+  <!-- Chain branches -->
+  <line x1="300" y1="90" x2="235" y2="150" stroke="#aaa" stroke-width="4" stroke-dasharray="6,4"/>
+  <line x1="300" y1="90" x2="365" y2="150" stroke="#aaa" stroke-width="4" stroke-dasharray="6,4"/>
+  <line x1="300" y1="90" x2="270" y2="150" stroke="#777" stroke-width="3" stroke-dasharray="6,4"/>
+  <line x1="300" y1="90" x2="330" y2="150" stroke="#777" stroke-width="3" stroke-dasharray="6,4"/>
+  <!-- Heavy Bag Body -->
+  <g transform="translate(220, 140)">
+    <!-- Top D-Ring Rivet Straps -->
+    <rect x="15" y="0" width="20" height="30" rx="3" fill="#111" stroke="#e0102b" stroke-width="2"/>
+    <rect x="125" y="0" width="20" height="30" rx="3" fill="#111" stroke="#e0102b" stroke-width="2"/>
+    <rect x="50" y="5" width="16" height="25" rx="3" fill="#111" stroke="#e0102b" stroke-width="1.5"/>
+    <rect x="94" y="5" width="16" height="25" rx="3" fill="#111" stroke="#e0102b" stroke-width="1.5"/>
+    <!-- Bag Main Cylinder -->
+    <rect x="10" y="25" width="140" height="340" rx="16" fill="url(#bagCylinder)" stroke="#2b2b33" stroke-width="2"/>
+    <!-- Red Accent Top Band -->
+    <rect x="10" y="50" width="140" height="40" fill="url(#redAccent2)"/>
+    <line x1="10" y1="50" x2="150" y2="50" stroke="#ffffff" stroke-width="1.5"/>
+    <line x1="10" y1="90" x2="150" y2="90" stroke="#ffffff" stroke-width="1.5"/>
+    <text x="80" y="77" font-family="'Oswald', sans-serif" font-weight="700" font-size="18" fill="#ffffff" text-anchor="middle" letter-spacing="3">70 LBS PRO</text>
+    <!-- Big Bold Vertical UFC Logo -->
+    <g transform="rotate(-90 80 200)">
+      <text x="80" y="214" font-family="'Oswald', sans-serif" font-weight="900" font-size="52" fill="#ffffff" text-anchor="middle" letter-spacing="4">UFC</text>
+    </g>
+    <!-- Target Strike Circles (Low Kick & Liver Shot Targets) -->
+    <circle cx="80" cy="275" r="22" fill="none" stroke="#e0102b" stroke-width="3"/>
+    <circle cx="80" cy="275" r="10" fill="#e0102b"/>
+    <circle cx="80" cy="330" r="18" fill="none" stroke="#c9a227" stroke-width="2.5"/>
+    <!-- Base D-ring tie down loop -->
+    <path d="M70,365 L90,365 L85,385 L75,385 Z" fill="#444" stroke="#e0102b" stroke-width="2"/>
+  </g>
+  <text x="300" y="540" font-family="'Oswald', sans-serif" font-weight="700" font-size="24" fill="#ffffff" text-anchor="middle" letter-spacing="3">HEAVY BAG TRAINING SYSTEM</text>
+  <text x="300" y="565" font-family="'Inter', sans-serif" font-weight="600" font-size="13" fill="#c9a227" text-anchor="middle" letter-spacing="2">MULTI-LAYER FOAM &amp; IMPACT FIBER FILL</text>
+</svg>

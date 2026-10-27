@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="botBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141418"/>
+      <stop offset="100%" stop-color="#08080a"/>
+    </linearGradient>
+    <linearGradient id="bottleBody" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#18181c"/>
+      <stop offset="25%" stop-color="#36363e"/>
+      <stop offset="50%" stop-color="#222228"/>
+      <stop offset="75%" stop-color="#3a3a44"/>
+      <stop offset="100%" stop-color="#151518"/>
+    </linearGradient>
+    <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2a2a30"/>
+      <stop offset="50%" stop-color="#44444e"/>
+      <stop offset="100%" stop-color="#222226"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#botBg)"/>
+  <circle cx="300" cy="300" r="230" fill="none" stroke="rgba(224,16,43,0.12)" stroke-width="2"/>
+  <g transform="translate(200, 60)">
+    <!-- Loop Handle -->
+    <path d="M75,30 C75,5 125,5 125,30 L125,60 L75,60 Z" fill="none" stroke="#e0102b" stroke-width="14" stroke-linecap="round"/>
+    <!-- Lid Cap -->
+    <rect x="65" y="60" width="70" height="40" rx="8" fill="url(#capGrad)" stroke="#1a1a1e" stroke-width="2"/>
+    <line x1="70" y1="75" x2="130" y2="75" stroke="#e0102b" stroke-width="3"/>
+    <!-- Neck -->
+    <path d="M60,100 L140,100 L155,140 L45,140 Z" fill="url(#capGrad)"/>
+    <!-- Bottle Cylinder Main Body -->
+    <rect x="40" y="140" width="120" height="320" rx="14" fill="url(#bottleBody)" stroke="#383842" stroke-width="2"/>
+    <!-- Octagon Ring Branding Pattern -->
+    <polygon points="100,200 130,215 140,245 130,275 100,290 70,275 60,245 70,215" fill="none" stroke="rgba(224,16,43,0.3)" stroke-width="2"/>
+    <!-- Vertical UFC Wordmark -->
+    <g transform="rotate(-90 100 245)">
+      <text x="100" y="258" font-family="'Oswald', sans-serif" font-weight="800" font-size="44" fill="#ffffff" text-anchor="middle" letter-spacing="4">UFC</text>
+    </g>
+    <text x="100" y="380" font-family="'Inter', sans-serif" font-weight="700" font-size="11" fill="#e0102b" text-anchor="middle" letter-spacing="2">1000 ML • VACUUM INSULATED</text>
+    <text x="100" y="400" font-family="'Inter', sans-serif" font-weight="500" font-size="10" fill="#9a9aa1" text-anchor="middle">24H COLD / 12H HOT</text>
+    <!-- Base bumper silicon -->
+    <rect x="38" y="435" width="124" height="30" rx="8" fill="#e0102b"/>
+  </g>
+  <text x="300" y="550" font-family="'Oswald', sans-serif" font-weight="600" font-size="15" fill="#c9a227" text-anchor="middle" letter-spacing="3">FOOD GRADE 18/8 STAINLESS STEEL • BPA FREE</text>
+</svg>

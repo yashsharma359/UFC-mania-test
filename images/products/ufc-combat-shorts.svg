@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="shBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141418"/>
+      <stop offset="100%" stop-color="#08080a"/>
+    </linearGradient>
+    <linearGradient id="fabricGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1e24"/>
+      <stop offset="100%" stop-color="#0d0d10"/>
+    </linearGradient>
+    <linearGradient id="goldPlate" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffe270"/>
+      <stop offset="100%" stop-color="#c9a227"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#shBg)"/>
+  <!-- Ambient Octagon frame -->
+  <polygon points="300,50 510,120 570,330 510,510 300,570 90,510 30,330 90,120" fill="none" stroke="rgba(201,162,39,0.15)" stroke-width="2"/>
+  <g transform="translate(130, 90)">
+    <!-- Waistband -->
+    <path d="M40,30 L300,30 L290,75 L50,75 Z" fill="#0f0f12" stroke="#e0102b" stroke-width="2"/>
+    <!-- Waistband Drawstring Patch -->
+    <rect x="145" y="25" width="50" height="55" rx="4" fill="#1b1b20" stroke="#333" stroke-width="1.5"/>
+    <polygon points="170,35 185,45 185,60 170,70 155,60 155,45" fill="none" stroke="#c9a227" stroke-width="2"/>
+    <!-- Left Leg -->
+    <path d="M50,75 L165,75 L160,280 L40,260 L20,120 Z" fill="url(#fabricGrad)" stroke="#2f2f38" stroke-width="2.5"/>
+    <!-- Right Leg -->
+    <path d="M175,75 L290,75 L320,120 L300,260 L180,280 Z" fill="url(#fabricGrad)" stroke="#2f2f38" stroke-width="2.5"/>
+    <!-- Crotch Stretch Mesh Inset -->
+    <polygon points="165,75 175,75 180,280 160,280" fill="#e0102b" opacity="0.8"/>
+    <!-- Left Leg Lateral Slit & Trim -->
+    <path d="M40,260 L25,190" stroke="#e0102b" stroke-width="3"/>
+    <!-- Right Leg Lateral Slit & Trim -->
+    <path d="M300,260 L315,190" stroke="#e0102b" stroke-width="3"/>
+    <!-- Gold Champion Trim on Right Leg -->
+    <path d="M320,120 L300,260" stroke="url(#goldPlate)" stroke-width="6"/>
+    <!-- Large UFC Octagon Logo on Left Thigh -->
+    <g transform="translate(60, 110) rotate(-12)">
+      <text x="30" y="40" font-family="'Oswald', sans-serif" font-weight="900" font-size="52" fill="#ffffff" letter-spacing="2">UFC</text>
+    </g>
+    <!-- Champion Crest on Right Leg -->
+    <polygon points="260,190 280,200 280,225 260,235 240,225 240,200" fill="rgba(201,162,39,0.2)" stroke="#c9a227" stroke-width="2"/>
+    <text x="260" y="218" font-family="'Oswald', sans-serif" font-weight="700" font-size="14" fill="#ffe270" text-anchor="middle">CHAMP</text>
+  </g>
+  <text x="300" y="470" font-family="'Oswald', sans-serif" font-weight="700" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="3">FIGHT NIGHT PRO OCTAGON SHORTS</text>
+  <text x="300" y="505" font-family="'Inter', sans-serif" font-weight="600" font-size="14" fill="#e0102b" text-anchor="middle" letter-spacing="2">4-WAY STRETCH • REINFORCED LATERAL SPLIT SLITS</text>
+  <text x="300" y="540" font-family="'Oswald', sans-serif" font-weight="600" font-size="14" fill="#c9a227" text-anchor="middle" letter-spacing="2">CHAMPION EDITION • MICROFIBER DRY-TECH</text>
+</svg>
