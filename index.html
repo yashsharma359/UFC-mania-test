@@ -13,6 +13,27 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '1185466460574306');
 fbq('track', 'PageView');
+
+// Universal Meta Pixel Tracker: supports standard events and custom aliases
+window.trackPixelEvent = function(eventName, params = {}, customAlias = null) {
+  try {
+    if (typeof window.fbq === 'function') {
+      // 1. Official Meta Standard Event
+      if (params && Object.keys(params).length > 0) {
+        window.fbq('track', eventName, params);
+      } else {
+        window.fbq('track', eventName);
+      }
+      // 2. Custom event alias if provided (for exact string targeting in custom conversions)
+      if (customAlias && customAlias !== eventName) {
+        window.fbq('trackCustom', customAlias, params);
+      }
+      console.log(`[Meta Pixel] Tracked: ${eventName}${customAlias ? ` (custom: "${customAlias}")` : ''}`, params);
+    }
+  } catch (err) {
+    console.warn('[Meta Pixel] Error tracking event:', err);
+  }
+};
 </script>
 <noscript><img height="1" width="1" style="display:none"
 src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
@@ -1884,6 +1905,21 @@ function addToCart(productId, size, color, qty = 1){
 
   saveCart(cart);
 
+  // Meta Pixel Event: Add to Cart (Standard: 'AddToCart', Custom: 'Add to Cart')
+  trackPixelEvent('AddToCart', {
+    content_name: product.name,
+    content_category: product.categoryLabel || 'UFC Merchandise',
+    content_ids: [product.id],
+    content_type: 'product',
+    value: Number((product.price * qty).toFixed(2)),
+    currency: 'INR',
+    contents: [{
+      id: product.id,
+      quantity: qty,
+      item_price: product.price
+    }]
+  }, 'Add to Cart');
+
   const badge = document.getElementById('navCartBadge');
   if(badge){
     badge.classList.remove('bounce');
@@ -2004,6 +2040,16 @@ function showToast(msg, type = 'info', actionText = null, actionHash = null){
 function openProductModal(productId){
   const p = getProductById(productId);
   if(!p) return;
+
+  // Meta Pixel Event: View Content for product modal
+  trackPixelEvent('ViewContent', {
+    content_name: p.name,
+    content_category: p.categoryLabel || 'UFC Merchandise',
+    content_ids: [p.id],
+    content_type: 'product',
+    value: p.price,
+    currency: 'INR'
+  }, 'View Product');
 
   const modal = document.getElementById('productModal');
   const content = document.getElementById('productModalContent');
@@ -2143,6 +2189,21 @@ function openProductModal(productId){
   document.getElementById('modalBuyNowBtn').addEventListener('click', () => {
     addToCart(p.id, selectedSize, selectedColor, quantity);
     closeProductModal();
+    // Meta Pixel Event: Instant Checkout initiated
+    trackPixelEvent('InitiateCheckout', {
+      content_name: 'Instant Buy (' + p.name + ')',
+      content_category: p.categoryLabel || 'UFC Merchandise',
+      content_ids: [p.id],
+      contents: [{
+        id: p.id,
+        quantity: quantity,
+        item_price: p.price
+      }],
+      content_type: 'product',
+      num_items: quantity,
+      value: p.price * quantity,
+      currency: 'INR'
+    }, 'Checkout');
     location.hash = '#/checkout';
   });
 }
@@ -2367,6 +2428,7 @@ function renderHome(){
 
   document.getElementById('heroSearchInput').addEventListener('keydown', e=>{
     if(e.key==='Enter' && e.target.value.trim()){
+      trackPixelEvent('Search', { search_string: e.target.value.trim(), content_category: 'Fighters' });
       location.hash = '#/fighters?q='+encodeURIComponent(e.target.value.trim());
     }
   });
@@ -2883,6 +2945,11 @@ function renderShop(){
     shopFilter.search = e.target.value.trim();
     filterAndRender();
   });
+  document.getElementById('shopSearchInput').addEventListener('keydown', e => {
+    if(e.key === 'Enter' && e.target.value.trim()){
+      trackPixelEvent('Search', { search_string: e.target.value.trim(), content_category: 'Shop Products' });
+    }
+  });
 
   document.getElementById('shopSortSelect').addEventListener('change', e => {
     shopFilter.sort = e.target.value;
@@ -2996,7 +3063,7 @@ function renderCart(){
         <div style="font-size:11px;color:var(--muted-2);margin-bottom:10px;">Try: UFCINDIA (10%), CHAMPION (₹500 off), KNOCKOUT (15%)</div>
         ` : ''}
 
-        <button class="btnCheckout" onclick="location.hash='#/checkout'">
+        <button class="btnCheckout" onclick="proceedToCheckout()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
           Proceed to Checkout
         </button>
@@ -3029,6 +3096,27 @@ function renderCart(){
   }
 }
 
+function proceedToCheckout(){
+  const cart = getCart();
+  const totals = getCartTotals();
+  // Meta Pixel Event: Checkout initiated from Cart
+  trackPixelEvent('InitiateCheckout', {
+    content_name: 'Cart Checkout',
+    content_category: 'E-commerce Checkout',
+    content_ids: cart.map(i => i.productId),
+    contents: cart.map(i => ({
+      id: i.productId,
+      quantity: i.quantity,
+      item_price: i.price
+    })),
+    content_type: 'product',
+    num_items: totals.itemCount,
+    value: totals.grandTotal,
+    currency: 'INR'
+  }, 'Checkout');
+  location.hash = '#/checkout';
+}
+
 // ============================================================================
 // CHECKOUT PAGE
 // ============================================================================
@@ -3039,6 +3127,22 @@ function renderCheckout(){
     return;
   }
   const totals = getCartTotals();
+
+  // Meta Pixel Event: Checkout page loaded
+  trackPixelEvent('InitiateCheckout', {
+    content_name: 'Checkout Page',
+    content_category: 'E-commerce Checkout',
+    content_ids: cart.map(i => i.productId),
+    contents: cart.map(i => ({
+      id: i.productId,
+      quantity: i.quantity,
+      item_price: i.price
+    })),
+    content_type: 'product',
+    num_items: totals.itemCount,
+    value: totals.grandTotal,
+    currency: 'INR'
+  }, 'Checkout');
 
   app.innerHTML = `
   <section class="pad wrap">
@@ -3200,6 +3304,29 @@ function selectPayment(method){
     const radio = row.querySelector('input[type=radio]');
     if(radio) radio.checked = row.dataset.method === method;
   });
+
+  const cart = getCart();
+  const totals = getCartTotals();
+  const paymentLabels = {
+    cod: 'Cash on Delivery',
+    upi: 'UPI / Google Pay / PhonePe',
+    card: 'Credit / Debit Card'
+  };
+
+  // Meta Pixel Event: Payment Method selected (Standard: 'AddPaymentInfo', Custom: 'Payment Method')
+  trackPixelEvent('AddPaymentInfo', {
+    content_category: 'Payment Method',
+    content_ids: cart.map(i => i.productId),
+    contents: cart.map(i => ({
+      id: i.productId,
+      quantity: i.quantity,
+      item_price: i.price
+    })),
+    content_type: 'product',
+    value: totals.grandTotal,
+    currency: 'INR',
+    payment_type: paymentLabels[method] || method
+  }, 'Payment Method');
 }
 
 // Form validation
@@ -3242,6 +3369,21 @@ function processOrder(){
   const paymentMethod = document.querySelector('input[name=payMethod]:checked')?.value || 'cod';
   const paymentLabels = { cod:'Cash on Delivery', upi:'UPI / GPay / PhonePe (Demo)', card:'Credit/Debit Card (Demo)' };
 
+  // Meta Pixel Event: Payment Method confirmed for placed order
+  trackPixelEvent('AddPaymentInfo', {
+    content_category: 'Payment Method',
+    content_ids: cart.map(i => i.productId),
+    contents: cart.map(i => ({
+      id: i.productId,
+      quantity: i.quantity,
+      item_price: i.price
+    })),
+    content_type: 'product',
+    value: totals.grandTotal,
+    currency: 'INR',
+    payment_type: paymentLabels[paymentMethod] || paymentMethod
+  }, 'Payment Method');
+
   const orderData = {
     orderId: 'UFC' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2,4).toUpperCase(),
     date: new Date().toLocaleString('en-IN', { dateStyle:'full', timeStyle:'short' }),
@@ -3260,6 +3402,22 @@ function processOrder(){
       country: 'India'
     }
   };
+
+  // Meta Pixel Event: Purchase completed
+  trackPixelEvent('Purchase', {
+    content_name: 'Order ' + orderData.orderId,
+    content_ids: cart.map(i => i.productId),
+    contents: cart.map(i => ({
+      id: i.productId,
+      quantity: i.quantity,
+      item_price: i.price
+    })),
+    content_type: 'product',
+    num_items: totals.itemCount,
+    value: totals.grandTotal,
+    currency: 'INR',
+    order_id: orderData.orderId
+  }, 'Purchase Completed');
 
   // Save order for confirmation page
   try { localStorage.setItem('ufc_mania_last_order', JSON.stringify(orderData)); } catch(e){}
@@ -3379,11 +3537,24 @@ function setActiveNav(route){
   document.querySelectorAll('.navlinks a').forEach(a=>a.classList.toggle('active', a.dataset.route===route));
 }
 
+let isInitialPageView = true;
+function trackSpaPageView(path){
+  if(isInitialPageView){
+    isInitialPageView = false; // Initial PageView was already recorded on page load in <head>
+    return;
+  }
+  trackPixelEvent('PageView', {
+    page_path: path || '/',
+    page_title: document.title
+  });
+}
+
 function router(){
   const hash = location.hash || '#/';
   const [path, query] = hash.replace(/^#/,'').split('?');
   window.scrollTo(0,0);
   document.getElementById('navlinks').classList.remove('open');
+  trackSpaPageView(path);
 
   if(path==='/' || path===''){ renderHome(); setActiveNav('home'); return; }
   if(path==='/fighters'){ renderFightersList(query); setActiveNav('fighters'); return; }
@@ -3440,6 +3611,9 @@ gInput.addEventListener('input', ()=>{
 });
 gInput.addEventListener('keydown', e=>{
   if(e.key==='Enter'){
+    if(gInput.value.trim()){
+      trackPixelEvent('Search', { search_string: gInput.value.trim(), content_category: 'Fighters & Profiles' });
+    }
     const first = document.querySelector('#searchResults .searchRow');
     if(first){ location.hash = first.getAttribute('href'); closeSearch(); }
   }

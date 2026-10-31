@@ -42,6 +42,17 @@ no login to view.
 - **Checkout (`#/checkout`):** 3-step progress bar, Indian delivery address validation (10-digit mobile, 6-digit PIN code, state selector), payment method selection (Cash on Delivery, Demo UPI, Demo Card), and comprehensive demo safety notices.
 - **Order Confirmation (`#/order-confirmation`):** Unique UFC Order ID generator, itemized breakdown, invoice print functionality (`window.print()`), delivery details, and automatic cart clearing.
 
+## Meta / Facebook Pixel Event Tracking (Pixel ID: `1185466460574306`)
+The site includes complete e-commerce event tracking optimized for Meta Ads Manager, Advantage+ Catalog Campaigns, and Custom Conversions. It tracks both official Meta Standard Events and Custom Aliases:
+- **`PageView`:** Tracked on initial page load and on all client-side SPA route transitions (`#/shop`, `#/cart`, `#/checkout`, `#/fighters`, `#/compare`, etc.).
+- **`ViewContent`** *(Custom Alias: `View Product`)*: Triggered when opening product details or quick view modals. Tracks `content_ids`, `content_name`, `content_category`, `value`, and `currency: 'INR'`.
+- **`AddToCart`** *(Custom Alias: `Add to Cart`)*: Triggered when adding items to the cart from catalog cards or quick view. Tracks `content_ids`, `content_name`, `contents` array (item id, price, qty), total `value`, and `currency: 'INR'`.
+- **`InitiateCheckout`** *(Custom Alias: `Checkout`)*: Triggered on clicking "Proceed to Checkout", instant "Buy Now", or loading the checkout page. Tracks item list, `num_items`, total `value`, and `currency: 'INR'`.
+- **`AddPaymentInfo`** *(Custom Alias: `Payment Method`)*: Triggered when selecting payment methods (Cash on Delivery, UPI, Card) and during order processing. Tracks selected `payment_type`, cart items, and `value`.
+- **`Purchase`** *(Custom Alias: `Purchase Completed`)*: Triggered upon successful order creation. Tracks unique `order_id`, item breakdown, `num_items`, total `value`, and `currency: 'INR'`.
+- **`Search`:** Triggered when searching fighters or shop merchandise via hero search, global search overlay, or shop filters.
+
+All events log cleanly to the browser console (`console.log`) in DevTools with the tag `[Meta Pixel]` for instant verification.
 
 ---
 
