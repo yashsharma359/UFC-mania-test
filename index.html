@@ -53,6 +53,96 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Firebase App & Firestore SDKs (v10 Modular via CDN) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyALBGCAWwDAofWh1dcH_pEl022_k_HqCZ4",
+    authDomain: "ufc-mania-1.firebaseapp.com",
+    projectId: "ufc-mania-1",
+    storageBucket: "ufc-mania-1.firebasestorage.app",
+    messagingSenderId: "910913540211",
+    appId: "1:910913540211:web:6d190c2a7c221b17009a06",
+    measurementId: "G-6JFM9NPYWN"
+  };
+
+  let db = null;
+  try {
+    const fbApp = initializeApp(firebaseConfig);
+    db = getFirestore(fbApp);
+    window._firebaseDb = db;
+    window._firebaseConnected = true;
+    console.log("[Firebase] UFC Mania cloud database initialized successfully.");
+  } catch(err) {
+    console.warn("[Firebase] Initialization error:", err);
+    window._firebaseConnected = false;
+  }
+
+  // Global helper to record orders to Firebase Firestore
+  window.recordFirebaseOrder = async function(orderData) {
+    if(!db) {
+      console.warn("[Firebase] DB not ready, storing order locally only.");
+      return;
+    }
+    try {
+      const docRef = await addDoc(collection(db, "orders"), {
+        ...orderData,
+        firebaseCreatedAt: serverTimestamp(),
+        createdAtEpoch: Date.now()
+      });
+      console.log("[Firebase] Order synced to cloud with ID:", docRef.id);
+    } catch(e) {
+      console.error("[Firebase] Error saving order to cloud:", e);
+    }
+  };
+
+  // Global helper to record user activity
+  window.recordFirebaseActivity = async function(act) {
+    if(!db) return;
+    try {
+      await addDoc(collection(db, "activity"), {
+        ...act,
+        userAgent: navigator.userAgent.substring(0, 80),
+        timestamp: Date.now(),
+        dateStr: new Date().toISOString()
+      });
+    } catch(e) {
+      // Activity logging fails silently if offline
+    }
+  };
+
+  // Expose firestore query operations for Admin Panel
+  window.adminFetchOrders = async function() {
+    if(!db) throw new Error("Firebase DB is not initialized.");
+    const q = query(collection(db, "orders"), orderBy("createdAtEpoch", "desc"), limit(100));
+    const snap = await getDocs(q);
+    const list = [];
+    snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+    return list;
+  };
+
+  window.adminUpdateOrderStatus = async function(docId, newStatus) {
+    if(!db) throw new Error("Firebase DB is not initialized.");
+    await updateDoc(doc(db, "orders", docId), { status: newStatus });
+  };
+
+  window.adminDeleteOrder = async function(docId) {
+    if(!db) throw new Error("Firebase DB is not initialized.");
+    await deleteDoc(doc(db, "orders", docId));
+  };
+
+  window.adminFetchActivity = async function() {
+    if(!db) throw new Error("Firebase DB is not initialized.");
+    const q = query(collection(db, "activity"), orderBy("timestamp", "desc"), limit(60));
+    const snap = await getDocs(q);
+    const list = [];
+    snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+    return list;
+  };
+</script>
 <style>
 :root{
   --bg:#0a0a0b;
@@ -755,6 +845,29 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
 .orderSummaryTable th{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px;text-transform:uppercase;}
 .orderSummaryTable td{padding:12px;border-bottom:1px solid var(--line);}
 
+/* ===== ADMIN PANEL STYLES ===== */
+.adminCard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.adminStatGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:24px 0;}
+.adminStatCard{background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:10px;padding:18px 20px;position:relative;overflow:hidden;}
+.adminStatCard::after{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--red);}
+.adminStatLabel{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+.adminStatVal{font-family:'Oswald',sans-serif;font-size:28px;color:var(--white);font-weight:700;margin-top:6px;}
+.adminTabs{display:flex;gap:8px;border-bottom:1px solid var(--line);padding-bottom:12px;margin:28px 0 20px;flex-wrap:wrap;}
+.adminTabBtn{background:transparent;border:1px solid transparent;color:var(--muted);padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+.adminTabBtn:hover{color:var(--white);background:rgba(255,255,255,0.04);}
+.adminTabBtn.active{color:var(--white);background:rgba(224,16,43,0.15);border-color:rgba(224,16,43,0.4);}
+.adminTableWrap{overflow-x:auto;}
+.adminTable{width:100%;border-collapse:collapse;font-size:13.5px;text-align:left;}
+.adminTable th{background:rgba(255,255,255,0.03);padding:12px 14px;border-bottom:1px solid var(--line);color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:0.8px;}
+.adminTable td{padding:14px;border-bottom:1px solid var(--line);vertical-align:middle;}
+.adminTable tr:hover td{background:rgba(255,255,255,0.015);}
+.statusBadge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;}
+.statusPending{background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.35);}
+.statusConfirmed{background:rgba(59,130,246,0.18);color:#60a5fa;border:1px solid rgba(59,130,246,0.35);}
+.statusShipped{background:rgba(168,85,247,0.18);color:#c084fc;border:1px solid rgba(168,85,247,0.35);}
+.statusDelivered{background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.35);}
+.statusCancelled{background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.35);}
+
 /* Print invoice rules */
 @media print{
   #nav,#searchOverlay,footer,.toastContainer,.btnAddToCart,.btnCheckout,.btnrow,button:not(.btnInvoicePrint){display:none !important;}
@@ -822,7 +935,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
 <footer>
   <div class="wrap">
     <span>UFC Mania — demo build. Not affiliated with the UFC or Zuffa LLC.</span>
-    <span>Sample dataset &amp; Demo UFC Store · Last updated January 2026</span>
+    <span>Sample dataset &amp; Demo UFC Store · Last updated January 2026 · <a href="#/admin" style="color:var(--muted);text-decoration:none;opacity:0.65;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.65">🔒 Admin</a></span>
   </div>
 </footer>
 
@@ -3422,6 +3535,11 @@ function processOrder(){
   // Save order for confirmation page
   try { localStorage.setItem('ufc_mania_last_order', JSON.stringify(orderData)); } catch(e){}
 
+  // Sync order to Firebase Firestore Cloud Database
+  if(window.recordFirebaseOrder){
+    window.recordFirebaseOrder(orderData);
+  }
+
   // Clear cart
   setActiveCoupon(null);
   saveCart([]);
@@ -3529,6 +3647,404 @@ function renderOrderConfirmation(){
   </section>`;
 }
 
+// ============================================================================
+// ADMIN PANEL (MANAGED VIA FIREBASE FIRESTORE & SECURE PASSWORD)
+// ============================================================================
+const ADMIN_SECRET = 'terechachakaufcdata5874';
+let adminActiveTab = 'orders';
+let adminCachedOrders = [];
+let adminCachedActivity = [];
+
+function isAdminAuthenticated(){
+  return sessionStorage.getItem('ufc_admin_auth') === 'true';
+}
+
+function renderAdminLogin(){
+  app.innerHTML = `
+  <section class="pad wrap" style="max-width:480px;margin:60px auto;">
+    <div class="adminCard" style="text-align:center;">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;background:rgba(224,16,43,0.15);border:1px solid rgba(224,16,43,0.4);border-radius:50%;margin-bottom:18px;">
+        <span style="font-size:28px;">🔒</span>
+      </div>
+      <h2 style="font-family:'Oswald',sans-serif;font-size:28px;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;">UFC Mania Admin</h2>
+      <p style="color:var(--muted);font-size:13.5px;margin-bottom:24px;">Enter the administrator master key to manage live orders and site activity.</p>
+      
+      <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+        <div style="margin-bottom:18px;text-align:left;">
+          <label style="display:block;font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:6px;letter-spacing:0.5px;">Master Password</label>
+          <input type="password" id="adminPasswordInput" placeholder="Enter master key..." required style="width:100%;box-sizing:border-box;background:#0d0d12;border:1px solid var(--line);border-radius:8px;padding:12px 14px;color:#fff;font-size:15px;outline:none;" autocomplete="current-password" autofocus>
+        </div>
+        <div id="adminLoginErr" style="color:var(--loss);font-size:13px;margin-bottom:14px;display:none;font-weight:600;"></div>
+        <button type="submit" class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;font-weight:700;">UNLOCK ADMIN DASHBOARD</button>
+      </form>
+
+      <div style="margin-top:20px;border-top:1px solid var(--line);padding-top:16px;">
+        <a href="#/" style="color:var(--muted);font-size:13px;text-decoration:none;">← Return to Website</a>
+      </div>
+    </div>
+  </section>`;
+}
+
+window.handleAdminLogin = function(e){
+  e.preventDefault();
+  const pass = document.getElementById('adminPasswordInput').value.trim();
+  const errBox = document.getElementById('adminLoginErr');
+  if(pass === ADMIN_SECRET){
+    sessionStorage.setItem('ufc_admin_auth', 'true');
+    showToast('Admin access granted', 'success');
+    renderAdminPanel();
+  } else {
+    errBox.textContent = 'Invalid administrator password. Access denied.';
+    errBox.style.display = 'block';
+  }
+};
+
+window.handleAdminLogout = function(){
+  sessionStorage.removeItem('ufc_admin_auth');
+  showToast('Logged out of admin panel', 'info');
+  location.hash = '#/';
+};
+
+window.switchAdminTab = function(tab){
+  adminActiveTab = tab;
+  renderAdminPanel();
+};
+
+async function renderAdminPanel(){
+  if(!isAdminAuthenticated()){
+    renderAdminLogin();
+    return;
+  }
+
+  app.innerHTML = `
+  <section class="pad wrap" style="max-width:1240px;margin:20px auto 60px;">
+    <!-- Admin Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;border-bottom:1px solid var(--line);padding-bottom:20px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:1px;text-transform:uppercase;">Admin</span>
+          <h1 style="font-family:'Oswald',sans-serif;font-size:32px;letter-spacing:1px;margin:0;">UFC MANIA MANAGEMENT HUB</h1>
+        </div>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px;">Connected to Firebase Firestore Cloud DB · Project: <code style="color:var(--gold);">ufc-mania-1</code></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button onclick="renderAdminPanel()" class="btn btn-ghost" style="padding:8px 14px;font-size:13px;">🔄 Refresh Data</button>
+        <button onclick="handleAdminLogout()" class="btn btn-ghost" style="padding:8px 14px;font-size:13px;color:var(--loss);border-color:rgba(239,68,68,0.3);">Logout 🔒</button>
+      </div>
+    </div>
+
+    <!-- Live Metrics Grid -->
+    <div class="adminStatGrid" id="adminStatContainer">
+      <div class="adminStatCard"><div class="adminStatLabel">Total Orders</div><div class="adminStatVal" id="statOrders">...</div></div>
+      <div class="adminStatCard"><div class="adminStatLabel">Total Revenue</div><div class="adminStatVal" id="statRevenue">...</div></div>
+      <div class="adminStatCard"><div class="adminStatLabel">Pending Orders</div><div class="adminStatVal" id="statPending">...</div></div>
+      <div class="adminStatCard"><div class="adminStatLabel">Catalog Products</div><div class="adminStatVal">${UFC_PRODUCTS.length}</div></div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="adminTabs">
+      <button class="adminTabBtn ${adminActiveTab==='orders'?'active':''}" onclick="switchAdminTab('orders')">📦 Orders Management</button>
+      <button class="adminTabBtn ${adminActiveTab==='activity'?'active':''}" onclick="switchAdminTab('activity')">⚡ Live User Activity</button>
+      <button class="adminTabBtn ${adminActiveTab==='products'?'active':''}" onclick="switchAdminTab('products')">🛍️ Products Catalog</button>
+      <button class="adminTabBtn ${adminActiveTab==='quick'?'active':''}" onclick="switchAdminTab('quick')">⚙️ System &amp; Cloud Info</button>
+    </div>
+
+    <!-- Tab Contents Container -->
+    <div id="adminTabContent">
+      <div style="text-align:center;padding:50px;color:var(--muted);">Loading cloud records from Firebase...</div>
+    </div>
+  </section>`;
+
+  // Load cloud data asynchronously
+  loadAdminDashboardData();
+}
+
+async function loadAdminDashboardData(){
+  const tabContent = document.getElementById('adminTabContent');
+  if(!tabContent) return;
+
+  try {
+    if(window.adminFetchOrders){
+      adminCachedOrders = await window.adminFetchOrders();
+    }
+  } catch(e) {
+    console.warn("Could not fetch remote Firebase orders:", e);
+    // fallback to local stored order if any
+    try {
+      const loc = JSON.parse(localStorage.getItem('ufc_mania_last_order'));
+      if(loc && !adminCachedOrders.some(o => o.orderId === loc.orderId)){
+        adminCachedOrders = [{ ...loc, id: 'local_demo' }];
+      }
+    }catch(err){}
+  }
+
+  // Update Top Stats
+  const statOrders = document.getElementById('statOrders');
+  const statRevenue = document.getElementById('statRevenue');
+  const statPending = document.getElementById('statPending');
+
+  if(statOrders){
+    const totalRev = adminCachedOrders.reduce((sum, o) => sum + (o.totals?.grandTotal || 0), 0);
+    const pendingCount = adminCachedOrders.filter(o => !o.status || o.status === 'placed' || o.status === 'pending').length;
+    statOrders.textContent = adminCachedOrders.length;
+    statRevenue.textContent = fmtINR(totalRev);
+    statPending.textContent = pendingCount;
+  }
+
+  // Render currently selected tab
+  if(adminActiveTab === 'orders'){
+    renderOrdersTab();
+  } else if(adminActiveTab === 'activity'){
+    renderActivityTab();
+  } else if(adminActiveTab === 'products'){
+    renderProductsTab();
+  } else if(adminActiveTab === 'quick'){
+    renderQuickTab();
+  }
+}
+
+function renderOrdersTab(){
+  const box = document.getElementById('adminTabContent');
+  if(!box) return;
+
+  if(!adminCachedOrders.length){
+    box.innerHTML = `
+    <div class="adminCard" style="text-align:center;padding:50px;">
+      <div style="font-size:40px;margin-bottom:12px;">📭</div>
+      <h3 style="margin:0 0 6px;">No Orders Recorded Yet</h3>
+      <p style="color:var(--muted);font-size:14px;max-width:500px;margin:0 auto 20px;">Whenever a customer places an order on the UFC Shop checkout, it will appear here in real-time with customer name, phone, address, and status controls.</p>
+      <a href="#/shop" class="btn btn-ghost" style="display:inline-flex;">Visit Store to Test Checkout →</a>
+    </div>`;
+    return;
+  }
+
+  box.innerHTML = `
+  <div class="adminCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
+      <h3 style="font-family:'Oswald',sans-serif;font-size:20px;margin:0;letter-spacing:0.5px;">RECENT CUSTOMER ORDERS (${adminCachedOrders.length})</h3>
+      <span style="font-size:12px;color:var(--muted);">Click on status dropdown to update live</span>
+    </div>
+    <div class="adminTableWrap">
+      <table class="adminTable">
+        <thead>
+          <tr>
+            <th>Order ID / Date</th>
+            <th>Customer &amp; Contact</th>
+            <th>Shipping Address</th>
+            <th>Items Ordered</th>
+            <th>Total Amount</th>
+            <th>Payment</th>
+            <th>Live Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${adminCachedOrders.map(o => {
+            const st = (o.status || 'pending').toLowerCase();
+            const badgeClass = st === 'delivered' ? 'statusDelivered' : st === 'shipped' ? 'statusShipped' : st === 'cancelled' ? 'statusCancelled' : 'statusPending';
+            const itemsSummary = (o.items || []).map(i => `${i.quantity}x ${i.name}`).join('<br>') || 'N/A';
+            const addr = o.shippingAddress ? `${o.shippingAddress.fullName || ''}, ${o.shippingAddress.phone || ''}<br>${o.shippingAddress.house || ''} ${o.shippingAddress.street || ''}, ${o.shippingAddress.city || ''}, ${o.shippingAddress.state || ''} - ${o.shippingAddress.pincode || ''}` : 'Address not specified';
+            
+            return `
+            <tr>
+              <td>
+                <span class="orderIdPill" style="font-size:12px;display:inline-block;margin-bottom:4px;">${o.orderId || o.id}</span>
+                <div style="font-size:11px;color:var(--muted);">${o.createdAt ? new Date(o.createdAt).toLocaleString('en-IN') : (o.createdAtEpoch ? new Date(o.createdAtEpoch).toLocaleString('en-IN') : 'Just now')}</div>
+              </td>
+              <td>
+                <div style="font-weight:600;color:var(--white);">${o.shippingAddress?.fullName || 'Anonymous'}</div>
+                <div style="font-size:12px;color:var(--muted);">${o.shippingAddress?.phone || 'No phone'}</div>
+              </td>
+              <td style="font-size:12px;color:#c0c0c5;line-height:1.4;max-width:260px;">${addr}</td>
+              <td style="font-size:12px;line-height:1.4;">${itemsSummary}</td>
+              <td><span style="font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;color:var(--gold);">${fmtINR(o.totals?.grandTotal || 0)}</span></td>
+              <td>
+                <span style="font-size:11px;text-transform:uppercase;background:rgba(255,255,255,0.06);padding:3px 7px;border-radius:4px;font-weight:600;">${o.paymentMethod || 'COD'}</span>
+              </td>
+              <td>
+                <select onchange="handleAdminStatusChange('${o.id}', this.value)" style="background:#0d0d12;color:#fff;border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:12px;font-weight:600;cursor:pointer;">
+                  <option value="pending" ${st==='pending'?'selected':''}>⏳ Pending</option>
+                  <option value="confirmed" ${st==='confirmed'?'selected':''}>✅ Confirmed</option>
+                  <option value="shipped" ${st==='shipped'?'selected':''}>🚚 Shipped</option>
+                  <option value="delivered" ${st==='delivered'?'selected':''}>🎉 Delivered</option>
+                  <option value="cancelled" ${st==='cancelled'?'selected':''}>❌ Cancelled</option>
+                </select>
+              </td>
+              <td>
+                <button onclick="handleAdminDeleteOrder('${o.id}')" title="Delete record" style="background:transparent;border:none;color:var(--loss);cursor:pointer;padding:6px;border-radius:4px;" onmouseover="this.style.background='rgba(239,68,68,0.15)'" onmouseout="this.style.background='transparent'">🗑️</button>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+async function renderActivityTab(){
+  const box = document.getElementById('adminTabContent');
+  if(!box) return;
+
+  box.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">Loading visitor stream from Firebase...</div>`;
+  
+  try {
+    if(window.adminFetchActivity){
+      adminCachedActivity = await window.adminFetchActivity();
+    }
+  } catch(e){
+    console.warn("Could not load activity:", e);
+  }
+
+  if(!adminCachedActivity.length){
+    box.innerHTML = `
+    <div class="adminCard" style="text-align:center;padding:50px;">
+      <div style="font-size:40px;margin-bottom:12px;">⚡</div>
+      <h3 style="margin:0 0 6px;">No Recent Visitor Activity Logged</h3>
+      <p style="color:var(--muted);font-size:14px;max-width:500px;margin:0 auto 20px;">As visitors browse pages, view fighters, and interact with the UFC store, real-time events stream into this feed.</p>
+    </div>`;
+    return;
+  }
+
+  box.innerHTML = `
+  <div class="adminCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <h3 style="font-family:'Oswald',sans-serif;font-size:20px;margin:0;letter-spacing:0.5px;">LIVE VISITOR STREAM (LAST ${adminCachedActivity.length} EVENTS)</h3>
+      <span style="font-size:12px;color:var(--muted);">Logged automatically via Firebase</span>
+    </div>
+    <div class="adminTableWrap">
+      <table class="adminTable">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Event Type</th>
+            <th>Page / Action</th>
+            <th>Page Title</th>
+            <th>Device / Agent</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${adminCachedActivity.map(act => `
+          <tr>
+            <td style="font-size:12px;color:var(--muted);">${act.timestamp ? new Date(act.timestamp).toLocaleTimeString('en-IN') : 'Just now'}</td>
+            <td><span style="background:rgba(224,16,43,0.15);color:var(--red);font-weight:700;font-size:11px;padding:3px 8px;border-radius:4px;text-transform:uppercase;">${act.type || 'PAGEVIEW'}</span></td>
+            <td><code style="color:var(--gold);font-size:12.5px;">${act.path || '/'}</code></td>
+            <td style="font-size:13px;color:var(--white);">${act.title || 'UFC Mania'}</td>
+            <td style="font-size:11px;color:var(--muted);max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${act.userAgent || 'Web Client'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderProductsTab(){
+  const box = document.getElementById('adminTabContent');
+  if(!box) return;
+
+  box.innerHTML = `
+  <div class="adminCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
+      <h3 style="font-family:'Oswald',sans-serif;font-size:20px;margin:0;letter-spacing:0.5px;">ACTIVE UFC MERCHANDISE CATALOG (${UFC_PRODUCTS.length})</h3>
+      <span style="font-size:12px;color:var(--muted);">Product items loaded from store inventory</span>
+    </div>
+    <div class="adminTableWrap">
+      <table class="adminTable">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Category</th>
+            <th>Price (INR)</th>
+            <th>Stock Status</th>
+            <th>Rating</th>
+            <th>SKU / ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${UFC_PRODUCTS.map(p => `
+          <tr>
+            <td style="display:flex;align-items:center;gap:12px;">
+              <img src="${p.image}" alt="${p.name}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;background:#1a1a24;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'40\\' height=\\'40\\'><rect width=\\'100%\\' height=\\'100%\\' fill=\\'%23222\\'/></svg>'">
+              <div>
+                <div style="font-weight:600;color:var(--white);font-size:13.5px;">${p.name}</div>
+                <div style="font-size:11.5px;color:var(--muted);">${p.subtitle || ''}</div>
+              </div>
+            </td>
+            <td><span style="text-transform:uppercase;font-size:11px;background:rgba(255,255,255,0.06);padding:3px 8px;border-radius:4px;font-weight:600;">${p.category}</span></td>
+            <td><span style="font-weight:700;color:var(--gold);font-family:'Oswald',sans-serif;font-size:15px;">${fmtINR(p.price)}</span></td>
+            <td>
+              <span class="statusBadge ${p.inStock ? 'statusDelivered' : 'statusCancelled'}">${p.inStock ? 'IN STOCK' : 'OUT OF STOCK'}</span>
+            </td>
+            <td style="font-size:12px;">⭐ ${p.rating} <span style="color:var(--muted);">(${p.reviewCount})</span></td>
+            <td><code style="font-size:11.5px;color:var(--muted);">${p.id}</code></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderQuickTab(){
+  const box = document.getElementById('adminTabContent');
+  if(!box) return;
+
+  box.innerHTML = `
+  <div class="adminCard">
+    <h3 style="font-family:'Oswald',sans-serif;font-size:20px;margin:0 0 16px;letter-spacing:0.5px;">SYSTEM &amp; FIREBASE CLOUD CONFIGURATION</h3>
+    
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
+      <div style="background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:10px;padding:18px;">
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:0.5px;margin-bottom:8px;">Firebase Cloud Project</div>
+        <div style="font-family:monospace;font-size:14px;color:var(--gold);margin-bottom:6px;">ufc-mania-1</div>
+        <div style="font-size:12px;color:var(--muted);">Auth Domain: ufc-mania-1.firebaseapp.com</div>
+        <div style="font-size:12px;color:var(--muted);">Database: Firestore (Native Mode)</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:10px;padding:18px;">
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:0.5px;margin-bottom:8px;">Admin Credentials</div>
+        <div style="font-size:13.5px;color:var(--white);margin-bottom:6px;">Password: <code style="color:var(--win);font-weight:bold;">${ADMIN_SECRET}</code></div>
+        <div style="font-size:12px;color:var(--muted);">Session: Protected via Browser SessionStorage</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:10px;padding:18px;">
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:0.5px;margin-bottom:8px;">Meta / Facebook Pixel</div>
+        <div style="font-size:13.5px;color:var(--white);margin-bottom:6px;">Pixel ID: <code style="color:var(--gold);">1185466460574306</code></div>
+        <div style="font-size:12px;color:var(--muted);">Tracking: PageView, ViewContent, AddToCart, Purchase</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+window.handleAdminStatusChange = async function(orderDocId, newStatus){
+  try {
+    if(window.adminUpdateOrderStatus && orderDocId !== 'local_demo'){
+      await window.adminUpdateOrderStatus(orderDocId, newStatus);
+      showToast(`Order status updated to "${newStatus}"`, 'success');
+    } else {
+      showToast(`Status changed to ${newStatus} (demo mode)`, 'info');
+    }
+    const target = adminCachedOrders.find(o => o.id === orderDocId);
+    if(target) target.status = newStatus;
+  } catch(err) {
+    console.error("Status update error:", err);
+    showToast('Failed to update status on cloud', 'error');
+  }
+};
+
+window.handleAdminDeleteOrder = async function(orderDocId){
+  if(!confirm("Are you sure you want to permanently delete this order record?")) return;
+  try {
+    if(window.adminDeleteOrder && orderDocId !== 'local_demo'){
+      await window.adminDeleteOrder(orderDocId);
+      showToast('Order deleted from cloud', 'info');
+    }
+    adminCachedOrders = adminCachedOrders.filter(o => o.id !== orderDocId);
+    renderOrdersTab();
+  } catch(err) {
+    console.error("Delete order error:", err);
+    showToast('Failed to delete order from cloud', 'error');
+  }
+};
+
 
 // ============================================================================
 // ROUTER
@@ -3555,6 +4071,13 @@ function router(){
   window.scrollTo(0,0);
   document.getElementById('navlinks').classList.remove('open');
   trackSpaPageView(path);
+  if(window.recordFirebaseActivity && path !== '/admin'){
+    window.recordFirebaseActivity({
+      type: 'pageview',
+      path: path || '/',
+      title: document.title || 'UFC Mania'
+    });
+  }
 
   if(path==='/' || path===''){ renderHome(); setActiveNav('home'); return; }
   if(path==='/fighters'){ renderFightersList(query); setActiveNav('fighters'); return; }
@@ -3572,6 +4095,7 @@ function router(){
   if(path==='/cart'){ renderCart(); setActiveNav('shop'); return; }
   if(path==='/checkout'){ renderCheckout(); setActiveNav('shop'); return; }
   if(path==='/order-confirmation'){ renderOrderConfirmation(); setActiveNav('shop'); return; }
+  if(path==='/admin'){ renderAdminPanel(); setActiveNav(''); return; }
   // fallback
   renderHome(); setActiveNav('home');
 }
