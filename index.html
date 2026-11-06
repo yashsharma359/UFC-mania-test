@@ -1116,6 +1116,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
       <a href="#/compare" data-route="compare">Compare</a>
       <a href="#/news" data-route="news">News</a>
       <a href="#/shop" data-route="shop">Shop</a>
+      <a href="#/auth" data-route="auth" id="mobileNavAuthLink" style="border-top:1px solid var(--line);margin-top:6px;padding-top:12px;color:var(--gold);font-weight:700;">👤 My Account / Sign In</a>
     </div>
     <div class="navtools">
       <button id="navSearchBtn" title="Search fighters" aria-label="Search fighters">
@@ -1129,7 +1130,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
         </svg>
         <span class="cartBadge" id="navCartBadge">0</span>
       </a>
-      <a href="#/auth" id="navAuthBtn" class="navAuthBtn" title="My Account">
+      <a href="#/auth" id="navAuthBtn" class="navAuthBtn" title="My Account" onclick="window.navigateAuth && window.navigateAuth(event)">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span id="navAuthLabel">Sign In</span>
       </a>
@@ -3883,24 +3884,52 @@ function renderOrderConfirmation(){
 // ============================================================================
 // CUSTOMER AUTHENTICATION & MY ACCOUNT SYSTEM
 // ============================================================================
+window.navigateAuth = function(e){
+  if(e && e.preventDefault) e.preventDefault();
+  if(window._currentUser){
+    location.hash = '#/account';
+  } else {
+    location.hash = '#/auth';
+  }
+  // If hash was already the same, router might not trigger via hashchange
+  router();
+};
+
 function updateNavAuthUI(){
   const btn = document.getElementById('navAuthBtn');
   const label = document.getElementById('navAuthLabel');
-  if(!btn || !label) return;
+  const mLink = document.getElementById('mobileNavAuthLink');
 
   if(window._currentUser){
     const name = window._currentUserProfile?.displayName || window._currentUser.displayName || window._currentUser.email.split('@')[0];
-    btn.href = '#/account';
-    btn.title = `My Account (${name})`;
-    label.textContent = name.length > 10 ? name.substring(0,9) + '…' : name;
-    btn.style.borderColor = 'rgba(47,158,91,0.5)';
+    const displayLabel = name.length > 10 ? name.substring(0,9) + '…' : name;
+    if(btn){
+      btn.href = '#/account';
+      btn.title = `My Account (${name})`;
+      btn.style.borderColor = 'rgba(47,158,91,0.5)';
+    }
+    if(label) label.textContent = displayLabel;
+    if(mLink){
+      mLink.href = '#/account';
+      mLink.textContent = `👤 My Account (${displayLabel})`;
+    }
   } else {
-    btn.href = '#/auth';
-    btn.title = 'Sign In or Create Account';
-    label.textContent = 'Sign In';
-    btn.style.borderColor = 'var(--line)';
+    if(btn){
+      btn.href = '#/auth';
+      btn.title = 'Sign In or Create Account';
+      btn.style.borderColor = 'var(--line)';
+    }
+    if(label) label.textContent = 'Sign In';
+    if(mLink){
+      mLink.href = '#/auth';
+      mLink.textContent = '👤 My Account / Sign In';
+    }
   }
 }
+
+window.updateNavAuthUI = updateNavAuthUI;
+window.renderAuthPage = renderAuthPage;
+window.renderAccountPage = renderAccountPage;
 
 function renderAuthPage(query){
   if(window._currentUser){
