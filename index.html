@@ -54,10 +54,11 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<!-- Firebase App & Firestore SDKs (v10 Modular via CDN) -->
+<!-- Firebase App, Auth & Firestore SDKs (v10 Modular via CDN) -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, query, orderBy, limit, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, updateProfile } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyALBGCAWwDAofWh1dcH_pEl022_k_HqCZ4",
@@ -70,16 +71,158 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
   };
 
   let db = null;
+  let auth = null;
   try {
     const fbApp = initializeApp(firebaseConfig);
     db = getFirestore(fbApp);
+    auth = getAuth(fbApp);
     window._firebaseDb = db;
+    window._firebaseAuth = auth;
     window._firebaseConnected = true;
-    console.log("[Firebase] UFC Mania cloud database initialized successfully.");
+    console.log("[Firebase] UFC Mania Auth & Cloud Firestore initialized successfully.");
   } catch(err) {
     console.warn("[Firebase] Initialization error:", err);
     window._firebaseConnected = false;
   }
+
+  // Current active user state
+  window._currentUser = null;
+  window._currentUserProfile = null;
+
+  if(auth){
+    onAuthStateChanged(auth, async (user) => {
+      window._currentUser = user;
+      if(user){
+        try {
+          const uDoc = await getDoc(doc(db, "users", user.uid));
+          if(uDoc.exists()){
+            window._currentUserProfile = uDoc.data();
+          } else {
+            // Initialize basic profile if not exists
+            const basic = {
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName || user.email.split('@')[0],
+              phone: '',
+              status: 'active',
+              createdAt: Date.now(),
+              address: {}
+            };
+            await setDoc(doc(db, "users", user.uid), basic, { merge: true });
+            window._currentUserProfile = basic;
+          }
+        } catch(e) {
+          console.warn("[Firebase] Error fetching user profile:", e);
+          window._currentUserProfile = { uid: user.uid, email: user.email, displayName: user.displayName || user.email };
+        }
+      } else {
+        window._currentUserProfile = null;
+      }
+      if(typeof updateNavAuthUI === 'function') updateNavAuthUI();
+      // If currently on account page, refresh view
+      if(location.hash === '#/account' && typeof renderAccountPage === 'function'){
+        renderAccountPage();
+      }
+    });
+  }
+
+  // Customer Auth Functions
+  window.authSignUp = async function(email, password, displayName, phone, address = {}){
+    if(!auth || !db) throw new Error("Firebase is not initialized.");
+    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCred.user;
+    if(displayName){
+      await updateProfile(user, { displayName });
+    }
+    const profile = {
+      uid: user.uid,
+      email: user.email,
+      displayName: displayName || email.split('@')[0],
+      phone: phone || '',
+      address: address || {},
+      status: 'active',
+      role: 'customer',
+      totalOrders: 0,
+      totalSpent: 0,
+      createdAt: Date.now(),
+      createdAtStr: new Date().toISOString()
+    };
+    await setDoc(doc(db, "users", user.uid), profile);
+    window._currentUser = user;
+    window._currentUserProfile = profile;
+    return user;
+  };
+
+  window.authSignIn = async function(email, password){
+    if(!auth) throw new Error("Firebase Auth is not initialized.");
+    const userCred = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCred.user;
+    // Check if account blocked
+    try {
+      const uDoc = await getDoc(doc(db, "users", user.uid));
+      if(uDoc.exists()){
+        const data = uDoc.data();
+        if(data.status === 'blocked'){
+          await signOut(auth);
+          throw new Error("Your account has been suspended by the administrator. Contact support.");
+        }
+        window._currentUserProfile = data;
+      }
+    } catch(err) {
+      if(err.message.includes("suspended")) throw err;
+    }
+    return user;
+  };
+
+  window.authSignOut = async function(){
+    if(!auth) return;
+    await signOut(auth);
+    window._currentUser = null;
+    window._currentUserProfile = null;
+    if(typeof updateNavAuthUI === 'function') updateNavAuthUI();
+  };
+
+  window.authSendPasswordReset = async function(email){
+    if(!auth) throw new Error("Firebase Auth is not initialized.");
+    await sendPasswordResetEmail(auth, email);
+  };
+
+  window.authUpdateProfile = async function(updates){
+    if(!auth || !auth.currentUser) throw new Error("Not logged in.");
+    const uid = auth.currentUser.uid;
+    if(updates.displayName){
+      await updateProfile(auth.currentUser, { displayName: updates.displayName });
+    }
+    await updateDoc(doc(db, "users", uid), {
+      ...updates,
+      updatedAt: Date.now()
+    });
+    window._currentUserProfile = { ...(window._currentUserProfile || {}), ...updates };
+  };
+
+  window.authFetchUserOrders = async function(){
+    if(!db || !auth || !auth.currentUser) return [];
+    try {
+      const q = query(
+        collection(db, "orders"),
+        where("userId", "==", auth.currentUser.uid),
+        orderBy("createdAtEpoch", "desc"),
+        limit(50)
+      );
+      const snap = await getDocs(q);
+      const list = [];
+      snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+      return list;
+    } catch(err) {
+      // Fallback query without compound index if needed
+      const q2 = query(collection(db, "orders"), where("userId", "==", auth.currentUser.uid), limit(50));
+      const snap2 = await getDocs(q2);
+      const list2 = [];
+      snap2.forEach(d => list2.push({ id: d.id, ...d.data() }));
+      list2.sort((a,b) => (b.createdAtEpoch||0) - (a.createdAtEpoch||0));
+      return list2;
+    }
+  };
 
   // Global helper to record orders to Firebase Firestore
   window.recordFirebaseOrder = async function(orderData) {
@@ -88,12 +231,33 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
       return;
     }
     try {
+      const currentUid = auth?.currentUser?.uid || null;
+      const userEmail = auth?.currentUser?.email || orderData.address?.email || null;
       const docRef = await addDoc(collection(db, "orders"), {
         ...orderData,
+        userId: currentUid,
+        userEmail: userEmail,
+        status: 'pending',
         firebaseCreatedAt: serverTimestamp(),
         createdAtEpoch: Date.now()
       });
       console.log("[Firebase] Order synced to cloud with ID:", docRef.id);
+
+      // If customer logged in, update their order count & spend in user profile
+      if(currentUid){
+        try {
+          const uDocRef = doc(db, "users", currentUid);
+          const uDocSnap = await getDoc(uDocRef);
+          if(uDocSnap.exists()){
+            const uData = uDocSnap.data();
+            await updateDoc(uDocRef, {
+              totalOrders: (uData.totalOrders || 0) + 1,
+              totalSpent: (uData.totalSpent || 0) + (orderData.totals?.grandTotal || 0),
+              lastOrderAt: Date.now()
+            });
+          }
+        }catch(e){ console.warn("Could not update user stats", e); }
+      }
     } catch(e) {
       console.error("[Firebase] Error saving order to cloud:", e);
     }
@@ -105,6 +269,8 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
     try {
       await addDoc(collection(db, "activity"), {
         ...act,
+        userId: auth?.currentUser?.uid || null,
+        userEmail: auth?.currentUser?.email || 'Guest',
         userAgent: navigator.userAgent.substring(0, 80),
         timestamp: Date.now(),
         dateStr: new Date().toISOString()
@@ -141,6 +307,32 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
     const list = [];
     snap.forEach(d => list.push({ id: d.id, ...d.data() }));
     return list;
+  };
+
+  // Admin User Management Operations
+  window.adminFetchUsers = async function() {
+    if(!db) throw new Error("Firebase DB is not initialized.");
+    const q = query(collection(db, "users"), limit(100));
+    const snap = await getDocs(q);
+    const list = [];
+    snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+    list.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+    return list;
+  };
+
+  window.adminUpdateUserStatus = async function(uid, newStatus) {
+    if(!db) throw new Error("Firebase DB is not initialized.");
+    await updateDoc(doc(db, "users", uid), { status: newStatus });
+  };
+
+  window.adminSaveUserNotes = async function(uid, notes) {
+    if(!db) throw new Error("Firebase DB is not initialized.");
+    await updateDoc(doc(db, "users", uid), { adminNotes: notes });
+  };
+
+  window.adminDeleteUserDoc = async function(uid) {
+    if(!db) throw new Error("Firebase DB is not initialized.");
+    await deleteDoc(doc(db, "users", uid));
   };
 </script>
 <style>
@@ -868,6 +1060,28 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
 .statusDelivered{background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.35);}
 .statusCancelled{background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.35);}
 
+/* ===== AUTH & ACCOUNT STYLES ===== */
+.navAuthBtn{
+  background:rgba(255,255,255,0.06);border:1px solid var(--line);
+  color:var(--white);padding:6px 12px;border-radius:8px;
+  font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;
+  gap:6px;text-decoration:none;transition:all .2s;white-space:nowrap;
+}
+.navAuthBtn:hover{background:rgba(224,16,43,0.15);border-color:rgba(224,16,43,0.4);color:var(--white);}
+.authCard{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:32px 28px;max-width:440px;margin:50px auto;box-shadow:0 12px 40px rgba(0,0,0,0.5);
+}
+.authTabs{display:flex;border-bottom:1px solid var(--line);margin-bottom:24px;}
+.authTab{flex:1;text-align:center;padding:12px;font-weight:700;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
+.authTab.active{color:var(--white);border-bottom-color:var(--red);}
+.accountGrid{display:grid;grid-template-columns:260px 1fr;gap:24px;margin-top:24px;}
+@media(max-width:840px){.accountGrid{grid-template-columns:1fr;}}
+.accountSidebar{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;height:fit-content;}
+.accountNavBtn{display:block;width:100%;text-align:left;padding:10px 14px;background:transparent;border:none;border-radius:6px;color:var(--muted);font-size:13.5px;font-weight:600;cursor:pointer;transition:all .2s;margin-bottom:4px;}
+.accountNavBtn:hover{background:rgba(255,255,255,0.04);color:var(--white);}
+.accountNavBtn.active{background:rgba(224,16,43,0.15);color:var(--white);font-weight:700;}
+
 /* Print invoice rules */
 @media print{
   #nav,#searchOverlay,footer,.toastContainer,.btnAddToCart,.btnCheckout,.btnrow,button:not(.btnInvoicePrint){display:none !important;}
@@ -914,6 +1128,10 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
           <path d="M16 10a4 4 0 0 1-8 0"></path>
         </svg>
         <span class="cartBadge" id="navCartBadge">0</span>
+      </a>
+      <a href="#/auth" id="navAuthBtn" class="navAuthBtn" title="My Account">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span id="navAuthLabel">Sign In</span>
       </a>
       <button class="burger" id="burgerBtn" aria-label="Menu">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -3408,6 +3626,21 @@ function renderCheckout(){
       processOrder();
     }
   });
+
+  // Auto-fill logged-in customer's details if available
+  if(window._currentUserProfile || window._currentUser){
+    const p = window._currentUserProfile || {};
+    const u = window._currentUser || {};
+    const addr = p.address || {};
+    if(p.displayName || u.displayName) document.getElementById('coName').value = p.displayName || u.displayName;
+    if(p.phone) document.getElementById('coMobile').value = p.phone;
+    if(u.email || p.email) document.getElementById('coEmail').value = u.email || p.email;
+    if(addr.house) document.getElementById('coHouse').value = addr.house;
+    if(addr.street) document.getElementById('coStreet').value = addr.street;
+    if(addr.city) document.getElementById('coCity').value = addr.city;
+    if(addr.state) document.getElementById('coState').value = addr.state;
+    if(addr.pincode) document.getElementById('coPincode').value = addr.pincode;
+  }
 }
 
 // Payment method selector
@@ -3648,12 +3881,443 @@ function renderOrderConfirmation(){
 }
 
 // ============================================================================
+// CUSTOMER AUTHENTICATION & MY ACCOUNT SYSTEM
+// ============================================================================
+function updateNavAuthUI(){
+  const btn = document.getElementById('navAuthBtn');
+  const label = document.getElementById('navAuthLabel');
+  if(!btn || !label) return;
+
+  if(window._currentUser){
+    const name = window._currentUserProfile?.displayName || window._currentUser.displayName || window._currentUser.email.split('@')[0];
+    btn.href = '#/account';
+    btn.title = `My Account (${name})`;
+    label.textContent = name.length > 10 ? name.substring(0,9) + '…' : name;
+    btn.style.borderColor = 'rgba(47,158,91,0.5)';
+  } else {
+    btn.href = '#/auth';
+    btn.title = 'Sign In or Create Account';
+    label.textContent = 'Sign In';
+    btn.style.borderColor = 'var(--line)';
+  }
+}
+
+function renderAuthPage(query){
+  if(window._currentUser){
+    location.hash = '#/account';
+    return;
+  }
+
+  const initialTab = query === 'signup' ? 'signup' : 'signin';
+
+  app.innerHTML = `
+  <section class="pad wrap" style="max-width:480px;margin:40px auto 60px;">
+    <div class="authCard">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+          <span style="color:var(--red);">UFC MANIA</span> MEMBER HUB
+        </div>
+        <p style="color:var(--muted);font-size:13px;margin-top:4px;">Sign in to track orders, save delivery addresses &amp; get member perks.</p>
+      </div>
+
+      <div class="authTabs">
+        <div class="authTab ${initialTab==='signin'?'active':''}" id="tabBtnSignIn" onclick="switchAuthTab('signin')">Sign In</div>
+        <div class="authTab ${initialTab==='signup'?'active':''}" id="tabBtnSignUp" onclick="switchAuthTab('signup')">Create Account</div>
+      </div>
+
+      <!-- Sign In Form -->
+      <form id="signInForm" style="display:${initialTab==='signin'?'block':'none'};" onsubmit="handleCustomerSignIn(event)">
+        <div class="formGroup">
+          <label class="formLabel">Email Address</label>
+          <input type="email" class="formInput" id="siEmail" placeholder="your@email.com" required autocomplete="email">
+        </div>
+        <div class="formGroup">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <label class="formLabel">Password</label>
+            <a href="javascript:void(0)" onclick="handleForgotPassword()" style="font-size:11.5px;color:var(--gold);text-decoration:none;">Forgot?</a>
+          </div>
+          <input type="password" class="formInput" id="siPassword" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <div id="signInError" style="color:var(--loss);font-size:12.5px;margin-bottom:12px;display:none;font-weight:600;"></div>
+        <button type="submit" class="btnCheckout" id="siSubmitBtn" style="margin-top:8px;">Sign In to UFC Mania</button>
+      </form>
+
+      <!-- Sign Up Form -->
+      <form id="signUpForm" style="display:${initialTab==='signup'?'block':'none'};" onsubmit="handleCustomerSignUp(event)">
+        <div class="formGroup">
+          <label class="formLabel">Full Name <span class="req">*</span></label>
+          <input type="text" class="formInput" id="suName" placeholder="e.g. Rahul Sharma" required autocomplete="name">
+        </div>
+        <div class="formGroup">
+          <label class="formLabel">Email Address <span class="req">*</span></label>
+          <input type="email" class="formInput" id="suEmail" placeholder="your@email.com" required autocomplete="email">
+        </div>
+        <div class="formGroup">
+          <label class="formLabel">Mobile Number (10-digit Indian) <span class="req">*</span></label>
+          <input type="tel" class="formInput" id="suPhone" placeholder="9876543210" maxlength="10" required autocomplete="tel">
+        </div>
+        <div class="formGroup">
+          <label class="formLabel">Create Password <span class="req">*</span></label>
+          <input type="password" class="formInput" id="suPassword" placeholder="Minimum 6 characters" minlength="6" required autocomplete="new-password">
+        </div>
+        <div id="signUpError" style="color:var(--loss);font-size:12.5px;margin-bottom:12px;display:none;font-weight:600;"></div>
+        <button type="submit" class="btnCheckout" id="suSubmitBtn" style="margin-top:8px;">Create My Account</button>
+      </form>
+
+      <div style="text-align:center;margin-top:24px;border-top:1px solid var(--line);padding-top:16px;">
+        <a href="#/shop" style="color:var(--muted);font-size:13px;text-decoration:none;">← Continue Browsing UFC Shop</a>
+      </div>
+    </div>
+  </section>`;
+}
+
+window.switchAuthTab = function(tab){
+  const tabIn = document.getElementById('tabBtnSignIn');
+  const tabUp = document.getElementById('tabBtnSignUp');
+  const formIn = document.getElementById('signInForm');
+  const formUp = document.getElementById('signUpForm');
+  if(!tabIn || !tabUp) return;
+
+  if(tab === 'signin'){
+    tabIn.classList.add('active');
+    tabUp.classList.remove('active');
+    formIn.style.display = 'block';
+    formUp.style.display = 'none';
+  } else {
+    tabUp.classList.add('active');
+    tabIn.classList.remove('active');
+    formUp.style.display = 'block';
+    formIn.style.display = 'none';
+  }
+};
+
+window.handleCustomerSignIn = async function(e){
+  e.preventDefault();
+  const email = document.getElementById('siEmail').value.trim();
+  const pass = document.getElementById('siPassword').value;
+  const errBox = document.getElementById('signInError');
+  const btn = document.getElementById('siSubmitBtn');
+  errBox.style.display = 'none';
+
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+
+  try {
+    if(!window.authSignIn) throw new Error("Firebase Auth is loading. Please retry in a second.");
+    await window.authSignIn(email, pass);
+    showToast('Welcome back to UFC Mania!', 'success');
+    updateNavAuthUI();
+    location.hash = '#/account';
+  } catch(err) {
+    console.error("Sign in failed:", err);
+    errBox.textContent = err.message.replace('Firebase: ', '');
+    errBox.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign In to UFC Mania';
+  }
+};
+
+window.handleCustomerSignUp = async function(e){
+  e.preventDefault();
+  const name = document.getElementById('suName').value.trim();
+  const email = document.getElementById('suEmail').value.trim();
+  const phone = document.getElementById('suPhone').value.trim();
+  const pass = document.getElementById('suPassword').value;
+  const errBox = document.getElementById('signUpError');
+  const btn = document.getElementById('suSubmitBtn');
+  errBox.style.display = 'none';
+
+  if(!/^[6-9]\d{9}$/.test(phone)){
+    errBox.textContent = 'Please enter a valid 10-digit Indian mobile number.';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Creating Account...';
+
+  try {
+    if(!window.authSignUp) throw new Error("Firebase Auth is loading. Please retry.");
+    await window.authSignUp(email, pass, name, phone);
+    showToast('Account created successfully! Welcome to UFC Mania.', 'success');
+    updateNavAuthUI();
+    location.hash = '#/account';
+  } catch(err) {
+    console.error("Sign up failed:", err);
+    errBox.textContent = err.message.replace('Firebase: ', '');
+    errBox.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Create My Account';
+  }
+};
+
+window.handleForgotPassword = async function(){
+  const email = prompt("Enter your registered email address to receive a password reset link:");
+  if(!email || !email.trim()) return;
+  try {
+    if(window.authSendPasswordReset){
+      await window.authSendPasswordReset(email.trim());
+      alert("Password reset email has been sent! Check your inbox.");
+    }
+  }catch(err){
+    alert("Could not send reset email: " + err.message);
+  }
+};
+
+// Customer Account Dashboard Page
+let currentAccountView = 'orders';
+let customerCachedOrders = [];
+
+window.switchAccountView = function(view){
+  currentAccountView = view;
+  renderAccountPage();
+};
+
+async function renderAccountPage(){
+  if(!window._currentUser){
+    location.hash = '#/auth';
+    return;
+  }
+
+  const user = window._currentUser;
+  const profile = window._currentUserProfile || {};
+  const displayName = profile.displayName || user.displayName || user.email.split('@')[0];
+
+  app.innerHTML = `
+  <section class="pad wrap" style="max-width:1100px;margin:20px auto 60px;">
+    <!-- Customer Header Banner -->
+    <div style="background:linear-gradient(135deg,rgba(224,16,43,0.12),rgba(20,20,22,0.9));border:1px solid var(--line);border-radius:14px;padding:28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#e0102b,#b80d22);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;box-shadow:0 4px 16px rgba(224,16,43,0.4);">
+          ${displayName.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <h1 style="font-family:'Oswald',sans-serif;font-size:28px;margin:0;letter-spacing:0.5px;">${displayName}</h1>
+            <span style="font-size:11px;background:rgba(47,158,91,0.15);color:var(--win);border:1px solid rgba(47,158,91,0.3);padding:2px 8px;border-radius:12px;font-weight:700;text-transform:uppercase;">Verified Member</span>
+          </div>
+          <div style="color:var(--muted);font-size:13px;margin-top:2px;">${user.email} ${profile.phone ? '· ' + profile.phone : ''}</div>
+        </div>
+      </div>
+      <div>
+        <button onclick="handleCustomerSignOut()" class="btn btn-ghost" style="padding:8px 16px;font-size:13px;color:var(--loss);border-color:rgba(239,68,68,0.3);">Sign Out 🚪</button>
+      </div>
+    </div>
+
+    <!-- Main Account Grid -->
+    <div class="accountGrid">
+      <!-- Sidebar Nav -->
+      <div class="accountSidebar">
+        <button class="accountNavBtn ${currentAccountView==='orders'?'active':''}" onclick="switchAccountView('orders')">📦 My Orders &amp; Tracking</button>
+        <button class="accountNavBtn ${currentAccountView==='profile'?'active':''}" onclick="switchAccountView('profile')">👤 Profile &amp; Address</button>
+        <button class="accountNavBtn ${currentAccountView==='security'?'active':''}" onclick="switchAccountView('security')">🔒 Security &amp; Password</button>
+        <div style="border-top:1px solid var(--line);margin:16px 0 12px;padding-top:12px;">
+          <a href="#/shop" class="btn btn-primary" style="display:block;text-align:center;padding:10px;font-size:13px;text-decoration:none;">Go to UFC Fight Shop →</a>
+        </div>
+      </div>
+
+      <!-- Account Content Area -->
+      <div id="accountContentBox">
+        <div style="text-align:center;padding:40px;color:var(--muted);">Loading account records...</div>
+      </div>
+    </div>
+  </section>`;
+
+  loadAccountContent();
+}
+
+async function loadAccountContent(){
+  const box = document.getElementById('accountContentBox');
+  if(!box) return;
+
+  if(currentAccountView === 'orders'){
+    box.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">Fetching your orders from cloud...</div>`;
+    try {
+      if(window.authFetchUserOrders){
+        customerCachedOrders = await window.authFetchUserOrders();
+      }
+    }catch(err){
+      console.warn("Could not load user orders:", err);
+    }
+
+    if(!customerCachedOrders.length){
+      box.innerHTML = `
+      <div class="adminCard" style="text-align:center;padding:50px;">
+        <div style="font-size:40px;margin-bottom:12px;">🛍️</div>
+        <h3 style="margin:0 0 6px;">No Orders Yet</h3>
+        <p style="color:var(--muted);font-size:14px;max-width:440px;margin:0 auto 20px;">You haven't placed any orders yet. Visit our fight shop to grab authentic UFC gloves, walkout hoodies, or championship belts!</p>
+        <a href="#/shop" class="btn btn-primary" style="display:inline-flex;">Browse UFC Shop →</a>
+      </div>`;
+      return;
+    }
+
+    box.innerHTML = `
+    <div class="adminCard">
+      <h3 style="font-family:'Oswald',sans-serif;font-size:22px;margin:0 0 18px;letter-spacing:0.5px;">ORDER HISTORY (${customerCachedOrders.length})</h3>
+      
+      <div style="display:flex;flex-direction:column;gap:18px;">
+        ${customerCachedOrders.map(o => {
+          const st = (o.status || 'pending').toLowerCase();
+          const badgeClass = st === 'delivered' ? 'statusDelivered' : st === 'shipped' ? 'statusShipped' : st === 'cancelled' ? 'statusCancelled' : 'statusPending';
+          const itemsList = (o.items || []).map(i => `${i.quantity}x ${i.name} (${i.size||'Standard'})`).join(', ');
+
+          return `
+          <div style="background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:10px;padding:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:14px;">
+              <div>
+                <span class="orderIdPill" style="font-size:13px;">${o.orderId || o.id}</span>
+                <span style="font-size:12px;color:var(--muted);margin-left:8px;">${o.date || (o.createdAtEpoch ? new Date(o.createdAtEpoch).toLocaleDateString('en-IN') : 'Recent')}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span class="statusBadge ${badgeClass}">${st}</span>
+                <span style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:var(--gold);">${fmtINR(o.totals?.grandTotal || 0)}</span>
+              </div>
+            </div>
+
+            <div style="font-size:13.5px;color:var(--white);margin-bottom:10px;">
+              <b>Items:</b> ${itemsList}
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted);">
+              <div>Delivery to: ${o.shippingAddress?.city || o.address?.city || 'India'} (${o.shippingAddress?.pincode || o.address?.pincode || ''}) · ${o.paymentMethod || o.payment || 'COD'}</div>
+              <button onclick="window.print()" class="btn btn-ghost" style="padding:4px 10px;font-size:11.5px;">🖨️ Receipt</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  } else if(currentAccountView === 'profile'){
+    const p = window._currentUserProfile || {};
+    const addr = p.address || {};
+
+    box.innerHTML = `
+    <div class="adminCard">
+      <h3 style="font-family:'Oswald',sans-serif;font-size:22px;margin:0 0 18px;letter-spacing:0.5px;">PERSONAL INFORMATION &amp; DEFAULT ADDRESS</h3>
+      
+      <form onsubmit="handleSaveCustomerProfile(event)">
+        <div class="formRow">
+          <div class="formGroup">
+            <label class="formLabel">Full Name</label>
+            <input type="text" class="formInput" id="accName" value="${p.displayName || ''}" required>
+          </div>
+          <div class="formGroup">
+            <label class="formLabel">Mobile Number</label>
+            <input type="tel" class="formInput" id="accPhone" value="${p.phone || ''}" maxlength="10">
+          </div>
+        </div>
+
+        <div style="font-weight:700;font-size:14px;color:var(--gold);margin:18px 0 10px;border-top:1px solid var(--line);padding-top:14px;">
+          📍 Default Delivery Address (Auto-fills at checkout)
+        </div>
+
+        <div class="formGroup">
+          <label class="formLabel">House / Flat / Building</label>
+          <input type="text" class="formInput" id="accHouse" value="${addr.house || ''}" placeholder="Flat 402, Apex Tower">
+        </div>
+        <div class="formGroup">
+          <label class="formLabel">Street / Locality</label>
+          <input type="text" class="formInput" id="accStreet" value="${addr.street || ''}" placeholder="MG Road, Connaught Place">
+        </div>
+        <div class="formRow">
+          <div class="formGroup">
+            <label class="formLabel">City</label>
+            <input type="text" class="formInput" id="accCity" value="${addr.city || ''}" placeholder="New Delhi">
+          </div>
+          <div class="formGroup">
+            <label class="formLabel">State</label>
+            <select class="formSelect" id="accState">
+              <option value="">Select State...</option>
+              ${INDIAN_STATES.map(s => `<option value="${s}" ${addr.state===s?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="formGroup" style="max-width:240px;">
+          <label class="formLabel">PIN Code</label>
+          <input type="text" class="formInput" id="accPincode" value="${addr.pincode || ''}" maxlength="6" placeholder="110001">
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="saveProfileBtn" style="padding:12px 24px;margin-top:12px;">Save Profile Changes</button>
+      </form>
+    </div>`;
+
+  } else if(currentAccountView === 'security'){
+    box.innerHTML = `
+    <div class="adminCard">
+      <h3 style="font-family:'Oswald',sans-serif;font-size:22px;margin:0 0 18px;letter-spacing:0.5px;">SECURITY &amp; ACCOUNT ACCESS</h3>
+      
+      <div style="background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:20px;">
+        <div style="font-weight:700;margin-bottom:6px;">Reset Password</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">We will send a secure password reset link to your registered email <b>${window._currentUser?.email}</b>.</p>
+        <button onclick="handleForgotPassword()" class="btn btn-ghost" style="padding:8px 16px;font-size:13px;">Send Reset Email ✉️</button>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:10px;padding:20px;">
+        <div style="font-weight:700;margin-bottom:6px;">Account Authentication Details</div>
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">
+          <div>Provider: Email/Password (Firebase Auth)</div>
+          <div>User UID: <code style="color:var(--gold);">${window._currentUser?.uid}</code></div>
+          <div>Status: <span style="color:var(--win);font-weight:700;">Active &amp; Verified</span></div>
+        </div>
+      </div>
+    </div>`;
+  }
+}
+
+window.handleSaveCustomerProfile = async function(e){
+  e.preventDefault();
+  const btn = document.getElementById('saveProfileBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  const updates = {
+    displayName: document.getElementById('accName').value.trim(),
+    phone: document.getElementById('accPhone').value.trim(),
+    address: {
+      house: document.getElementById('accHouse').value.trim(),
+      street: document.getElementById('accStreet').value.trim(),
+      city: document.getElementById('accCity').value.trim(),
+      state: document.getElementById('accState').value,
+      pincode: document.getElementById('accPincode').value.trim()
+    }
+  };
+
+  try {
+    if(window.authUpdateProfile){
+      await window.authUpdateProfile(updates);
+      showToast('Profile updated successfully!', 'success');
+      updateNavAuthUI();
+    }
+  }catch(err){
+    console.error("Save profile error:", err);
+    showToast('Failed to save profile: ' + err.message, 'error');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Save Profile Changes';
+  }
+};
+
+window.handleCustomerSignOut = async function(){
+  try {
+    if(window.authSignOut) await window.authSignOut();
+    showToast('You have been signed out.', 'info');
+    updateNavAuthUI();
+    location.hash = '#/';
+  }catch(err){
+    console.error("Sign out error:", err);
+  }
+};
+
+// ============================================================================
 // ADMIN PANEL (MANAGED VIA FIREBASE FIRESTORE & SECURE PASSWORD)
 // ============================================================================
 const ADMIN_SECRET = 'terechachakaufcdata5874';
 let adminActiveTab = 'orders';
 let adminCachedOrders = [];
 let adminCachedActivity = [];
+let adminCachedUsers = [];
 
 function isAdminAuthenticated(){
   return sessionStorage.getItem('ufc_admin_auth') === 'true';
@@ -3737,13 +4401,14 @@ async function renderAdminPanel(){
     <div class="adminStatGrid" id="adminStatContainer">
       <div class="adminStatCard"><div class="adminStatLabel">Total Orders</div><div class="adminStatVal" id="statOrders">...</div></div>
       <div class="adminStatCard"><div class="adminStatLabel">Total Revenue</div><div class="adminStatVal" id="statRevenue">...</div></div>
+      <div class="adminStatCard"><div class="adminStatLabel">Registered Users</div><div class="adminStatVal" id="statUsers">...</div></div>
       <div class="adminStatCard"><div class="adminStatLabel">Pending Orders</div><div class="adminStatVal" id="statPending">...</div></div>
-      <div class="adminStatCard"><div class="adminStatLabel">Catalog Products</div><div class="adminStatVal">${UFC_PRODUCTS.length}</div></div>
     </div>
 
     <!-- Tab Navigation -->
     <div class="adminTabs">
       <button class="adminTabBtn ${adminActiveTab==='orders'?'active':''}" onclick="switchAdminTab('orders')">📦 Orders Management</button>
+      <button class="adminTabBtn ${adminActiveTab==='users'?'active':''}" onclick="switchAdminTab('users')">👥 User Accounts</button>
       <button class="adminTabBtn ${adminActiveTab==='activity'?'active':''}" onclick="switchAdminTab('activity')">⚡ Live User Activity</button>
       <button class="adminTabBtn ${adminActiveTab==='products'?'active':''}" onclick="switchAdminTab('products')">🛍️ Products Catalog</button>
       <button class="adminTabBtn ${adminActiveTab==='quick'?'active':''}" onclick="switchAdminTab('quick')">⚙️ System &amp; Cloud Info</button>
@@ -3767,8 +4432,11 @@ async function loadAdminDashboardData(){
     if(window.adminFetchOrders){
       adminCachedOrders = await window.adminFetchOrders();
     }
+    if(window.adminFetchUsers){
+      adminCachedUsers = await window.adminFetchUsers();
+    }
   } catch(e) {
-    console.warn("Could not fetch remote Firebase orders:", e);
+    console.warn("Could not fetch remote Firebase records:", e);
     // fallback to local stored order if any
     try {
       const loc = JSON.parse(localStorage.getItem('ufc_mania_last_order'));
@@ -3782,6 +4450,7 @@ async function loadAdminDashboardData(){
   const statOrders = document.getElementById('statOrders');
   const statRevenue = document.getElementById('statRevenue');
   const statPending = document.getElementById('statPending');
+  const statUsers = document.getElementById('statUsers');
 
   if(statOrders){
     const totalRev = adminCachedOrders.reduce((sum, o) => sum + (o.totals?.grandTotal || 0), 0);
@@ -3789,11 +4458,14 @@ async function loadAdminDashboardData(){
     statOrders.textContent = adminCachedOrders.length;
     statRevenue.textContent = fmtINR(totalRev);
     statPending.textContent = pendingCount;
+    if(statUsers) statUsers.textContent = adminCachedUsers.length;
   }
 
   // Render currently selected tab
   if(adminActiveTab === 'orders'){
     renderOrdersTab();
+  } else if(adminActiveTab === 'users'){
+    renderUsersTab();
   } else if(adminActiveTab === 'activity'){
     renderActivityTab();
   } else if(adminActiveTab === 'products'){
@@ -3843,23 +4515,29 @@ function renderOrdersTab(){
             const st = (o.status || 'pending').toLowerCase();
             const badgeClass = st === 'delivered' ? 'statusDelivered' : st === 'shipped' ? 'statusShipped' : st === 'cancelled' ? 'statusCancelled' : 'statusPending';
             const itemsSummary = (o.items || []).map(i => `${i.quantity}x ${i.name}`).join('<br>') || 'N/A';
-            const addr = o.shippingAddress ? `${o.shippingAddress.fullName || ''}, ${o.shippingAddress.phone || ''}<br>${o.shippingAddress.house || ''} ${o.shippingAddress.street || ''}, ${o.shippingAddress.city || ''}, ${o.shippingAddress.state || ''} - ${o.shippingAddress.pincode || ''}` : 'Address not specified';
+            const customerName = o.shippingAddress?.fullName || o.address?.name || 'Anonymous';
+            const customerPhone = o.shippingAddress?.phone || o.address?.mobile || 'No phone';
+            const customerEmail = o.userEmail || o.address?.email || o.shippingAddress?.email || '';
+            const addrObj = o.shippingAddress || o.address || {};
+            const addr = `${customerName}, ${customerPhone}<br>${addrObj.house || ''} ${addrObj.street || ''}, ${addrObj.city || ''}, ${addrObj.state || ''} - ${addrObj.pincode || ''}`;
             
             return `
             <tr>
               <td>
                 <span class="orderIdPill" style="font-size:12px;display:inline-block;margin-bottom:4px;">${o.orderId || o.id}</span>
-                <div style="font-size:11px;color:var(--muted);">${o.createdAt ? new Date(o.createdAt).toLocaleString('en-IN') : (o.createdAtEpoch ? new Date(o.createdAtEpoch).toLocaleString('en-IN') : 'Just now')}</div>
+                <div style="font-size:11px;color:var(--muted);">${o.date || (o.createdAt ? new Date(o.createdAt).toLocaleString('en-IN') : (o.createdAtEpoch ? new Date(o.createdAtEpoch).toLocaleString('en-IN') : 'Just now'))}</div>
+                ${o.userId ? `<span style="font-size:10px;background:rgba(47,158,91,0.15);color:var(--win);padding:1px 5px;border-radius:3px;">Member Order</span>` : `<span style="font-size:10px;color:var(--muted);">Guest</span>`}
               </td>
               <td>
-                <div style="font-weight:600;color:var(--white);">${o.shippingAddress?.fullName || 'Anonymous'}</div>
-                <div style="font-size:12px;color:var(--muted);">${o.shippingAddress?.phone || 'No phone'}</div>
+                <div style="font-weight:600;color:var(--white);">${customerName}</div>
+                <div style="font-size:12px;color:var(--muted);">${customerPhone}</div>
+                ${customerEmail ? `<div style="font-size:11px;color:var(--gold);">${customerEmail}</div>` : ''}
               </td>
               <td style="font-size:12px;color:#c0c0c5;line-height:1.4;max-width:260px;">${addr}</td>
               <td style="font-size:12px;line-height:1.4;">${itemsSummary}</td>
               <td><span style="font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;color:var(--gold);">${fmtINR(o.totals?.grandTotal || 0)}</span></td>
               <td>
-                <span style="font-size:11px;text-transform:uppercase;background:rgba(255,255,255,0.06);padding:3px 7px;border-radius:4px;font-weight:600;">${o.paymentMethod || 'COD'}</span>
+                <span style="font-size:11px;text-transform:uppercase;background:rgba(255,255,255,0.06);padding:3px 7px;border-radius:4px;font-weight:600;">${o.paymentMethod || o.payment || 'COD'}</span>
               </td>
               <td>
                 <select onchange="handleAdminStatusChange('${o.id}', this.value)" style="background:#0d0d12;color:#fff;border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:12px;font-weight:600;cursor:pointer;">
@@ -3879,6 +4557,110 @@ function renderOrdersTab(){
       </table>
     </div>
   </div>`;
+}
+
+function renderUsersTab(){
+  const box = document.getElementById('adminTabContent');
+  if(!box) return;
+
+  if(!adminCachedUsers.length){
+    box.innerHTML = `
+    <div class="adminCard" style="text-align:center;padding:50px;">
+      <div style="font-size:40px;margin-bottom:12px;">👥</div>
+      <h3 style="margin:0 0 6px;">No Registered Users Yet</h3>
+      <p style="color:var(--muted);font-size:14px;max-width:480px;margin:0 auto 20px;">When customers register via the Sign Up form, their profile, phone number, default delivery address and order totals will appear here for full admin management.</p>
+    </div>`;
+    return;
+  }
+
+  box.innerHTML = `
+  <div class="adminCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
+      <h3 style="font-family:'Oswald',sans-serif;font-size:20px;margin:0;letter-spacing:0.5px;">REGISTERED CUSTOMER ACCOUNTS (${adminCachedUsers.length})</h3>
+      <span style="font-size:12px;color:var(--muted);">Full account access &amp; controls</span>
+    </div>
+    <div class="adminTableWrap">
+      <table class="adminTable">
+        <thead>
+          <tr>
+            <th>Customer Name / Email</th>
+            <th>Mobile Number</th>
+            <th>Saved Address</th>
+            <th>Orders Placed</th>
+            <th>Total Spend</th>
+            <th>Account Status</th>
+            <th>Admin Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${adminCachedUsers.map(u => {
+            const addr = u.address ? `${u.address.house || ''} ${u.address.street || ''}, ${u.address.city || ''} ${u.address.state || ''} ${u.address.pincode ? '- ' + u.address.pincode : ''}`.trim() : 'No address saved';
+            const isBlocked = u.status === 'blocked';
+
+            return `
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div style="width:34px;height:34px;border-radius:50%;background:rgba(224,16,43,0.15);border:1px solid rgba(224,16,43,0.3);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;">
+                    ${(u.displayName || u.email || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div style="font-weight:600;color:var(--white);">${u.displayName || 'No Name'}</div>
+                    <div style="font-size:11.5px;color:var(--gold);">${u.email}</div>
+                  </div>
+                </div>
+              </td>
+              <td><span style="font-size:12.5px;color:var(--white);">${u.phone || '—'}</span></td>
+              <td style="font-size:12px;color:var(--muted);max-width:240px;line-height:1.4;">${addr || '—'}</td>
+              <td><span style="font-weight:700;color:var(--white);">${u.totalOrders || 0}</span></td>
+              <td><span style="font-family:'Oswald';font-weight:700;color:var(--gold);">${fmtINR(u.totalSpent || 0)}</span></td>
+              <td>
+                <span class="statusBadge ${isBlocked ? 'statusCancelled' : 'statusDelivered'}">${isBlocked ? 'SUSPENDED' : 'ACTIVE'}</span>
+              </td>
+              <td>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <button onclick="handleAdminToggleUserStatus('${u.uid}', '${isBlocked ? 'active' : 'blocked'}')" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;color:${isBlocked?'var(--win)':'var(--loss)'};">
+                    ${isBlocked ? 'Activate' : 'Block'}
+                  </button>
+                  <button onclick="handleAdminResetUserPassword('${u.email}')" title="Send Password Reset Email" class="btn btn-ghost" style="padding:4px 8px;font-size:11px;">
+                    🔑 Reset
+                  </button>
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+window.handleAdminToggleUserStatus = async function(uid, newStatus){
+  try {
+    if(window.adminUpdateUserStatus){
+      await window.adminUpdateUserStatus(uid, newStatus);
+      showToast(`User status set to ${newStatus}`, 'success');
+      const u = adminCachedUsers.find(x => x.uid === uid);
+      if(u) u.status = newStatus;
+      renderUsersTab();
+    }
+  }catch(err){
+    console.error("Update user status error:", err);
+    showToast("Failed to update user status", "error");
+  }
+};
+
+window.handleAdminResetUserPassword = async function(email){
+  if(!confirm(`Send password reset email to ${email}?`)) return;
+  try {
+    if(window.authSendPasswordReset){
+      await window.authSendPasswordReset(email);
+      showToast(`Password reset link sent to ${email}`, 'success');
+    }
+  }catch(err){
+    showToast("Error sending reset email: " + err.message, "error");
+  }
+};
 }
 
 async function renderActivityTab(){
@@ -4095,14 +4877,17 @@ function router(){
   if(path==='/cart'){ renderCart(); setActiveNav('shop'); return; }
   if(path==='/checkout'){ renderCheckout(); setActiveNav('shop'); return; }
   if(path==='/order-confirmation'){ renderOrderConfirmation(); setActiveNav('shop'); return; }
+  if(path==='/auth'){ renderAuthPage(query); setActiveNav(''); return; }
+  if(path==='/account'){ renderAccountPage(); setActiveNav(''); return; }
   if(path==='/admin'){ renderAdminPanel(); setActiveNav(''); return; }
   // fallback
   renderHome(); setActiveNav('home');
 }
 window.addEventListener('hashchange', router);
-window.addEventListener('DOMContentLoaded', () => { updateNavCartBadge(); router(); });
+window.addEventListener('DOMContentLoaded', () => { updateNavCartBadge(); updateNavAuthUI(); router(); });
 router();
 updateNavCartBadge();
+updateNavAuthUI();
 
 // ============================================================================
 // NAV / SEARCH CHROME
