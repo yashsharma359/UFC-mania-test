@@ -119,6 +119,7 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
         window._currentUserProfile = null;
       }
       if(typeof updateNavAuthUI === 'function') updateNavAuthUI();
+      if(user && typeof closeAuthModal === 'function') closeAuthModal();
       // If currently on account page, refresh view
       if(location.hash === '#/account' && typeof renderAccountPage === 'function'){
         renderAccountPage();
@@ -1065,9 +1066,24 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
   background:rgba(255,255,255,0.06);border:1px solid var(--line);
   color:var(--white);padding:6px 12px;border-radius:8px;
   font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;
-  gap:6px;text-decoration:none;transition:all .2s;white-space:nowrap;
+  gap:6px;text-decoration:none;transition:all .2s;white-space:nowrap;cursor:pointer;
 }
 .navAuthBtn:hover{background:rgba(224,16,43,0.15);border-color:rgba(224,16,43,0.4);color:var(--white);}
+
+/* Dedicated Auth Popup Modal */
+.authModal{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.authModalOverlay{position:absolute;inset:0;background:rgba(6,6,8,.88);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+.authModalContent{
+  position:relative;z-index:2;background:var(--surface);border:1px solid rgba(224,16,43,.4);
+  border-radius:14px;max-width:440px;width:100%;max-height:92vh;overflow-y:auto;
+  box-shadow:0 24px 70px rgba(0,0,0,.9),0 0 30px rgba(224,16,43,.25);padding:28px 24px;
+  animation:card-appear .2s ease-out;
+}
+.authModalClose{
+  position:absolute;top:14px;right:16px;background:none;border:none;
+  color:var(--muted);font-size:26px;line-height:1;cursor:pointer;transition:color .18s;z-index:5;
+}
+.authModalClose:hover{color:#fff;}
 .authCard{
   background:var(--surface);border:1px solid var(--line);border-radius:14px;
   padding:32px 28px;max-width:440px;margin:50px auto;box-shadow:0 12px 40px rgba(0,0,0,0.5);
@@ -1116,7 +1132,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
       <a href="#/compare" data-route="compare">Compare</a>
       <a href="#/news" data-route="news">News</a>
       <a href="#/shop" data-route="shop">Shop</a>
-      <a href="#/auth" data-route="auth" id="mobileNavAuthLink" style="border-top:1px solid var(--line);margin-top:6px;padding-top:12px;color:var(--gold);font-weight:700;">👤 My Account / Sign In</a>
+      <a href="javascript:void(0)" onclick="handleNavAuthClick(event)" id="mobileNavAuthLink" style="border-top:1px solid var(--line);margin-top:6px;padding-top:12px;color:var(--gold);font-weight:700;">👤 My Account / Sign In</a>
     </div>
     <div class="navtools">
       <button id="navSearchBtn" title="Search fighters" aria-label="Search fighters">
@@ -1130,10 +1146,10 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
         </svg>
         <span class="cartBadge" id="navCartBadge">0</span>
       </a>
-      <a href="#/auth" id="navAuthBtn" class="navAuthBtn" title="My Account" onclick="window.navigateAuth && window.navigateAuth(event)">
+      <button type="button" id="navAuthBtn" class="navAuthBtn" title="My Account" onclick="handleNavAuthClick(event)">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span id="navAuthLabel">Sign In</span>
-      </a>
+      </button>
       <button class="burger" id="burgerBtn" aria-label="Menu">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
@@ -1161,6 +1177,65 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
 <div id="productModal" class="productModal hidden" role="dialog" aria-modal="true" aria-label="Product Details">
   <div class="productModalOverlay" id="productModalOverlay"></div>
   <div class="productModalContent" id="productModalContent"></div>
+</div>
+
+<!-- Dedicated Auth Popup Modal (Opens immediately on Sign In click) -->
+<div id="authModal" class="authModal hidden" role="dialog" aria-modal="true" aria-label="Sign In or Sign Up">
+  <div class="authModalOverlay" id="authModalOverlay" onclick="closeAuthModal()"></div>
+  <div class="authModalContent">
+    <button class="authModalClose" onclick="closeAuthModal()" aria-label="Close modal">&times;</button>
+    
+    <div style="text-align:center;margin-bottom:18px;">
+      <div style="font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+        <span style="color:var(--red);">UFC MANIA</span> MEMBER HUB
+      </div>
+      <p style="color:var(--muted);font-size:12.5px;margin-top:4px;">Sign in to track orders, save delivery addresses &amp; get member perks.</p>
+    </div>
+
+    <div class="authTabs">
+      <div class="authTab active" id="modalTabSignIn" onclick="switchModalAuthTab('signin')">Sign In</div>
+      <div class="authTab" id="modalTabSignUp" onclick="switchModalAuthTab('signup')">Create Account</div>
+    </div>
+
+    <!-- Sign In Form -->
+    <form id="modalSignInForm" onsubmit="handleCustomerSignIn(event)">
+      <div class="formGroup">
+        <label class="formLabel">Email Address</label>
+        <input type="email" class="formInput" id="modalSiEmail" placeholder="your@email.com" required autocomplete="email">
+      </div>
+      <div class="formGroup">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <label class="formLabel">Password</label>
+          <a href="javascript:void(0)" onclick="handleForgotPassword()" style="font-size:11.5px;color:var(--gold);text-decoration:none;">Forgot?</a>
+        </div>
+        <input type="password" class="formInput" id="modalSiPassword" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <div id="modalSignInError" style="color:var(--loss);font-size:12.5px;margin-bottom:12px;display:none;font-weight:600;"></div>
+      <button type="submit" class="btnCheckout" id="modalSiSubmitBtn" style="margin-top:8px;">Sign In to UFC Mania</button>
+    </form>
+
+    <!-- Sign Up Form -->
+    <form id="modalSignUpForm" style="display:none;" onsubmit="handleCustomerSignUp(event)">
+      <div class="formGroup">
+        <label class="formLabel">Full Name <span class="req">*</span></label>
+        <input type="text" class="formInput" id="modalSuName" placeholder="e.g. Rahul Sharma" required autocomplete="name">
+      </div>
+      <div class="formGroup">
+        <label class="formLabel">Email Address <span class="req">*</span></label>
+        <input type="email" class="formInput" id="modalSuEmail" placeholder="your@email.com" required autocomplete="email">
+      </div>
+      <div class="formGroup">
+        <label class="formLabel">Mobile Number (10-digit) <span class="req">*</span></label>
+        <input type="tel" class="formInput" id="modalSuPhone" placeholder="9876543210" maxlength="10" required autocomplete="tel">
+      </div>
+      <div class="formGroup">
+        <label class="formLabel">Create Password <span class="req">*</span></label>
+        <input type="password" class="formInput" id="modalSuPassword" placeholder="Minimum 6 characters" minlength="6" required autocomplete="new-password">
+      </div>
+      <div id="modalSignUpError" style="color:var(--loss);font-size:12.5px;margin-bottom:12px;display:none;font-weight:600;"></div>
+      <button type="submit" class="btnCheckout" id="modalSuSubmitBtn" style="margin-top:8px;">Create My Account</button>
+    </form>
+  </div>
 </div>
 
 <div id="toastContainer" class="toastContainer" aria-live="polite"></div>
@@ -3884,15 +3959,51 @@ function renderOrderConfirmation(){
 // ============================================================================
 // CUSTOMER AUTHENTICATION & MY ACCOUNT SYSTEM
 // ============================================================================
-window.navigateAuth = function(e){
+window.openAuthModal = function(initialTab = 'signin'){
+  const modal = document.getElementById('authModal');
+  if(!modal) return;
+  modal.classList.remove('hidden');
+  switchModalAuthTab(initialTab);
+};
+
+window.closeAuthModal = function(){
+  const modal = document.getElementById('authModal');
+  if(modal) modal.classList.add('hidden');
+  const errIn = document.getElementById('modalSignInError');
+  const errUp = document.getElementById('modalSignUpError');
+  if(errIn) errIn.style.display = 'none';
+  if(errUp) errUp.style.display = 'none';
+};
+
+window.switchModalAuthTab = function(tab){
+  const tabIn = document.getElementById('modalTabSignIn');
+  const tabUp = document.getElementById('modalTabSignUp');
+  const formIn = document.getElementById('modalSignInForm');
+  const formUp = document.getElementById('modalSignUpForm');
+  if(!tabIn || !tabUp) return;
+
+  if(tab === 'signin'){
+    tabIn.classList.add('active');
+    tabUp.classList.remove('active');
+    if(formIn) formIn.style.display = 'block';
+    if(formUp) formUp.style.display = 'none';
+  } else {
+    tabUp.classList.add('active');
+    tabIn.classList.remove('active');
+    if(formUp) formUp.style.display = 'block';
+    if(formIn) formIn.style.display = 'none';
+  }
+};
+
+window.handleNavAuthClick = function(e){
   if(e && e.preventDefault) e.preventDefault();
+  const navlinks = document.getElementById('navlinks');
+  if(navlinks) navlinks.classList.remove('open');
   if(window._currentUser){
     location.hash = '#/account';
   } else {
-    location.hash = '#/auth';
+    openAuthModal('signin');
   }
-  // If hash was already the same, router might not trigger via hashchange
-  router();
 };
 
 function updateNavAuthUI(){
@@ -3904,24 +4015,20 @@ function updateNavAuthUI(){
     const name = window._currentUserProfile?.displayName || window._currentUser.displayName || window._currentUser.email.split('@')[0];
     const displayLabel = name.length > 10 ? name.substring(0,9) + '…' : name;
     if(btn){
-      btn.href = '#/account';
       btn.title = `My Account (${name})`;
       btn.style.borderColor = 'rgba(47,158,91,0.5)';
     }
     if(label) label.textContent = displayLabel;
     if(mLink){
-      mLink.href = '#/account';
       mLink.textContent = `👤 My Account (${displayLabel})`;
     }
   } else {
     if(btn){
-      btn.href = '#/auth';
       btn.title = 'Sign In or Create Account';
       btn.style.borderColor = 'var(--line)';
     }
     if(label) label.textContent = 'Sign In';
     if(mLink){
-      mLink.href = '#/auth';
       mLink.textContent = '👤 My Account / Sign In';
     }
   }
@@ -3936,149 +4043,100 @@ function renderAuthPage(query){
     location.hash = '#/account';
     return;
   }
-
-  const initialTab = query === 'signup' ? 'signup' : 'signin';
-
-  app.innerHTML = `
-  <section class="pad wrap" style="max-width:480px;margin:40px auto 60px;">
-    <div class="authCard">
-      <div style="text-align:center;margin-bottom:20px;">
-        <div style="font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
-          <span style="color:var(--red);">UFC MANIA</span> MEMBER HUB
-        </div>
-        <p style="color:var(--muted);font-size:13px;margin-top:4px;">Sign in to track orders, save delivery addresses &amp; get member perks.</p>
-      </div>
-
-      <div class="authTabs">
-        <div class="authTab ${initialTab==='signin'?'active':''}" id="tabBtnSignIn" onclick="switchAuthTab('signin')">Sign In</div>
-        <div class="authTab ${initialTab==='signup'?'active':''}" id="tabBtnSignUp" onclick="switchAuthTab('signup')">Create Account</div>
-      </div>
-
-      <!-- Sign In Form -->
-      <form id="signInForm" style="display:${initialTab==='signin'?'block':'none'};" onsubmit="handleCustomerSignIn(event)">
-        <div class="formGroup">
-          <label class="formLabel">Email Address</label>
-          <input type="email" class="formInput" id="siEmail" placeholder="your@email.com" required autocomplete="email">
-        </div>
-        <div class="formGroup">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <label class="formLabel">Password</label>
-            <a href="javascript:void(0)" onclick="handleForgotPassword()" style="font-size:11.5px;color:var(--gold);text-decoration:none;">Forgot?</a>
-          </div>
-          <input type="password" class="formInput" id="siPassword" placeholder="••••••••" required autocomplete="current-password">
-        </div>
-        <div id="signInError" style="color:var(--loss);font-size:12.5px;margin-bottom:12px;display:none;font-weight:600;"></div>
-        <button type="submit" class="btnCheckout" id="siSubmitBtn" style="margin-top:8px;">Sign In to UFC Mania</button>
-      </form>
-
-      <!-- Sign Up Form -->
-      <form id="signUpForm" style="display:${initialTab==='signup'?'block':'none'};" onsubmit="handleCustomerSignUp(event)">
-        <div class="formGroup">
-          <label class="formLabel">Full Name <span class="req">*</span></label>
-          <input type="text" class="formInput" id="suName" placeholder="e.g. Rahul Sharma" required autocomplete="name">
-        </div>
-        <div class="formGroup">
-          <label class="formLabel">Email Address <span class="req">*</span></label>
-          <input type="email" class="formInput" id="suEmail" placeholder="your@email.com" required autocomplete="email">
-        </div>
-        <div class="formGroup">
-          <label class="formLabel">Mobile Number (10-digit Indian) <span class="req">*</span></label>
-          <input type="tel" class="formInput" id="suPhone" placeholder="9876543210" maxlength="10" required autocomplete="tel">
-        </div>
-        <div class="formGroup">
-          <label class="formLabel">Create Password <span class="req">*</span></label>
-          <input type="password" class="formInput" id="suPassword" placeholder="Minimum 6 characters" minlength="6" required autocomplete="new-password">
-        </div>
-        <div id="signUpError" style="color:var(--loss);font-size:12.5px;margin-bottom:12px;display:none;font-weight:600;"></div>
-        <button type="submit" class="btnCheckout" id="suSubmitBtn" style="margin-top:8px;">Create My Account</button>
-      </form>
-
-      <div style="text-align:center;margin-top:24px;border-top:1px solid var(--line);padding-top:16px;">
-        <a href="#/shop" style="color:var(--muted);font-size:13px;text-decoration:none;">← Continue Browsing UFC Shop</a>
-      </div>
-    </div>
-  </section>`;
+  openAuthModal(query === 'signup' ? 'signup' : 'signin');
+  // keep background on current or home
+  if(!location.hash || location.hash==='#/auth'){
+    location.hash = '#/';
+  }
 }
 
 window.switchAuthTab = function(tab){
-  const tabIn = document.getElementById('tabBtnSignIn');
-  const tabUp = document.getElementById('tabBtnSignUp');
-  const formIn = document.getElementById('signInForm');
-  const formUp = document.getElementById('signUpForm');
-  if(!tabIn || !tabUp) return;
-
-  if(tab === 'signin'){
-    tabIn.classList.add('active');
-    tabUp.classList.remove('active');
-    formIn.style.display = 'block';
-    formUp.style.display = 'none';
-  } else {
-    tabUp.classList.add('active');
-    tabIn.classList.remove('active');
-    formUp.style.display = 'block';
-    formIn.style.display = 'none';
-  }
+  switchModalAuthTab(tab);
 };
 
 window.handleCustomerSignIn = async function(e){
   e.preventDefault();
-  const email = document.getElementById('siEmail').value.trim();
-  const pass = document.getElementById('siPassword').value;
-  const errBox = document.getElementById('signInError');
-  const btn = document.getElementById('siSubmitBtn');
-  errBox.style.display = 'none';
+  const emailInput = document.getElementById('modalSiEmail') || document.getElementById('siEmail');
+  const passInput = document.getElementById('modalSiPassword') || document.getElementById('siPassword');
+  const errBox = document.getElementById('modalSignInError') || document.getElementById('signInError');
+  const btn = document.getElementById('modalSiSubmitBtn') || document.getElementById('siSubmitBtn');
+  
+  const email = emailInput?.value.trim() || '';
+  const pass = passInput?.value || '';
+  if(errBox) errBox.style.display = 'none';
 
-  btn.disabled = true;
-  btn.textContent = 'Verifying...';
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = 'Verifying...';
+  }
 
   try {
     if(!window.authSignIn) throw new Error("Firebase Auth is loading. Please retry in a second.");
     await window.authSignIn(email, pass);
     showToast('Welcome back to UFC Mania!', 'success');
+    closeAuthModal();
     updateNavAuthUI();
     location.hash = '#/account';
   } catch(err) {
     console.error("Sign in failed:", err);
-    errBox.textContent = err.message.replace('Firebase: ', '');
-    errBox.style.display = 'block';
+    if(errBox){
+      errBox.textContent = err.message.replace('Firebase: ', '');
+      errBox.style.display = 'block';
+    }
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Sign In to UFC Mania';
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = 'Sign In to UFC Mania';
+    }
   }
 };
 
 window.handleCustomerSignUp = async function(e){
   e.preventDefault();
-  const name = document.getElementById('suName').value.trim();
-  const email = document.getElementById('suEmail').value.trim();
-  const phone = document.getElementById('suPhone').value.trim();
-  const pass = document.getElementById('suPassword').value;
-  const errBox = document.getElementById('signUpError');
-  const btn = document.getElementById('suSubmitBtn');
-  errBox.style.display = 'none';
+  const nameInput = document.getElementById('modalSuName') || document.getElementById('suName');
+  const emailInput = document.getElementById('modalSuEmail') || document.getElementById('suEmail');
+  const phoneInput = document.getElementById('modalSuPhone') || document.getElementById('suPhone');
+  const passInput = document.getElementById('modalSuPassword') || document.getElementById('suPassword');
+  const errBox = document.getElementById('modalSignUpError') || document.getElementById('signUpError');
+  const btn = document.getElementById('modalSuSubmitBtn') || document.getElementById('suSubmitBtn');
+
+  const name = nameInput?.value.trim() || '';
+  const email = emailInput?.value.trim() || '';
+  const phone = phoneInput?.value.trim() || '';
+  const pass = passInput?.value || '';
+  if(errBox) errBox.style.display = 'none';
 
   if(!/^[6-9]\d{9}$/.test(phone)){
-    errBox.textContent = 'Please enter a valid 10-digit Indian mobile number.';
-    errBox.style.display = 'block';
+    if(errBox){
+      errBox.textContent = 'Please enter a valid 10-digit Indian mobile number.';
+      errBox.style.display = 'block';
+    }
     return;
   }
 
-  btn.disabled = true;
-  btn.textContent = 'Creating Account...';
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = 'Creating Account...';
+  }
 
   try {
     if(!window.authSignUp) throw new Error("Firebase Auth is loading. Please retry.");
     await window.authSignUp(email, pass, name, phone);
     showToast('Account created successfully! Welcome to UFC Mania.', 'success');
+    closeAuthModal();
     updateNavAuthUI();
     location.hash = '#/account';
   } catch(err) {
     console.error("Sign up failed:", err);
-    errBox.textContent = err.message.replace('Firebase: ', '');
-    errBox.style.display = 'block';
+    if(errBox){
+      errBox.textContent = err.message.replace('Firebase: ', '');
+      errBox.style.display = 'block';
+    }
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Create My Account';
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = 'Create My Account';
+    }
   }
 };
 
@@ -4106,7 +4164,8 @@ window.switchAccountView = function(view){
 
 async function renderAccountPage(){
   if(!window._currentUser){
-    location.hash = '#/auth';
+    openAuthModal('signin');
+    location.hash = '#/';
     return;
   }
 
@@ -4935,7 +4994,12 @@ function closeSearch(){ overlay.classList.add('hidden'); gInput.value=''; docume
 document.getElementById('navSearchBtn').addEventListener('click', openSearch);
 document.getElementById('searchClose').addEventListener('click', closeSearch);
 overlay.addEventListener('click', e=>{ if(e.target===overlay) closeSearch(); });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeSearch(); });
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    closeSearch();
+    if(typeof closeAuthModal==='function') closeAuthModal();
+  }
+});
 
 gInput.addEventListener('input', ()=>{
   const q = gInput.value.trim().toLowerCase();
