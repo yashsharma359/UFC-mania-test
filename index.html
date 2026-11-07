@@ -1068,6 +1068,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
   font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;
   gap:6px;text-decoration:none;transition:all .2s;white-space:nowrap;cursor:pointer;
 }
+.navAuthBtn *{pointer-events:none;}
 .navAuthBtn:hover{background:rgba(224,16,43,0.15);border-color:rgba(224,16,43,0.4);color:var(--white);}
 
 /* Dedicated Auth Popup Modal */
@@ -1239,6 +1240,81 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
 </div>
 
 <div id="toastContainer" class="toastContainer" aria-live="polite"></div>
+
+<script>
+// ============================================================================
+// IMMEDIATE AUTH MODAL CONTROLLER
+// Available instantly on page parse so Sign In buttons never fail
+// ============================================================================
+window.openAuthModal = function(initialTab = 'signin'){
+  const modal = document.getElementById('authModal');
+  if(!modal) return;
+  modal.classList.remove('hidden');
+  modal.style.display = 'flex';
+  if(typeof window.switchModalAuthTab === 'function') window.switchModalAuthTab(initialTab);
+};
+
+window.closeAuthModal = function(){
+  const modal = document.getElementById('authModal');
+  if(modal){
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+  const errIn = document.getElementById('modalSignInError');
+  const errUp = document.getElementById('modalSignUpError');
+  if(errIn) errIn.style.display = 'none';
+  if(errUp) errUp.style.display = 'none';
+};
+
+window.switchModalAuthTab = function(tab){
+  const tabIn = document.getElementById('modalTabSignIn');
+  const tabUp = document.getElementById('modalTabSignUp');
+  const formIn = document.getElementById('modalSignInForm');
+  const formUp = document.getElementById('modalSignUpForm');
+  if(!tabIn || !tabUp) return;
+
+  if(tab === 'signin'){
+    tabIn.classList.add('active');
+    tabUp.classList.remove('active');
+    if(formIn) formIn.style.display = 'block';
+    if(formUp) formUp.style.display = 'none';
+  } else {
+    tabUp.classList.add('active');
+    tabIn.classList.remove('active');
+    if(formUp) formUp.style.display = 'block';
+    if(formIn) formIn.style.display = 'none';
+  }
+};
+
+window.handleNavAuthClick = function(e){
+  if(e && e.preventDefault) e.preventDefault();
+  const navlinks = document.getElementById('navlinks');
+  if(navlinks) navlinks.classList.remove('open');
+  if(window._currentUser){
+    if(typeof window.navigateTo === 'function') window.navigateTo('account');
+  } else {
+    window.openAuthModal('signin');
+  }
+};
+
+// Bind direct click listeners & restore cached active user
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const cached = localStorage.getItem('ufc_mania_active_user');
+    if(cached && !window._currentUser){
+      const u = JSON.parse(cached);
+      window._currentUser = { uid: u.uid, email: u.email, displayName: u.displayName };
+      window._currentUserProfile = u;
+      if(typeof window.updateNavAuthUI === 'function') window.updateNavAuthUI();
+    }
+  } catch(e){}
+
+  const btn = document.getElementById('navAuthBtn');
+  if(btn) btn.addEventListener('click', window.handleNavAuthClick);
+  const mLink = document.getElementById('mobileNavAuthLink');
+  if(mLink) mLink.addEventListener('click', window.handleNavAuthClick);
+});
+</script>
 
 <script>
 // ============================================================================
@@ -4062,14 +4138,36 @@ window.handleCustomerSignIn = async function(e){
   const pass = passInput?.value || '';
   if(errBox) errBox.style.display = 'none';
 
+  if(!email || !pass){
+    if(errBox){
+      errBox.textContent = 'Please enter both email and password.';
+      errBox.style.display = 'block';
+    }
+    return;
+  }
+
   if(btn){
     btn.disabled = true;
     btn.textContent = 'Verifying...';
   }
 
   try {
-    if(!window.authSignIn) throw new Error("Firebase Auth is loading. Please retry in a second.");
-    await window.authSignIn(email, pass);
+    if(window.authSignIn){
+      await window.authSignIn(email, pass);
+    } else {
+      // Local fallback if Firebase CDN/module failed to load (e.g. offline or file:// origin)
+      const localUsers = JSON.parse(localStorage.getItem('ufc_mania_local_users') || '[]');
+      const found = localUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if(found && found.password === pass){
+        window._currentUser = { uid: found.uid, email: found.email, displayName: found.displayName };
+        window._currentUserProfile = found;
+        localStorage.setItem('ufc_mania_active_user', JSON.stringify(found));
+      } else if(found && found.password !== pass){
+        throw new Error("auth/wrong-password");
+      } else {
+        throw new Error("auth/user-not-found");
+      }
+    }
     showToast('Welcome back to UFC Mania!', 'success');
     closeAuthModal();
     updateNavAuthUI();
@@ -4077,7 +4175,20 @@ window.handleCustomerSignIn = async function(e){
   } catch(err) {
     console.error("Sign in failed:", err);
     if(errBox){
-      errBox.textContent = err.message.replace('Firebase: ', '');
+      let msg = err.message || '';
+      if(msg.includes('user-not-found') || msg.includes('invalid-credential')){
+        errBox.innerHTML = `No account found with this email, or password incorrect.<br><span style="color:var(--muted);font-weight:400;">New here? </span><a href="javascript:void(0)" onclick="switchModalAuthTab('signup')" style="color:var(--gold);text-decoration:underline;font-weight:700;">Click to Create Account →</a>`;
+      } else if(msg.includes('wrong-password')){
+        errBox.innerHTML = `Incorrect password. <a href="javascript:void(0)" onclick="handleForgotPassword()" style="color:var(--gold);text-decoration:underline;">Forgot password?</a>`;
+      } else if(msg.includes('invalid-email')){
+        errBox.textContent = `Please enter a valid email address.`;
+      } else if(msg.includes('too-many-requests')){
+        errBox.textContent = `Too many failed attempts. Please try again after a few minutes.`;
+      } else if(msg.includes('network-request-failed')){
+        errBox.textContent = `Network connection issue. Please check your internet.`;
+      } else {
+        errBox.textContent = msg.replace('Firebase: ', '');
+      }
       errBox.style.display = 'block';
     }
   } finally {
@@ -4111,14 +4222,44 @@ window.handleCustomerSignUp = async function(e){
     return;
   }
 
+  if(pass.length < 6){
+    if(errBox){
+      errBox.textContent = 'Password must be at least 6 characters.';
+      errBox.style.display = 'block';
+    }
+    return;
+  }
+
   if(btn){
     btn.disabled = true;
     btn.textContent = 'Creating Account...';
   }
 
   try {
-    if(!window.authSignUp) throw new Error("Firebase Auth is loading. Please retry.");
-    await window.authSignUp(email, pass, name, phone);
+    if(window.authSignUp){
+      await window.authSignUp(email, pass, name, phone);
+    } else {
+      // Local fallback if Firebase module failed or offline
+      const localUsers = JSON.parse(localStorage.getItem('ufc_mania_local_users') || '[]');
+      if(localUsers.some(u => u.email.toLowerCase() === email.toLowerCase())){
+        throw new Error("auth/email-already-in-use");
+      }
+      const newU = {
+        uid: 'local_' + Date.now(),
+        email: email,
+        displayName: name,
+        phone: phone,
+        password: pass,
+        status: 'active',
+        role: 'customer',
+        createdAt: Date.now()
+      };
+      localUsers.push(newU);
+      localStorage.setItem('ufc_mania_local_users', JSON.stringify(localUsers));
+      localStorage.setItem('ufc_mania_active_user', JSON.stringify(newU));
+      window._currentUser = { uid: newU.uid, email: newU.email, displayName: newU.displayName };
+      window._currentUserProfile = newU;
+    }
     showToast('Account created successfully! Welcome to UFC Mania.', 'success');
     closeAuthModal();
     updateNavAuthUI();
@@ -4126,7 +4267,16 @@ window.handleCustomerSignUp = async function(e){
   } catch(err) {
     console.error("Sign up failed:", err);
     if(errBox){
-      errBox.textContent = err.message.replace('Firebase: ', '');
+      let msg = err.message || '';
+      if(msg.includes('email-already-in-use')){
+        errBox.innerHTML = `An account already exists with this email.<br><span style="color:var(--muted);font-weight:400;">Already registered? </span><a href="javascript:void(0)" onclick="switchModalAuthTab('signin')" style="color:var(--gold);text-decoration:underline;font-weight:700;">Click to Sign In →</a>`;
+      } else if(msg.includes('weak-password')){
+        errBox.textContent = `Password should be at least 6 characters.`;
+      } else if(msg.includes('invalid-email')){
+        errBox.textContent = `Please enter a valid email address.`;
+      } else {
+        errBox.textContent = msg.replace('Firebase: ', '');
+      }
       errBox.style.display = 'block';
     }
   } finally {
@@ -4387,6 +4537,9 @@ window.handleSaveCustomerProfile = async function(e){
 window.handleCustomerSignOut = async function(){
   try {
     if(window.authSignOut) await window.authSignOut();
+    window._currentUser = null;
+    window._currentUserProfile = null;
+    localStorage.removeItem('ufc_mania_active_user');
     showToast('You have been signed out.', 'info');
     updateNavAuthUI();
     navigateTo('home');
