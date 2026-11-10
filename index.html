@@ -1171,7 +1171,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
 <footer>
   <div class="wrap">
     <span>UFC Mania — demo build. Not affiliated with the UFC or Zuffa LLC.</span>
-    <span>Sample dataset &amp; Demo UFC Store · Last updated January 2026 · <a href="/admin" style="color:var(--muted);text-decoration:none;opacity:0.65;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.65">🔒 Admin</a></span>
+    <span>Sample dataset &amp; Demo UFC Store · Last updated January 2026 · <a href="/about" style="color:var(--muted);text-decoration:none;margin-right:12px;opacity:0.75;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.75">About</a> <a href="/contact" style="color:var(--muted);text-decoration:none;margin-right:12px;opacity:0.75;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.75">Contact</a> <a href="/admin" style="color:var(--muted);text-decoration:none;opacity:0.65;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.65">🔒 Admin</a></span>
   </div>
 </footer>
 
@@ -1291,7 +1291,7 @@ window.handleNavAuthClick = function(e){
   const navlinks = document.getElementById('navlinks');
   if(navlinks) navlinks.classList.remove('open');
   if(window._currentUser){
-    if(typeof window.navigateTo === 'function') window.navigateTo('account');
+    if(typeof window.navigateTo === 'function') window.navigateTo('/account');
   } else {
     window.openAuthModal('signin');
   }
@@ -3296,6 +3296,86 @@ function renderNews(){
   </section>`;
 }
 
+// ---------------- About ----------------
+function renderAbout(){
+  app.innerHTML = `
+  <section class="pad wrap" style="max-width:880px;margin:20px auto 60px;">
+    <div class="sectionHead"><div><h2>About UFC Mania</h2><p>The premier interactive UFC fighter directory, rankings tracker, and fight gear store</p></div></div>
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:32px 28px;line-height:1.7;">
+      <h3 style="font-family:'Oswald',sans-serif;font-size:22px;letter-spacing:0.5px;color:var(--white);margin-bottom:12px;">Welcome to UFC Mania</h3>
+      <p style="color:var(--muted);font-size:15px;margin-bottom:18px;">UFC Mania is built for MMA enthusiasts, analysts, and fans around the globe. Our platform delivers detailed fighter statistics, divisional rankings, head-to-head comparisons, and authentic fight merchandise in one seamless experience.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:24px 0;">
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:10px;padding:18px;">
+          <div style="font-size:24px;margin-bottom:8px;">🥊</div>
+          <h4 style="font-size:16px;color:var(--white);margin-bottom:6px;">Fighter Database</h4>
+          <p style="color:var(--muted);font-size:13px;margin:0;">In-depth records, striking metrics, submission accuracy, and biographical details.</p>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:10px;padding:18px;">
+          <div style="font-size:24px;margin-bottom:8px;">🏆</div>
+          <h4 style="font-size:16px;color:var(--white);margin-bottom:6px;">Divisional Rankings</h4>
+          <p style="color:var(--muted);font-size:13px;margin:0;">Up-to-date championship status and divisional standings across all weight classes.</p>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:10px;padding:18px;">
+          <div style="font-size:24px;margin-bottom:8px;">🛒</div>
+          <h4 style="font-size:16px;color:var(--white);margin-bottom:6px;">Official Gear Store</h4>
+          <p style="color:var(--muted);font-size:13px;margin:0;">Authentic fight gloves, apparel, champion walkout jerseys, and collectibles.</p>
+        </div>
+      </div>
+      <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--line);display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="/fighters" class="btn btn-primary">Browse Fighters</a>
+        <a href="/shop" class="btn btn-ghost">Visit UFC Store</a>
+        <a href="/contact" class="btn btn-ghost">Contact Us</a>
+      </div>
+    </div>
+  </section>`;
+}
+
+// ---------------- Contact ----------------
+function renderContact(){
+  app.innerHTML = `
+  <section class="pad wrap" style="max-width:880px;margin:20px auto 60px;">
+    <div class="sectionHead"><div><h2>Contact UFC Mania</h2><p>Have questions, feedback, or need assistance? We're here to help.</p></div></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;">
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px;">
+        <h3 style="font-family:'Oswald',sans-serif;font-size:20px;color:var(--white);margin-bottom:14px;">Get in Touch</h3>
+        <p style="color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:20px;">Feel free to reach out to our team regarding fighter inquiries, order tracking, partnership opportunities, or bug reports.</p>
+        <div style="display:flex;flex-direction:column;gap:14px;font-size:14px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:18px;">📧</span>
+            <div><div style="color:var(--muted);font-size:12px;">Email Support</div><strong style="color:var(--white);">support@ufcmania.demo</strong></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:18px;">📍</span>
+            <div><div style="color:var(--muted);font-size:12px;">Location</div><span style="color:var(--white);">New Delhi, India</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:18px;">⚡</span>
+            <div><div style="color:var(--muted);font-size:12px;">Support Hours</div><span style="color:var(--white);">Mon - Sat · 10:00 AM - 7:00 PM IST</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px;">
+        <h3 style="font-family:'Oswald',sans-serif;font-size:20px;color:var(--white);margin-bottom:14px;">Send a Message</h3>
+        <form onsubmit="event.preventDefault(); if(typeof showToast==='function') showToast('Thank you! Your message has been received.', 'success'); this.reset();">
+          <div class="formGroup">
+            <label class="formLabel">Your Name</label>
+            <input type="text" class="formInput" placeholder="e.g. John Doe" required>
+          </div>
+          <div class="formGroup">
+            <label class="formLabel">Your Email</label>
+            <input type="email" class="formInput" placeholder="you@domain.com" required>
+          </div>
+          <div class="formGroup">
+            <label class="formLabel">Message</label>
+            <textarea class="formInput" rows="4" placeholder="How can we assist you today?" required style="resize:vertical;"></textarea>
+          </div>
+          <button type="submit" class="btnCheckout" style="margin-top:8px;">Send Message</button>
+        </form>
+      </div>
+    </div>
+  </section>`;
+}
+
 // ---------------- Compare ----------------
 function renderCompare(prefill){
   app.innerHTML = `
@@ -4034,53 +4114,10 @@ function renderOrderConfirmation(){
 
 // ============================================================================
 // CUSTOMER AUTHENTICATION & MY ACCOUNT SYSTEM
+// Note: Core modal controller (window.openAuthModal, window.closeAuthModal,
+// window.switchModalAuthTab, window.handleNavAuthClick) is declared early (top of body)
+// so that Sign In triggers are globally available instantly.
 // ============================================================================
-window.openAuthModal = function(initialTab = 'signin'){
-  const modal = document.getElementById('authModal');
-  if(!modal) return;
-  modal.classList.remove('hidden');
-  switchModalAuthTab(initialTab);
-};
-
-window.closeAuthModal = function(){
-  const modal = document.getElementById('authModal');
-  if(modal) modal.classList.add('hidden');
-  const errIn = document.getElementById('modalSignInError');
-  const errUp = document.getElementById('modalSignUpError');
-  if(errIn) errIn.style.display = 'none';
-  if(errUp) errUp.style.display = 'none';
-};
-
-window.switchModalAuthTab = function(tab){
-  const tabIn = document.getElementById('modalTabSignIn');
-  const tabUp = document.getElementById('modalTabSignUp');
-  const formIn = document.getElementById('modalSignInForm');
-  const formUp = document.getElementById('modalSignUpForm');
-  if(!tabIn || !tabUp) return;
-
-  if(tab === 'signin'){
-    tabIn.classList.add('active');
-    tabUp.classList.remove('active');
-    if(formIn) formIn.style.display = 'block';
-    if(formUp) formUp.style.display = 'none';
-  } else {
-    tabUp.classList.add('active');
-    tabIn.classList.remove('active');
-    if(formUp) formUp.style.display = 'block';
-    if(formIn) formIn.style.display = 'none';
-  }
-};
-
-window.handleNavAuthClick = function(e){
-  if(e && e.preventDefault) e.preventDefault();
-  const navlinks = document.getElementById('navlinks');
-  if(navlinks) navlinks.classList.remove('open');
-  if(window._currentUser){
-    navigateTo('account');
-  } else {
-    openAuthModal('signin');
-  }
-};
 
 function updateNavAuthUI(){
   const btn = document.getElementById('navAuthBtn');
@@ -4116,11 +4153,11 @@ window.renderAccountPage = renderAccountPage;
 
 function renderAuthPage(query){
   if(window._currentUser){
-    navigateTo('account');
+    navigateTo('/account');
     return;
   }
   openAuthModal(query === 'signup' ? 'signup' : 'signin');
-  navigateTo('home');
+  navigateTo('/');
 }
 
 window.switchAuthTab = function(tab){
@@ -4312,7 +4349,7 @@ window.switchAccountView = function(view){
 async function renderAccountPage(){
   if(!window._currentUser){
     openAuthModal('signin');
-    navigateTo('home');
+    navigateTo('/');
     return;
   }
 
@@ -4542,7 +4579,7 @@ window.handleCustomerSignOut = async function(){
     localStorage.removeItem('ufc_mania_active_user');
     showToast('You have been signed out.', 'info');
     updateNavAuthUI();
-    navigateTo('home');
+    navigateTo('/');
   }catch(err){
     console.error("Sign out error:", err);
   }
@@ -4581,7 +4618,7 @@ function renderAdminLogin(){
       </form>
 
       <div style="margin-top:20px;border-top:1px solid var(--line);padding-top:16px;">
-        <a href="javascript:void(0)" onclick="navigateTo('home')" style="color:var(--muted);font-size:13px;text-decoration:none;">← Return to Website</a>
+        <a href="javascript:void(0)" onclick="navigateTo('/')" style="color:var(--muted);font-size:13px;text-decoration:none;">← Return to Website</a>
       </div>
     </div>
   </section>`;
@@ -4604,7 +4641,7 @@ window.handleAdminLogin = function(e){
 window.handleAdminLogout = function(){
   sessionStorage.removeItem('ufc_admin_auth');
   showToast('Logged out of admin panel', 'info');
-  navigateTo('home');
+  navigateTo('/');
 };
 
 window.switchAdminTab = function(tab){
@@ -5105,7 +5142,8 @@ function toBrowserUrl(cleanPath, query = null){
   if(!p.startsWith('/')) p = '/' + p;
   let full = (base ? base : '') + p;
   if(query){
-    full += (query.startsWith('?') ? query : '?' + query);
+    const cleanQ = query.replace(/^\?/, '');
+    if(cleanQ) full += '?' + cleanQ;
   }
   return full;
 }
@@ -5117,9 +5155,19 @@ function normalizePathname(pathname){
   if(base && p.startsWith(base)){
     p = p.substring(base.length);
   }
-  if(!p || p === '' || p === '/index.html'){
-    p = '/';
+  // Strip .html extension or /index.html
+  if(p.endsWith('/index.html')) p = p.slice(0, -11) || '/';
+  if(p === '/index.html' || p === 'index.html') p = '/';
+  if(!p || p === '' || p === '/home') p = '/';
+
+  // Handle local file protocol
+  if(window.location.protocol === 'file:'){
+    if(window._currentPath && window._currentPath !== '/'){
+      return window._currentPath;
+    }
+    return '/';
   }
+
   // Remove trailing slash if longer than 1 char (e.g. /cart/ -> /cart)
   if(p.length > 1 && p.endsWith('/')){
     p = p.slice(0, -1);
@@ -5132,8 +5180,14 @@ window._currentPage = 'home';
 
 function navigateTo(targetRoute, query = null, pushHistory = true){
   let raw = targetRoute || '/';
-  
-  // Normalize if passed relative name like 'cart' -> '/cart'
+
+  // Support route alias like navigateTo('fighter', 'jon-jones')
+  if(raw === 'fighter' && query){
+    raw = '/fighter/' + query;
+    query = null;
+  }
+
+  // Normalize relative name like 'cart' -> '/cart'
   if(!raw.startsWith('/') && !raw.startsWith('#')){
     raw = '/' + raw;
   }
@@ -5153,95 +5207,133 @@ function navigateTo(targetRoute, query = null, pushHistory = true){
   const cleanPath = normalizePathname(raw);
   window._currentPath = cleanPath;
   window._currentPage = cleanPath.replace(/^\//, '').split('/')[0] || 'home';
-  window.scrollTo(0, 0);
+
+  try { window.scrollTo(0, 0); } catch(e){}
 
   const navlinks = document.getElementById('navlinks');
   if(navlinks) navlinks.classList.remove('open');
 
   const fullBrowserUrl = toBrowserUrl(cleanPath, query);
 
-  // Update URL in browser address bar (BrowserRouter behavior)
+  // Update URL in browser address bar (BrowserRouter HTML5 pushState)
   if(pushHistory && window.history && window.history.pushState){
-    const currentFull = window.location.pathname + (window.location.search || '');
-    if(currentFull !== fullBrowserUrl){
-      history.pushState({ path: cleanPath, query: query }, '', fullBrowserUrl);
+    try {
+      if(window.location.protocol !== 'file:'){
+        const currentFull = window.location.pathname + (window.location.search || '');
+        if(currentFull !== fullBrowserUrl){
+          window.history.pushState({ path: cleanPath, query: query }, '', fullBrowserUrl);
+        }
+      }
+    } catch(err){
+      console.warn('[Router] pushState skipped:', err);
     }
   }
 
   // Meta Pixel Tracking
-  trackSpaPageView(cleanPath);
+  try {
+    trackSpaPageView(cleanPath);
+  } catch(e){}
 
   // Firebase Activity Tracking
-  if(window.recordFirebaseActivity && cleanPath !== '/admin'){
-    window.recordFirebaseActivity({
-      type: 'pageview',
-      path: cleanPath,
-      title: 'UFC Mania - ' + (cleanPath === '/' ? 'Home' : cleanPath.slice(1))
-    });
-  }
+  try {
+    if(window.recordFirebaseActivity && cleanPath !== '/admin'){
+      window.recordFirebaseActivity({
+        type: 'pageview',
+        path: cleanPath,
+        title: 'UFC Mania - ' + (cleanPath === '/' ? 'Home' : cleanPath.slice(1))
+      });
+    }
+  } catch(e){}
 
   // Route Dispatcher
-  if(cleanPath === '/' || cleanPath === ''){
-    renderHome();
-    setActiveNav('home');
-  } else if(cleanPath === '/fighters'){
-    renderFightersList(query);
-    setActiveNav('fighters');
-  } else if(cleanPath.startsWith('/fighter/')){
-    const fighterId = cleanPath.split('/')[2];
-    renderProfile(fighterId);
-    setActiveNav('fighters');
-  } else if(cleanPath === '/rankings'){
-    renderRankings();
-    setActiveNav('rankings');
-  } else if(cleanPath === '/weightclasses'){
-    renderWeightClasses();
-    setActiveNav('weightclasses');
-  } else if(cleanPath === '/countries'){
-    renderCountries();
-    setActiveNav('countries');
-  } else if(cleanPath === '/compare'){
-    let params = null;
-    if(query && typeof query === 'string'){
-      const q = parseQuery(query);
-      params = q.a || q.b ? [q.a, q.b] : null;
-    } else if(Array.isArray(query)){
-      params = query;
+  try {
+    if(cleanPath === '/' || cleanPath === ''){
+      renderHome();
+      setActiveNav('home');
+    } else if(cleanPath === '/fighters'){
+      renderFightersList(query);
+      setActiveNav('fighters');
+    } else if(cleanPath.startsWith('/fighter/')){
+      const fighterId = cleanPath.split('/')[2];
+      renderProfile(fighterId);
+      setActiveNav('fighters');
+    } else if(cleanPath === '/rankings'){
+      renderRankings();
+      setActiveNav('rankings');
+    } else if(cleanPath === '/weightclasses'){
+      renderWeightClasses();
+      setActiveNav('weightclasses');
+    } else if(cleanPath === '/countries'){
+      renderCountries();
+      setActiveNav('countries');
+    } else if(cleanPath === '/compare'){
+      let params = null;
+      if(query && typeof query === 'string'){
+        const q = parseQuery(query);
+        params = q.a || q.b ? [q.a, q.b] : null;
+      } else if(Array.isArray(query)){
+        params = query;
+      }
+      renderCompare(params);
+      setActiveNav('compare');
+    } else if(cleanPath === '/news'){
+      renderNews();
+      setActiveNav('news');
+    } else if(cleanPath === '/shop'){
+      renderShop();
+      setActiveNav('shop');
+    } else if(cleanPath === '/cart'){
+      renderCart();
+      setActiveNav('shop');
+    } else if(cleanPath === '/checkout'){
+      renderCheckout();
+      setActiveNav('shop');
+    } else if(cleanPath === '/order-confirmation'){
+      renderOrderConfirmation();
+      setActiveNav('shop');
+    } else if(cleanPath.startsWith('/product/')){
+      const productId = cleanPath.split('/')[2];
+      renderShop();
+      setActiveNav('shop');
+      setTimeout(() => { if(typeof openProductModal === 'function') openProductModal(productId); }, 60);
+    } else if(cleanPath === '/account'){
+      renderAccountPage();
+      setActiveNav('');
+    } else if(cleanPath === '/admin'){
+      renderAdminPanel();
+      setActiveNav('');
+    } else if(cleanPath === '/login' || cleanPath === '/signin' || cleanPath === '/auth'){
+      openAuthModal('signin');
+      if(window._currentUser){
+        renderAccountPage();
+        setActiveNav('');
+      } else {
+        renderHome();
+        setActiveNav('home');
+      }
+    } else if(cleanPath === '/signup' || cleanPath === '/register'){
+      openAuthModal('signup');
+      if(window._currentUser){
+        renderAccountPage();
+        setActiveNav('');
+      } else {
+        renderHome();
+        setActiveNav('home');
+      }
+    } else if(cleanPath === '/about'){
+      renderAbout();
+      setActiveNav('');
+    } else if(cleanPath === '/contact'){
+      renderContact();
+      setActiveNav('');
+    } else {
+      // 404 fallback
+      renderHome();
+      setActiveNav('home');
     }
-    renderCompare(params);
-    setActiveNav('compare');
-  } else if(cleanPath === '/news'){
-    renderNews();
-    setActiveNav('news');
-  } else if(cleanPath === '/shop'){
-    renderShop();
-    setActiveNav('shop');
-  } else if(cleanPath === '/cart'){
-    renderCart();
-    setActiveNav('shop');
-  } else if(cleanPath === '/checkout'){
-    renderCheckout();
-    setActiveNav('shop');
-  } else if(cleanPath === '/order-confirmation'){
-    renderOrderConfirmation();
-    setActiveNav('shop');
-  } else if(cleanPath === '/account'){
-    renderAccountPage();
-    setActiveNav('');
-  } else if(cleanPath === '/admin'){
-    renderAdminPanel();
-    setActiveNav('');
-  } else if(cleanPath === '/auth'){
-    openAuthModal(query === 'signup' ? 'signup' : 'signin');
-    if(pushHistory){
-      history.replaceState({ path: '/' }, '', toBrowserUrl('/'));
-    }
-    renderHome();
-    setActiveNav('home');
-  } else {
-    // 404 fallback
-    renderHome();
-    setActiveNav('home');
+  } catch(routeErr){
+    console.error('[Router] Dispatch error:', routeErr);
+    try { renderHome(); setActiveNav('home'); } catch(e){}
   }
 }
 
@@ -5290,15 +5382,36 @@ document.addEventListener('click', (e) => {
 
 // Resolve Initial Route on direct page refresh / initial load
 function resolveInitialRoute(){
-  updateNavCartBadge();
-  updateNavAuthUI();
+  try { if(typeof updateNavCartBadge === 'function') updateNavCartBadge(); } catch(e){}
+  try { if(typeof updateNavAuthUI === 'function') updateNavAuthUI(); } catch(e){}
+
+  // Support SPA redirect parameter (e.g. from GitHub Pages 404.html: /?p=/cart)
+  try {
+    const searchParams = new URLSearchParams(window.location.search);
+    const pFromQuery = searchParams.get('p') || searchParams.get('route');
+    if(pFromQuery){
+      searchParams.delete('p');
+      searchParams.delete('route');
+      const rem = searchParams.toString();
+      const cleanUrl = toBrowserUrl(pFromQuery, rem);
+      if(window.history && window.history.replaceState && window.location.protocol !== 'file:'){
+        try { window.history.replaceState({ path: pFromQuery, query: rem }, '', cleanUrl); } catch(e){}
+      }
+      navigateTo(pFromQuery, rem, false);
+      return;
+    }
+  } catch(e){}
 
   // If page was loaded with a legacy #hash (e.g. /#/cart), rewrite to clean /cart
   if(window.location.hash && window.location.hash.startsWith('#/')){
     const legacy = window.location.hash.replace(/^#/, '');
     const [lp, lq] = legacy.split('?');
     const cleanUrl = toBrowserUrl(lp, lq);
-    try { history.replaceState(null, '', cleanUrl); } catch(e){}
+    try {
+      if(window.location.protocol !== 'file:' && window.history && window.history.replaceState){
+        history.replaceState({ path: lp, query: lq }, '', cleanUrl);
+      }
+    } catch(e){}
     navigateTo(lp, lq, false);
     return;
   }
@@ -5307,8 +5420,10 @@ function resolveInitialRoute(){
   const path = normalizePathname(window.location.pathname);
   const query = window.location.search.replace(/^\?/, '');
 
-  if(window.history && window.history.replaceState){
-    history.replaceState({ path, query }, '', toBrowserUrl(path, query));
+  if(window.history && window.history.replaceState && window.location.protocol !== 'file:'){
+    try {
+      history.replaceState({ path, query }, '', toBrowserUrl(path, query));
+    } catch(e){}
   }
 
   navigateTo(path, query, false);
@@ -5316,8 +5431,8 @@ function resolveInitialRoute(){
 
 window.addEventListener('DOMContentLoaded', resolveInitialRoute);
 resolveInitialRoute();
-updateNavCartBadge();
-updateNavAuthUI();
+try { if(typeof updateNavCartBadge === 'function') updateNavCartBadge(); } catch(e){}
+try { if(typeof updateNavAuthUI === 'function') updateNavAuthUI(); } catch(e){}
 
 // ============================================================================
 // NAV / SEARCH CHROME
@@ -5364,9 +5479,9 @@ gInput.addEventListener('keydown', e=>{
       closeSearch();
       if(href.includes('/fighter/')){
         const fid = href.split('/fighter/')[1];
-        navigateTo('fighter', fid);
+        navigateTo('/fighter/' + fid);
       } else {
-        navigateTo('fighters');
+        navigateTo('/fighters');
       }
     }
   }
