@@ -54,15 +54,18 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<!-- Firebase App, Auth & Firestore SDKs (v10 Modular via CDN) -->
+<!-- Firebase App, Auth & Realtime Database SDKs (v10 Modular via CDN + Direct REST fallback) -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, query, orderBy, limit, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+  import { getDatabase, ref, set, push, get, child, update, remove } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, updateProfile } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+  const RTDB_BASE = "https://ufc-mania-1-default-rtdb.firebaseio.com";
 
   const firebaseConfig = {
     apiKey: "AIzaSyALBGCAWwDAofWh1dcH_pEl022_k_HqCZ4",
     authDomain: "ufc-mania-1.firebaseapp.com",
+    databaseURL: "https://ufc-mania-1-default-rtdb.firebaseio.com",
     projectId: "ufc-mania-1",
     storageBucket: "ufc-mania-1.firebasestorage.app",
     messagingSenderId: "910913540211",
@@ -74,12 +77,12 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
   let auth = null;
   try {
     const fbApp = initializeApp(firebaseConfig);
-    db = getFirestore(fbApp);
+    db = getDatabase(fbApp);
     auth = getAuth(fbApp);
     window._firebaseDb = db;
     window._firebaseAuth = auth;
     window._firebaseConnected = true;
-    console.log("[Firebase] UFC Mania Auth & Cloud Firestore initialized successfully.");
+    console.log("[Firebase] UFC Mania Auth & Realtime Database connected successfully.");
   } catch(err) {
     console.warn("[Firebase] Initialization error:", err);
     window._firebaseConnected = false;
@@ -94,21 +97,36 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
       window._currentUser = user;
       if(user){
         try {
-          const uDoc = await getDoc(doc(db, "users", user.uid));
-          if(uDoc.exists()){
-            window._currentUserProfile = uDoc.data();
+          let profile = null;
+          if(db){
+            try {
+              const snap = await get(child(ref(db), `users/${user.uid}`));
+              if(snap.exists()) profile = snap.val();
+            }catch(e){}
+          }
+          if(!profile){
+            try {
+              const res = await fetch(`${RTDB_BASE}/users/${user.uid}.json`);
+              profile = await res.json();
+            }catch(e){}
+          }
+          if(profile){
+            window._currentUserProfile = profile;
           } else {
-            // Initialize basic profile if not exists
             const basic = {
               uid: user.uid,
               email: user.email,
               displayName: user.displayName || user.email.split('@')[0],
               phone: '',
               status: 'active',
+              role: 'customer',
+              totalOrders: 0,
+              totalSpent: 0,
               createdAt: Date.now(),
               address: {}
             };
-            await setDoc(doc(db, "users", user.uid), basic, { merge: true });
+            if(db) set(ref(db, `users/${user.uid}`), basic).catch(()=>{});
+            fetch(`${RTDB_BASE}/users/${user.uid}.json`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(basic) }).catch(()=>{});
             window._currentUserProfile = basic;
           }
         } catch(e) {
@@ -120,7 +138,6 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
       }
       if(typeof updateNavAuthUI === 'function') updateNavAuthUI();
       if(user && typeof closeAuthModal === 'function') closeAuthModal();
-      // If currently on account page, refresh view
       if((window._currentPage === 'account' || location.hash === '#/account') && typeof renderAccountPage === 'function'){
         renderAccountPage();
       }
@@ -129,11 +146,11 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
 
   // Customer Auth Functions
   window.authSignUp = async function(email, password, displayName, phone, address = {}){
-    if(!auth || !db) throw new Error("Firebase is not initialized.");
+    if(!auth) throw new Error("Firebase Auth is not initialized.");
     const userCred = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCred.user;
     if(displayName){
-      await updateProfile(user, { displayName });
+      try { await updateProfile(user, { displayName }); }catch(e){}
     }
     const profile = {
       uid: user.uid,
@@ -148,7 +165,26 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
       createdAt: Date.now(),
       createdAtStr: new Date().toISOString()
     };
-    await setDoc(doc(db, "users", user.uid), profile);
+    try {
+      if(db){
+        await set(ref(db, `users/${user.uid}`), profile);
+      } else {
+        await fetch(`${RTDB_BASE}/users/${user.uid}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(profile)
+        });
+      }
+    } catch(err) {
+      console.warn("RTDB set failed, trying REST fallback:", err);
+      try {
+        await fetch(`${RTDB_BASE}/users/${user.uid}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(profile)
+        });
+      }catch(e){}
+    }
     window._currentUser = user;
     window._currentUserProfile = profile;
     return user;
@@ -158,11 +194,17 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
     if(!auth) throw new Error("Firebase Auth is not initialized.");
     const userCred = await signInWithEmailAndPassword(auth, email, password);
     const user = userCred.user;
-    // Check if account blocked
     try {
-      const uDoc = await getDoc(doc(db, "users", user.uid));
-      if(uDoc.exists()){
-        const data = uDoc.data();
+      let data = null;
+      if(db){
+        const snap = await get(child(ref(db), `users/${user.uid}`));
+        if(snap.exists()) data = snap.val();
+      }
+      if(!data){
+        const res = await fetch(`${RTDB_BASE}/users/${user.uid}.json`);
+        data = await res.json();
+      }
+      if(data){
         if(data.status === 'blocked'){
           await signOut(auth);
           throw new Error("Your account has been suspended by the administrator. Contact support.");
@@ -192,148 +234,238 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
     if(!auth || !auth.currentUser) throw new Error("Not logged in.");
     const uid = auth.currentUser.uid;
     if(updates.displayName){
-      await updateProfile(auth.currentUser, { displayName: updates.displayName });
+      try { await updateProfile(auth.currentUser, { displayName: updates.displayName }); }catch(e){}
     }
-    await updateDoc(doc(db, "users", uid), {
-      ...updates,
-      updatedAt: Date.now()
-    });
+    const upd = { ...updates, updatedAt: Date.now() };
+    try {
+      if(db) await update(ref(db, `users/${uid}`), upd);
+      await fetch(`${RTDB_BASE}/users/${uid}.json`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify(upd) });
+    }catch(e){}
     window._currentUserProfile = { ...(window._currentUserProfile || {}), ...updates };
   };
 
   window.authFetchUserOrders = async function(){
-    if(!db || !auth || !auth.currentUser) return [];
+    if(!auth || !auth.currentUser) return [];
+    const uid = auth.currentUser.uid;
+    const userEmail = auth.currentUser.email;
     try {
-      const q = query(
-        collection(db, "orders"),
-        where("userId", "==", auth.currentUser.uid),
-        orderBy("createdAtEpoch", "desc"),
-        limit(50)
-      );
-      const snap = await getDocs(q);
-      const list = [];
-      snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-      return list;
-    } catch(err) {
-      // Fallback query without compound index if needed
-      const q2 = query(collection(db, "orders"), where("userId", "==", auth.currentUser.uid), limit(50));
-      const snap2 = await getDocs(q2);
-      const list2 = [];
-      snap2.forEach(d => list2.push({ id: d.id, ...d.data() }));
-      list2.sort((a,b) => (b.createdAtEpoch||0) - (a.createdAtEpoch||0));
-      return list2;
-    }
-  };
-
-  // Global helper to record orders to Firebase Firestore
-  window.recordFirebaseOrder = async function(orderData) {
-    if(!db) {
-      console.warn("[Firebase] DB not ready, storing order locally only.");
-      return;
-    }
-    try {
-      const currentUid = auth?.currentUser?.uid || null;
-      const userEmail = auth?.currentUser?.email || orderData.address?.email || null;
-      const docRef = await addDoc(collection(db, "orders"), {
-        ...orderData,
-        userId: currentUid,
-        userEmail: userEmail,
-        status: 'pending',
-        firebaseCreatedAt: serverTimestamp(),
-        createdAtEpoch: Date.now()
-      });
-      console.log("[Firebase] Order synced to cloud with ID:", docRef.id);
-
-      // If customer logged in, update their order count & spend in user profile
-      if(currentUid){
+      let ordersObj = null;
+      if(db){
         try {
-          const uDocRef = doc(db, "users", currentUid);
-          const uDocSnap = await getDoc(uDocRef);
-          if(uDocSnap.exists()){
-            const uData = uDocSnap.data();
-            await updateDoc(uDocRef, {
-              totalOrders: (uData.totalOrders || 0) + 1,
-              totalSpent: (uData.totalSpent || 0) + (orderData.totals?.grandTotal || 0),
-              lastOrderAt: Date.now()
-            });
-          }
-        }catch(e){ console.warn("Could not update user stats", e); }
+          const snap = await get(ref(db, 'orders'));
+          if(snap.exists()) ordersObj = snap.val();
+        }catch(e){}
       }
+      if(!ordersObj){
+        const res = await fetch(`${RTDB_BASE}/orders.json`);
+        ordersObj = await res.json();
+      }
+      if(!ordersObj) return [];
+      const list = Object.keys(ordersObj).map(k => ({ id: k, ...ordersObj[k] }));
+      const userOrders = list.filter(o => o.userId === uid || (userEmail && o.userEmail === userEmail));
+      userOrders.sort((a,b) => (b.createdAtEpoch||0) - (a.createdAtEpoch||0));
+      return userOrders;
     } catch(e) {
-      console.error("[Firebase] Error saving order to cloud:", e);
+      console.warn("Error fetching user orders:", e);
+      return [];
     }
   };
 
-  // Global helper to record user activity
+  // Global helper to record orders to Firebase Realtime Database
+  window.recordFirebaseOrder = async function(orderData) {
+    const currentUid = auth?.currentUser?.uid || null;
+    const userEmail = auth?.currentUser?.email || orderData.address?.email || null;
+    const fullOrder = {
+      ...orderData,
+      userId: currentUid,
+      userEmail: userEmail,
+      status: 'pending',
+      createdAtEpoch: Date.now(),
+      createdAtStr: new Date().toISOString()
+    };
+
+    let saved = false;
+    if(db){
+      try {
+        const newRef = push(ref(db, 'orders'));
+        await set(newRef, { ...fullOrder, id: newRef.key });
+        console.log("[Firebase RTDB] Order saved with key:", newRef.key);
+        saved = true;
+      }catch(e){
+        console.warn("[Firebase RTDB] SDK push failed, fallback to REST:", e);
+      }
+    }
+    if(!saved){
+      try {
+        const res = await fetch(`${RTDB_BASE}/orders.json`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fullOrder)
+        });
+        const d = await res.json();
+        console.log("[Firebase RTDB REST] Order saved with key:", d.name);
+      }catch(err){
+        console.error("[Firebase] Error saving order to RTDB:", err);
+      }
+    }
+
+    // Update user stats in cloud
+    if(currentUid){
+      try {
+        let uData = null;
+        if(db){
+          const snap = await get(child(ref(db), `users/${currentUid}`));
+          if(snap.exists()) uData = snap.val();
+        }
+        if(!uData){
+          const res = await fetch(`${RTDB_BASE}/users/${currentUid}.json`);
+          uData = await res.json();
+        }
+        if(uData){
+          const newTotals = {
+            totalOrders: (uData.totalOrders || 0) + 1,
+            totalSpent: (uData.totalSpent || 0) + (orderData.totals?.grandTotal || 0),
+            lastOrderAt: Date.now()
+          };
+          if(db) update(ref(db, `users/${currentUid}`), newTotals).catch(()=>{});
+          fetch(`${RTDB_BASE}/users/${currentUid}.json`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify(newTotals) }).catch(()=>{});
+        }
+      }catch(e){}
+    }
+  };
+
+  // Global helper to record visitor activity
   window.recordFirebaseActivity = async function(act) {
-    if(!db) return;
+    const actData = {
+      ...act,
+      userId: auth?.currentUser?.uid || null,
+      userEmail: auth?.currentUser?.email || 'Guest',
+      userAgent: navigator.userAgent.substring(0, 80),
+      timestamp: Date.now(),
+      dateStr: new Date().toISOString()
+    };
     try {
-      await addDoc(collection(db, "activity"), {
-        ...act,
-        userId: auth?.currentUser?.uid || null,
-        userEmail: auth?.currentUser?.email || 'Guest',
-        userAgent: navigator.userAgent.substring(0, 80),
-        timestamp: Date.now(),
-        dateStr: new Date().toISOString()
-      });
-    } catch(e) {
-      // Activity logging fails silently if offline
-    }
+      if(db){
+        push(ref(db, 'activity'), actData).catch(()=>{});
+      } else {
+        fetch(`${RTDB_BASE}/activity.json`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(actData)
+        }).catch(()=>{});
+      }
+    }catch(e){}
   };
 
-  // Expose firestore query operations for Admin Panel
+  // Admin Operations for Realtime Database
   window.adminFetchOrders = async function() {
-    if(!db) throw new Error("Firebase DB is not initialized.");
-    const q = query(collection(db, "orders"), orderBy("createdAtEpoch", "desc"), limit(100));
-    const snap = await getDocs(q);
-    const list = [];
-    snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+    let data = null;
+    if(db){
+      try {
+        const snap = await get(ref(db, 'orders'));
+        if(snap.exists()) data = snap.val();
+      }catch(e){}
+    }
+    if(!data){
+      const res = await fetch(`${RTDB_BASE}/orders.json`);
+      data = await res.json();
+    }
+    if(!data) return [];
+    const list = Object.keys(data).map(k => ({ id: k, ...data[k] }));
+    list.sort((a,b) => (b.createdAtEpoch||0) - (a.createdAtEpoch||0));
     return list;
   };
 
-  window.adminUpdateOrderStatus = async function(docId, newStatus) {
-    if(!db) throw new Error("Firebase DB is not initialized.");
-    await updateDoc(doc(db, "orders", docId), { status: newStatus });
+  window.adminUpdateOrderStatus = async function(orderKey, newStatus) {
+    try {
+      if(db) await update(ref(db, `orders/${orderKey}`), { status: newStatus });
+      await fetch(`${RTDB_BASE}/orders/${orderKey}.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+    }catch(e){
+      console.error("Order status update failed:", e);
+      throw e;
+    }
   };
 
-  window.adminDeleteOrder = async function(docId) {
-    if(!db) throw new Error("Firebase DB is not initialized.");
-    await deleteDoc(doc(db, "orders", docId));
+  window.adminDeleteOrder = async function(orderKey) {
+    try {
+      if(db) await remove(ref(db, `orders/${orderKey}`));
+      await fetch(`${RTDB_BASE}/orders/${orderKey}.json`, { method: 'DELETE' });
+    }catch(e){
+      console.error("Order delete failed:", e);
+      throw e;
+    }
   };
 
   window.adminFetchActivity = async function() {
-    if(!db) throw new Error("Firebase DB is not initialized.");
-    const q = query(collection(db, "activity"), orderBy("timestamp", "desc"), limit(60));
-    const snap = await getDocs(q);
-    const list = [];
-    snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-    return list;
+    let data = null;
+    if(db){
+      try {
+        const snap = await get(ref(db, 'activity'));
+        if(snap.exists()) data = snap.val();
+      }catch(e){}
+    }
+    if(!data){
+      const res = await fetch(`${RTDB_BASE}/activity.json`);
+      data = await res.json();
+    }
+    if(!data) return [];
+    const list = Object.keys(data).map(k => ({ id: k, ...data[k] }));
+    list.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+    return list.slice(0, 80);
   };
 
-  // Admin User Management Operations
   window.adminFetchUsers = async function() {
-    if(!db) throw new Error("Firebase DB is not initialized.");
-    const q = query(collection(db, "users"), limit(100));
-    const snap = await getDocs(q);
-    const list = [];
-    snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+    let data = null;
+    if(db){
+      try {
+        const snap = await get(ref(db, 'users'));
+        if(snap.exists()) data = snap.val();
+      }catch(e){}
+    }
+    if(!data){
+      const res = await fetch(`${RTDB_BASE}/users.json`);
+      data = await res.json();
+    }
+    if(!data) return [];
+    const list = Object.keys(data).map(k => ({ id: k, uid: k, ...data[k] }));
     list.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
     return list;
   };
 
   window.adminUpdateUserStatus = async function(uid, newStatus) {
-    if(!db) throw new Error("Firebase DB is not initialized.");
-    await updateDoc(doc(db, "users", uid), { status: newStatus });
+    try {
+      if(db) await update(ref(db, `users/${uid}`), { status: newStatus });
+      await fetch(`${RTDB_BASE}/users/${uid}.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+    }catch(e){
+      console.error("User status update failed:", e);
+      throw e;
+    }
   };
 
   window.adminSaveUserNotes = async function(uid, notes) {
-    if(!db) throw new Error("Firebase DB is not initialized.");
-    await updateDoc(doc(db, "users", uid), { adminNotes: notes });
+    try {
+      if(db) await update(ref(db, `users/${uid}`), { adminNotes: notes });
+      await fetch(`${RTDB_BASE}/users/${uid}.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminNotes: notes })
+      });
+    }catch(e){}
   };
 
   window.adminDeleteUserDoc = async function(uid) {
-    if(!db) throw new Error("Firebase DB is not initialized.");
-    await deleteDoc(doc(db, "users", uid));
+    try {
+      if(db) await remove(ref(db, `users/${uid}`));
+      await fetch(`${RTDB_BASE}/users/${uid}.json`, { method: 'DELETE' });
+    }catch(e){}
   };
 </script>
 <style>
@@ -3999,7 +4131,7 @@ function processOrder(){
   // Save order for confirmation page
   try { localStorage.setItem('ufc_mania_last_order', JSON.stringify(orderData)); } catch(e){}
 
-  // Sync order to Firebase Firestore Cloud Database
+  // Sync order to Firebase Realtime Cloud Database
   if(window.recordFirebaseOrder){
     window.recordFirebaseOrder(orderData);
   }
@@ -4585,7 +4717,7 @@ window.handleCustomerSignOut = async function(){
 };
 
 // ============================================================================
-// ADMIN PANEL (MANAGED VIA FIREBASE FIRESTORE & SECURE PASSWORD)
+// ADMIN PANEL (MANAGED VIA FIREBASE REALTIME DB & SECURE PASSWORD)
 // ============================================================================
 const ADMIN_SECRET = 'terechachakaufcdata5874';
 let adminActiveTab = 'orders';
@@ -4663,7 +4795,7 @@ async function renderAdminPanel(){
           <span style="background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:1px;text-transform:uppercase;">Admin</span>
           <h1 style="font-family:'Oswald',sans-serif;font-size:32px;letter-spacing:1px;margin:0;">UFC MANIA MANAGEMENT HUB</h1>
         </div>
-        <div style="color:var(--muted);font-size:13px;margin-top:4px;">Connected to Firebase Firestore Cloud DB · Project: <code style="color:var(--gold);">ufc-mania-1</code></div>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px;">Connected to Firebase Realtime Cloud DB · Project: <code style="color:var(--gold);">ufc-mania-1</code></div>
       </div>
       <div style="display:flex;gap:10px;align-items:center;">
         <button onclick="renderAdminPanel()" class="btn btn-ghost" style="padding:8px 14px;font-size:13px;">🔄 Refresh Data</button>
@@ -4702,23 +4834,49 @@ async function loadAdminDashboardData(){
   const tabContent = document.getElementById('adminTabContent');
   if(!tabContent) return;
 
+  // 1. Fetch Orders from Firebase Realtime DB
   try {
     if(window.adminFetchOrders){
-      adminCachedOrders = await window.adminFetchOrders();
-    }
-    if(window.adminFetchUsers){
-      adminCachedUsers = await window.adminFetchUsers();
+      const fetchedOrders = await window.adminFetchOrders();
+      if(Array.isArray(fetchedOrders)) adminCachedOrders = fetchedOrders;
     }
   } catch(e) {
-    console.warn("Could not fetch remote Firebase records:", e);
-    // fallback to local stored order if any
-    try {
-      const loc = JSON.parse(localStorage.getItem('ufc_mania_last_order'));
-      if(loc && !adminCachedOrders.some(o => o.orderId === loc.orderId)){
-        adminCachedOrders = [{ ...loc, id: 'local_demo' }];
-      }
-    }catch(err){}
+    console.warn("Could not fetch remote Firebase orders:", e);
   }
+
+  // Fallback to locally stored last order if any
+  try {
+    const loc = JSON.parse(localStorage.getItem('ufc_mania_last_order'));
+    if(loc && !adminCachedOrders.some(o => o.orderId === loc.orderId)){
+      adminCachedOrders = [{ ...loc, id: 'local_demo' }, ...adminCachedOrders];
+    }
+  } catch(err){}
+
+  // 2. Fetch Users from Firebase Realtime DB
+  try {
+    if(window.adminFetchUsers){
+      const fetchedUsers = await window.adminFetchUsers();
+      if(Array.isArray(fetchedUsers)) adminCachedUsers = fetchedUsers;
+    }
+  } catch(e) {
+    console.warn("Could not fetch remote Firebase users:", e);
+  }
+
+  // Fallback to local stored users if any
+  try {
+    const localUsers = JSON.parse(localStorage.getItem('ufc_mania_local_users') || '[]');
+    if(Array.isArray(localUsers)){
+      localUsers.forEach(lu => {
+        if(!adminCachedUsers.some(u => (u.uid && u.uid === lu.uid) || (u.email && lu.email && u.email.toLowerCase() === lu.email.toLowerCase()))){
+          adminCachedUsers.push(lu);
+        }
+      });
+    }
+    const activeU = JSON.parse(localStorage.getItem('ufc_mania_active_user') || 'null');
+    if(activeU && activeU.email && !adminCachedUsers.some(u => (u.uid && u.uid === activeU.uid) || (u.email && u.email.toLowerCase() === activeU.email.toLowerCase()))){
+      adminCachedUsers.push(activeU);
+    }
+  } catch(err){}
 
   // Update Top Stats
   const statOrders = document.getElementById('statOrders');
@@ -5051,7 +5209,7 @@ function renderQuickTab(){
         <div style="font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:0.5px;margin-bottom:8px;">Firebase Cloud Project</div>
         <div style="font-family:monospace;font-size:14px;color:var(--gold);margin-bottom:6px;">ufc-mania-1</div>
         <div style="font-size:12px;color:var(--muted);">Auth Domain: ufc-mania-1.firebaseapp.com</div>
-        <div style="font-size:12px;color:var(--muted);">Database: Firestore (Native Mode)</div>
+        <div style="font-size:12px;color:var(--muted);">Database: Realtime Database (us-central1)</div>
       </div>
 
       <div style="background:rgba(255,255,255,0.02);border:1px solid var(--line);border-radius:10px;padding:18px;">
