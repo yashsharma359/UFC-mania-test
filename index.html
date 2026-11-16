@@ -138,8 +138,13 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
       }
       if(typeof updateNavAuthUI === 'function') updateNavAuthUI();
       if(user && typeof closeAuthModal === 'function') closeAuthModal();
-      if((window._currentPage === 'account' || location.hash === '#/account') && typeof renderAccountPage === 'function'){
+      if(user && window._postAuthRedirect === 'checkout' && typeof getCart === 'function' && getCart().length > 0){
+        window._postAuthRedirect = null;
+        if(typeof navigateTo === 'function') navigateTo('checkout');
+      } else if((window._currentPage === 'account' || location.hash === '#/account') && typeof renderAccountPage === 'function'){
         renderAccountPage();
+      } else if(window._currentPage === 'checkout' && typeof renderCheckout === 'function'){
+        renderCheckout();
       }
     });
   }
@@ -327,6 +332,8 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
             totalSpent: (uData.totalSpent || 0) + (orderData.totals?.grandTotal || 0),
             lastOrderAt: Date.now()
           };
+          if(orderData.address?.mobile && !uData.phone) newTotals.phone = orderData.address.mobile;
+          if(orderData.address && (!uData.address || !uData.address.house)) newTotals.address = orderData.address;
           if(db) update(ref(db, `users/${currentUid}`), newTotals).catch(()=>{});
           fetch(`${RTDB_BASE}/users/${currentUid}.json`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify(newTotals) }).catch(()=>{});
         }
@@ -3792,6 +3799,17 @@ function renderCart(){
 
 function proceedToCheckout(){
   const cart = getCart();
+  if(cart.length === 0){
+    showToast('Your cart is empty. Add products to proceed.', 'error');
+    return;
+  }
+  // Require account authentication before checkout
+  if(!window._currentUser){
+    window._postAuthRedirect = 'checkout';
+    showToast('Please sign in or create an account to proceed with your order.', 'info');
+    openAuthModal('signin');
+    return;
+  }
   const totals = getCartTotals();
   // Meta Pixel Event: Checkout initiated from Cart
   trackPixelEvent('InitiateCheckout', {
@@ -3821,6 +3839,10 @@ function renderCheckout(){
     return;
   }
   const totals = getCartTotals();
+  const isLoggedIn = !!window._currentUser;
+  const userProfile = window._currentUserProfile || {};
+  const currentU = window._currentUser || {};
+  const userDisplayName = userProfile.displayName || currentU.displayName || (currentU.email ? currentU.email.split('@')[0] : '');
 
   // Meta Pixel Event: Checkout page loaded
   trackPixelEvent('InitiateCheckout', {
@@ -3847,6 +3869,30 @@ function renderCheckout(){
       <div class="stepDivider"></div>
       <div class="checkoutStepItem"><span class="stepCircle">3</span><span>Confirmation</span></div>
     </div>
+
+    ${!isLoggedIn ? `
+    <div class="storeNotice" style="margin-bottom:24px;background:linear-gradient(135deg,rgba(224,16,43,0.15),rgba(20,20,25,0.9));border:1px solid rgba(224,16,43,0.4);border-radius:12px;padding:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:44px;height:44px;border-radius:50%;background:rgba(224,16,43,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;">🔒</div>
+          <div>
+            <div style="font-family:'Oswald',sans-serif;font-size:18px;color:var(--white);letter-spacing:0.5px;">ACCOUNT REQUIRED TO PLACE ORDER</div>
+            <div style="font-size:13px;color:var(--muted);margin-top:2px;">Orders must be linked to a customer account for real-time tracking, invoice &amp; delivery updates.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button type="button" onclick="window._postAuthRedirect='checkout';openAuthModal('signin');" class="btn btn-primary" style="padding:9px 18px;font-size:13px;">Sign In</button>
+          <button type="button" onclick="window._postAuthRedirect='checkout';openAuthModal('signup');" class="btn btn-ghost" style="padding:9px 18px;font-size:13px;border-color:rgba(255,255,255,0.2);">Create Account</button>
+        </div>
+      </div>
+    </div>` : `
+    <div style="margin-bottom:20px;padding:12px 18px;background:rgba(47,158,91,0.08);border:1px solid rgba(47,158,91,0.3);border-radius:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--win);"></span>
+        <span style="font-size:13px;color:var(--white);">Logged in as <b>${userDisplayName}</b> (${currentU.email})</span>
+      </div>
+      <a href="javascript:void(0)" onclick="navigateTo('account')" style="font-size:12px;color:var(--gold);text-decoration:underline;">View My Account</a>
+    </div>`}
 
     <div class="storeNotice" style="margin-bottom:24px;">
       <span class="tagline">🔒 <b>DEMO CHECKOUT</b> — No real payment will be charged. This is for demonstration purposes only.</span>
@@ -3985,6 +4031,12 @@ function renderCheckout(){
 
   // Place order handler
   document.getElementById('placeOrderBtn').addEventListener('click', () => {
+    if(!window._currentUser){
+      window._postAuthRedirect = 'checkout';
+      showToast('Please sign in or create an account to place your order.', 'error');
+      openAuthModal('signin');
+      return;
+    }
     if(validateCheckoutForm()){
       processOrder();
     }
@@ -4040,6 +4092,12 @@ function selectPayment(method){
 
 // Form validation
 function validateCheckoutForm(){
+  if(!window._currentUser){
+    window._postAuthRedirect = 'checkout';
+    showToast('Please sign in or create an account to place your order.', 'error');
+    openAuthModal('signin');
+    return false;
+  }
   let valid = true;
   const fields = [
     { id:'coName', err:'errName', test: v => v.trim().length >= 2 },
@@ -4073,6 +4131,12 @@ function validateCheckoutForm(){
 
 // Process order
 function processOrder(){
+  if(!window._currentUser){
+    window._postAuthRedirect = 'checkout';
+    showToast('Please sign in or create an account to place your order.', 'error');
+    openAuthModal('signin');
+    return;
+  }
   const cart = getCart();
   const totals = getCartTotals();
   const paymentMethod = document.querySelector('input[name=payMethod]:checked')?.value || 'cod';
@@ -4339,7 +4403,13 @@ window.handleCustomerSignIn = async function(e){
     showToast('Welcome back to UFC Mania!', 'success');
     closeAuthModal();
     updateNavAuthUI();
-    navigateTo('account');
+    const targetRedir = window._postAuthRedirect;
+    window._postAuthRedirect = null;
+    if(targetRedir === 'checkout' && typeof getCart === 'function' && getCart().length > 0){
+      navigateTo('checkout');
+    } else {
+      navigateTo('account');
+    }
   } catch(err) {
     console.error("Sign in failed:", err);
     if(errBox){
@@ -4431,7 +4501,13 @@ window.handleCustomerSignUp = async function(e){
     showToast('Account created successfully! Welcome to UFC Mania.', 'success');
     closeAuthModal();
     updateNavAuthUI();
-    navigateTo('account');
+    const targetRedir = window._postAuthRedirect;
+    window._postAuthRedirect = null;
+    if(targetRedir === 'checkout' && typeof getCart === 'function' && getCart().length > 0){
+      navigateTo('checkout');
+    } else {
+      navigateTo('account');
+    }
   } catch(err) {
     console.error("Sign up failed:", err);
     if(errBox){
