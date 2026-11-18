@@ -499,10 +499,27 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
 html{scroll-padding-top:70px;height:100%;}
 *,*::before,*::after{box-sizing:inherit;}
 body{
-  margin:0;background:var(--bg);color:var(--white);
+  margin:0;
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(224,16,43,0.08) 0%, transparent 60%),
+    radial-gradient(circle at 90% 90%, rgba(201,162,39,0.05) 0%, transparent 50%),
+    linear-gradient(rgba(10,10,11,0.95), rgba(10,10,11,0.95)),
+    url("data:image/svg+xml,%3Csvg width='44' height='44' viewBox='0 0 44 44' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='22,2 38,8 42,22 38,36 22,42 6,36 2,22 6,8' fill='none' stroke='rgba(255,255,255,0.035)' stroke-width='1.2'/%3E%3Ccircle cx='22' cy='22' r='2' fill='rgba(224,16,43,0.08)'/%3E%3C/svg%3E");
+  background-attachment:fixed;
+  color:var(--white);
   -webkit-font-smoothing:antialiased;
   min-height:100%;
   overflow-x:hidden;
+}
+
+/* Glassmorphism Surfaces across the site */
+.adminCard, .checkoutCard, .cartSummaryCard, .filterBar, .wcCard, .productCard, .cartItemRow, .storeNotice {
+  background: rgba(18, 18, 22, 0.75) !important;
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
 }
 img{max-width:100%;display:block;}
 a{color:inherit;text-decoration:none;}
@@ -627,26 +644,198 @@ section.pad{padding:72px 0;}
 
 /* fighter card grid */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;}
-.fcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;transition:transform .18s,border-color .18s;position:relative;}
-.fcard:hover{transform:translateY(-4px);border-color:var(--muted-2);}
+.fcard{
+  background:rgba(18,18,22,0.78);
+  backdrop-filter:blur(14px) saturate(160%);
+  -webkit-backdrop-filter:blur(14px) saturate(160%);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px;
+  overflow:hidden;
+  transition:transform 0.35s cubic-bezier(0.16,1,0.3,1), border-color 0.3s ease, box-shadow 0.35s ease;
+  position:relative;
+  box-shadow:0 8px 24px rgba(0,0,0,0.45);
+  will-change:transform,box-shadow;
+}
+.fcard:hover{
+  transform:translateY(-8px) scale(1.015);
+  border-color:rgba(224,16,43,0.45);
+  box-shadow:0 18px 40px rgba(0,0,0,0.7), 0 0 25px rgba(224,16,43,0.25);
+}
 .fcard .photo{position:relative;height:220px;background:linear-gradient(160deg,#232326,#0f0f11);overflow:hidden;}
-.fcard .photo img{width:100%;height:100%;object-fit:cover;object-position:top center;}
-.fcard .statusPill{position:absolute;top:10px;left:10px;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);}
+.fcard .photo img{
+  width:100%;height:100%;object-fit:cover;object-position:top center;
+  transition:transform 0.5s cubic-bezier(0.16,1,0.3,1), filter 0.3s ease;
+}
+.fcard:hover .photo img{
+  transform:scale(1.08);
+  filter:brightness(1.06) contrast(1.04);
+}
+.fcard .statusPill{position:absolute;top:10px;left:10px;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:2;}
 .statusPill.active{color:#7ee0a1;border:1px solid #2f9e5b;}
 .statusPill.retired{color:#c9a227;border:1px solid #7a641c;}
 .statusPill.former{color:#c98f8f;border:1px solid #7a2f2f;}
-.fcard .flag{position:absolute;top:10px;right:10px;font-size:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));}
+.fcard .flag{position:absolute;top:10px;right:10px;font-size:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));z-index:2;}
 .fcard .body{padding:14px 16px 16px;}
 .fcard .nick{color:var(--red);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
-.fcard h3{font-size:19px;margin-top:3px;font-weight:600;}
+.fcard h3{font-size:19px;margin-top:3px;font-weight:600;transition:color 0.2s;}
+.fcard:hover h3{color:#fff;}
 .fcard .meta{display:flex;gap:8px;color:var(--muted);font-size:12.5px;margin-top:6px;flex-wrap:wrap;}
 .fcard .meta span:not(:last-child)::after{content:'•';margin-left:8px;color:var(--muted-2);}
-.fcard .record{font-family:'Oswald';font-size:15px;margin-top:12px;letter-spacing:.02em;}
-.fcard .record b{color:var(--win);}
+.fcard .record{font-family:'Oswald';font-size:15px;margin-top:12px;letter-spacing:.02em;transition:all 0.2s;}
+.fcard .record b{color:var(--win);transition:text-shadow 0.3s;}
+.fcard:hover .record b{color:#38e078;text-shadow:0 0 10px rgba(56,224,120,0.7);}
 .fcard .record .l{color:var(--loss);}
 .fcard .record .d{color:var(--muted);}
-.fcard .viewBtn{display:block;text-align:center;margin-top:12px;padding:9px;border-radius:7px;border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--white);}
-.fcard .viewBtn:hover{background:var(--red);border-color:var(--red);}
+.fcard .viewBtn{
+  display:block;text-align:center;margin-top:12px;padding:9px;border-radius:7px;
+  border:1px solid rgba(255,255,255,0.1);font-size:13px;font-weight:600;color:var(--white);
+  transition:all 0.25s ease;
+}
+.fcard:hover .viewBtn{
+  background:linear-gradient(135deg,var(--red),#ff243c);
+  border-color:var(--red);
+  box-shadow:0 4px 16px rgba(224,16,43,0.5);
+  transform:translateY(-1px);
+}
+
+/* Champion Cards - Gold Shimmer Glow Animation */
+.championCard {
+  border:1px solid rgba(201,162,39,0.65) !important;
+  box-shadow:0 0 24px rgba(201,162,39,0.25), 0 12px 36px rgba(0,0,0,0.6) !important;
+  background:linear-gradient(165deg, rgba(28,24,12,0.9), rgba(16,16,18,0.9)) !important;
+}
+.championCard::before {
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg, #ffe066, #c9a227, #fffae0, #c9a227, #ffe066);
+  background-size:300% 100%;
+  animation:championGoldGlow 3s linear infinite;
+  z-index:5;
+}
+.championCard:hover {
+  border-color:rgba(247,208,80,0.85) !important;
+  box-shadow:0 18px 42px rgba(0,0,0,0.7), 0 0 35px rgba(201,162,39,0.45) !important;
+}
+.champGlowRibbon {
+  position:absolute;
+  top:10px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:6;
+  background:linear-gradient(135deg, #c9a227, #ffd952, #b8860b);
+  color:#111;
+  font-family:'Oswald',sans-serif;
+  font-weight:800;
+  font-size:10px;
+  letter-spacing:0.8px;
+  padding:3px 11px;
+  border-radius:20px;
+  box-shadow:0 2px 12px rgba(201,162,39,0.65);
+  white-space:nowrap;
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+@keyframes championGoldGlow {
+  0%{background-position:0% 50%;}
+  100%{background-position:300% 50%;}
+}
+
+/* Skeleton Loading Shimmer */
+@keyframes skeletonShimmerAnim {
+  0%{background-position:-200% 0;}
+  100%{background-position:200% 0;}
+}
+.skeletonBox {
+  background:linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.09) 37%, rgba(255,255,255,0.03) 63%);
+  background-size:400% 100%;
+  animation:skeletonShimmerAnim 1.6s ease-in-out infinite;
+  border-radius:6px;
+}
+.skeletonCard {
+  background:rgba(18,18,22,0.75);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.skeletonPhoto {height:200px;border-radius:8px;}
+.skeletonLine {height:14px;border-radius:4px;}
+.skeletonLine.short {width:35%;}
+.skeletonLine.med {width:65%;}
+.skeletonLine.btn {height:36px;border-radius:7px;margin-top:8px;}
+
+/* Mobile Bottom Navigation Bar */
+.mobileBottomNav {
+  display:none;
+}
+@media (max-width: 768px) {
+  .mobileBottomNav {
+    display:flex;
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    height:58px;
+    background:rgba(10,10,12,0.95);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-top:1px solid rgba(255,255,255,0.09);
+    z-index:999;
+    justify-content:space-around;
+    align-items:center;
+    padding-bottom:env(safe-area-inset-bottom, 0px);
+    box-shadow:0 -4px 25px rgba(0,0,0,0.6);
+  }
+  .mbTab {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    color:var(--muted);
+    font-size:10.5px;
+    font-weight:600;
+    transition:all 0.2s;
+    padding:6px 0;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mbTab .mbIcon {
+    font-size:18px;
+    margin-bottom:2px;
+    transition:transform 0.2s cubic-bezier(0.16,1,0.3,1);
+  }
+  .mbTab:active .mbIcon, .mbTab.active .mbIcon {
+    transform:scale(1.18);
+  }
+  .mbTab.active {
+    color:var(--white);
+  }
+  .mbTab.active .mbLabel {
+    color:var(--red);
+    font-weight:700;
+  }
+  .mbBadge {
+    position:absolute;
+    top:-5px;
+    right:-10px;
+    background:var(--red);
+    color:#fff;
+    font-size:9.5px;
+    font-weight:800;
+    border-radius:10px;
+    padding:1px 5px;
+    line-height:1.2;
+    box-shadow:0 2px 6px rgba(224,16,43,0.6);
+  }
+  body {
+    padding-bottom:68px !important;
+  }
+}
 
 /* filter bar */
 .filterBar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:26px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;}
@@ -1312,6 +1501,33 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
     <span>Sample dataset &amp; Demo UFC Store · Last updated January 2026 · <a href="/about" onclick="navigateTo('/about'); return false;" style="color:var(--muted);text-decoration:none;margin-right:12px;opacity:0.75;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.75">About</a> <a href="/contact" onclick="navigateTo('/contact'); return false;" style="color:var(--muted);text-decoration:none;margin-right:12px;opacity:0.75;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.75">Contact</a> <a href="/admin" onclick="navigateTo('/admin'); return false;" style="color:var(--muted);text-decoration:none;opacity:0.65;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.65">🔒 Admin</a></span>
   </div>
 </footer>
+
+<!-- Mobile App-like Bottom Navigation Bar -->
+<nav id="mobileBottomNav" class="mobileBottomNav" aria-label="Mobile Navigation">
+  <a href="/" onclick="navigateTo('/'); return false;" class="mbTab" data-route="home">
+    <span class="mbIcon">🏠</span>
+    <span class="mbLabel">Home</span>
+  </a>
+  <a href="/fighters" onclick="navigateTo('/fighters'); return false;" class="mbTab" data-route="fighters">
+    <span class="mbIcon">🥊</span>
+    <span class="mbLabel">Fighters</span>
+  </a>
+  <a href="/shop" onclick="navigateTo('/shop'); return false;" class="mbTab" data-route="shop">
+    <span class="mbIcon">🛍️</span>
+    <span class="mbLabel">Shop</span>
+  </a>
+  <a href="/cart" onclick="navigateTo('/cart'); return false;" class="mbTab" data-route="cart">
+    <span class="mbIcon" style="position:relative;display:inline-block;">
+      🛒
+      <span class="mbBadge" id="mbCartBadge" style="display:none;">0</span>
+    </span>
+    <span class="mbLabel">Cart</span>
+  </a>
+  <a href="javascript:void(0)" onclick="handleMobileNavAccountClick()" class="mbTab" data-route="account">
+    <span class="mbIcon">👤</span>
+    <span class="mbLabel" id="mbAccountLabel">Account</span>
+  </a>
+</nav>
 
 <div id="productModal" class="productModal hidden" role="dialog" aria-modal="true" aria-label="Product Details">
   <div class="productModalOverlay" id="productModalOverlay"></div>
@@ -2469,6 +2685,11 @@ function updateNavCartBadge(){
     badge.textContent = count;
     badge.style.display = count > 0 ? 'flex' : 'none';
   }
+  const mbBadge = document.getElementById('mbCartBadge');
+  if(mbBadge){
+    mbBadge.textContent = count;
+    mbBadge.style.display = count > 0 ? 'block' : 'none';
+  }
 }
 
 function addToCart(productId, size, color, qty = 1){
@@ -2918,8 +3139,10 @@ function wcCount(w){ return FIGHTERS.filter(f=>f.weightClass===w).length; }
 
 // ---------- fighter card ----------
 function fighterCard(f){
-  return `<a class="fcard" href="/fighter/${f.id}">
+  const isChamp = f.ranking?.champStatus === 'Undisputed Champion' || (f.ranking?.current && f.ranking.current.includes('(Champion)')) || (f.statusLabel && f.statusLabel.toLowerCase() === 'champion');
+  return `<a class="fcard ${isChamp ? 'championCard' : ''}" href="/fighter/${f.id}">
     <div class="photo">
+      ${isChamp ? '<div class="champGlowRibbon"><span>👑</span> UNDISPUTED CHAMPION</div>' : ''}
       ${photoBox(f,40)}
       <span class="statusPill ${statusClass(f.status)}">${f.statusLabel}</span>
       <span class="flag" title="${f.country}">${flag(f.country)}</span>
@@ -4290,6 +4513,7 @@ function updateNavAuthUI(){
   const btn = document.getElementById('navAuthBtn');
   const label = document.getElementById('navAuthLabel');
   const mLink = document.getElementById('mobileNavAuthLink');
+  const mbAccountLabel = document.getElementById('mbAccountLabel');
 
   if(window._currentUser){
     const name = window._currentUserProfile?.displayName || window._currentUser.displayName || window._currentUser.email.split('@')[0];
@@ -4302,6 +4526,7 @@ function updateNavAuthUI(){
     if(mLink){
       mLink.textContent = `👤 My Account (${displayLabel})`;
     }
+    if(mbAccountLabel) mbAccountLabel.textContent = 'Account';
   } else {
     if(btn){
       btn.title = 'Sign In or Create Account';
@@ -4311,8 +4536,17 @@ function updateNavAuthUI(){
     if(mLink){
       mLink.textContent = '👤 My Account / Sign In';
     }
+    if(mbAccountLabel) mbAccountLabel.textContent = 'Sign In';
   }
 }
+
+window.handleMobileNavAccountClick = function(){
+  if(window._currentUser){
+    navigateTo('/account');
+  } else {
+    openAuthModal('signin');
+  }
+};
 
 window.updateNavAuthUI = updateNavAuthUI;
 window.renderAuthPage = renderAuthPage;
@@ -4571,7 +4805,16 @@ async function renderAccountPage(){
 
       <!-- Account Content Area -->
       <div id="accountContentBox">
-        <div style="text-align:center;padding:40px;color:var(--muted);">Loading account records...</div>
+        <div style="padding:24px 0;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;color:var(--muted);font-size:13px;">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);animation:glow-pulse 1.4s infinite;"></span>
+            Loading your member orders...
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="skeletonBox" style="height:60px;width:100%;"></div>
+            <div class="skeletonBox" style="height:60px;width:100%;"></div>
+          </div>
+        </div>
       </div>
     </div>
   </section>`;
@@ -4870,7 +5113,18 @@ async function renderAdminPanel(){
 
     <!-- Tab Contents Container -->
     <div id="adminTabContent">
-      <div style="text-align:center;padding:50px;color:var(--muted);">Loading cloud records from Firebase...</div>
+      <div style="padding:28px 0;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;color:var(--gold);font-size:13px;font-weight:600;">
+          <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--gold);animation:glow-pulse 1.4s infinite;"></span>
+          Syncing live records from Firebase Realtime Cloud DB...
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="skeletonBox" style="height:48px;width:100%;"></div>
+          <div class="skeletonBox" style="height:48px;width:100%;"></div>
+          <div class="skeletonBox" style="height:48px;width:100%;"></div>
+          <div class="skeletonBox" style="height:48px;width:100%;"></div>
+        </div>
+      </div>
     </div>
   </section>`;
 
@@ -5146,7 +5400,18 @@ async function renderActivityTab(){
   const box = document.getElementById('adminTabContent');
   if(!box) return;
 
-  box.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">Loading visitor stream from Firebase...</div>`;
+  box.innerHTML = `
+  <div style="padding:24px 0;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;color:var(--gold);font-size:13px;font-weight:600;">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--win);animation:glow-pulse 1.4s infinite;"></span>
+      Loading live visitor stream from Firebase...
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="skeletonBox" style="height:40px;width:100%;"></div>
+      <div class="skeletonBox" style="height:40px;width:100%;"></div>
+      <div class="skeletonBox" style="height:40px;width:100%;"></div>
+    </div>
+  </div>`;
   
   try {
     if(window.adminFetchActivity){
@@ -5312,6 +5577,9 @@ window.handleAdminDeleteOrder = async function(orderDocId){
 // ============================================================================
 function setActiveNav(route){
   document.querySelectorAll('.navlinks a').forEach(a=>a.classList.toggle('active', a.dataset.route===route));
+  document.querySelectorAll('.mobileBottomNav .mbTab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.route === route);
+  });
 }
 
 let isInitialPageView = true;
