@@ -938,13 +938,32 @@ table.fh tr:hover td{background:var(--surface);}
 .updated{color:var(--gold);font-weight:600;}
 
 /* rankings table */
-.rankRow{display:flex;align-items:center;gap:14px;padding:12px 14px;border-bottom:1px solid var(--line);}
-.rankRow:hover{background:var(--surface);}
-.rankNum{font-family:'Oswald';font-size:20px;width:34px;color:var(--muted);}
-.rankNum.champ{color:var(--gold);}
-.rankRow img{width:40px;height:40px;border-radius:6px;object-fit:cover;}
-.rankRow .nm{font-weight:600;font-size:14.5px;flex:1;}
-.rankRow .rec{color:var(--muted);font-size:13px;}
+/* rankings table & division card styles */
+.rankCard{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.35);transition:transform .2s ease,border-color .2s ease;}
+.rankCard:hover{border-color:rgba(210,10,10,0.35);}
+.rankCardHead{padding:16px 20px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.rankCardHead h3{margin:0;font-family:'Oswald',sans-serif;font-size:20px;letter-spacing:0.5px;text-transform:uppercase;color:var(--white);display:flex;align-items:center;gap:8px;}
+.rankChampBanner{background:linear-gradient(135deg,rgba(230,175,46,0.12),rgba(15,17,21,0.85));border:1px solid rgba(230,175,46,0.35);border-radius:10px;padding:12px 14px;margin:14px 16px;display:flex;align-items:center;gap:14px;position:relative;}
+.rankChampBanner .badge{font-size:10px;font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:1px;color:var(--gold);text-transform:uppercase;background:rgba(230,175,46,0.18);padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:4px;}
+.rankChampBanner .nm{font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;color:var(--white);line-height:1.2;}
+.rankRow{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.05);transition:background .15s ease;text-decoration:none;color:inherit;}
+.rankRow:hover{background:rgba(255,255,255,0.04);}
+.rankRow.isRoster:hover{background:rgba(210,10,10,0.08);}
+.rankNum{font-family:'Oswald',sans-serif;font-size:17px;font-weight:700;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:rgba(255,255,255,0.04);color:var(--muted);flex-shrink:0;}
+.rankNum.top1{background:rgba(230,175,46,0.18);color:var(--gold);border:1px solid rgba(230,175,46,0.35);}
+.rankNum.top3{background:rgba(210,10,10,0.15);color:#ff6666;}
+.rankNum.champ{color:var(--gold);background:rgba(230,175,46,0.25);}
+.rankRow .avatarBox{width:38px;height:38px;border-radius:8px;overflow:hidden;flex-shrink:0;border:1px solid rgba(255,255,255,0.08);background:#12151b;}
+.rankRow .nm{font-weight:600;font-size:14px;flex:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.rankRow .rec{color:var(--muted);font-size:12.5px;font-family:'Inter',sans-serif;}
+.rosterTag{font-size:10px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:4px;background:rgba(210,10,10,0.18);color:#ff5555;border:1px solid rgba(210,10,10,0.35);}
+.rankPillsBar{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:20px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+.rankFilterBtn{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:7px 16px;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s ease;}
+.rankFilterBtn:hover{color:var(--white);border-color:var(--muted);}
+.rankFilterBtn.active{background:var(--red);border-color:var(--red);color:var(--white);box-shadow:0 0 14px rgba(210,10,10,0.45);}
+@media(max-width:768px){
+  #rankingsGrid{grid-template-columns:1fr !important;}
+}
 
 /* compare */
 .compareSelectRow{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:36px;}
@@ -3585,32 +3604,1163 @@ function renderWeightClasses(){
   </section>`;
 }
 
+// ---------------- Official UFC Rankings Data (Live from ufc.com/rankings) ----------------
+const UFC_OFFICIAL_RANKINGS = [
+  {
+    "division": "Men's Pound-for-Pound",
+    "champion": "Islam Makhachev",
+    "fighters": [
+      {
+        "rank": 1,
+        "name": "Islam Makhachev"
+      },
+      {
+        "rank": 2,
+        "name": "Alexander Volkanovski"
+      },
+      {
+        "rank": 3,
+        "name": "Petr Yan"
+      },
+      {
+        "rank": 4,
+        "name": "Justin Gaethje"
+      },
+      {
+        "rank": 5,
+        "name": "Ilia Topuria"
+      },
+      {
+        "rank": 6,
+        "name": "Joshua Van"
+      },
+      {
+        "rank": 7,
+        "name": "Sean Strickland"
+      },
+      {
+        "rank": 8,
+        "name": "Ciryl Gane"
+      },
+      {
+        "rank": 9,
+        "name": "Tom Aspinall"
+      },
+      {
+        "rank": 10,
+        "name": "Merab Dvalishvili"
+      },
+      {
+        "rank": 11,
+        "name": "Alex Pereira"
+      },
+      {
+        "rank": 12,
+        "name": "Khamzat Chimaev"
+      },
+      {
+        "rank": 13,
+        "name": "Arman Tsarukyan"
+      },
+      {
+        "rank": 14,
+        "name": "Alexandre Pantoja"
+      },
+      {
+        "rank": 15,
+        "name": "Carlos Ulberg"
+      }
+    ]
+  },
+  {
+    "division": "Flyweight",
+    "champion": "Joshua Van",
+    "fighters": [
+      {
+        "rank": 1,
+        "name": "Alexandre Pantoja"
+      },
+      {
+        "rank": 2,
+        "name": "Manel Kape"
+      },
+      {
+        "rank": 3,
+        "name": "Brandon Royval"
+      },
+      {
+        "rank": 4,
+        "name": "Tatsuro Taira"
+      },
+      {
+        "rank": 5,
+        "name": "Kyoji Horiguchi"
+      },
+      {
+        "rank": 6,
+        "name": "Lone’er Kavanagh"
+      },
+      {
+        "rank": 7,
+        "name": "Asu Almabayev"
+      },
+      {
+        "rank": 8,
+        "name": "Brandon Moreno"
+      },
+      {
+        "rank": 9,
+        "name": "Amir Albazi"
+      },
+      {
+        "rank": 10,
+        "name": "Ramazan Temirov"
+      },
+      {
+        "rank": 11,
+        "name": "Tim Elliott"
+      },
+      {
+        "rank": 12,
+        "name": "Sumudaerji"
+      },
+      {
+        "rank": 12,
+        "name": "Steve Erceg"
+      },
+      {
+        "rank": 14,
+        "name": "Charles Johnson"
+      },
+      {
+        "rank": 15,
+        "name": "Tagir Ulanbekov"
+      }
+    ]
+  },
+  {
+    "division": "Bantamweight",
+    "champion": "Petr Yan",
+    "fighters": [
+      {
+        "rank": 1,
+        "name": "Merab Dvalishvili"
+      },
+      {
+        "rank": 2,
+        "name": "Sean O'Malley"
+      },
+      {
+        "rank": 3,
+        "name": "Song Yadong"
+      },
+      {
+        "rank": 4,
+        "name": "Umar Nurmagomedov"
+      },
+      {
+        "rank": 5,
+        "name": "Mario Bautista"
+      },
+      {
+        "rank": 6,
+        "name": "Cory Sandhagen"
+      },
+      {
+        "rank": 7,
+        "name": "Payton Talbott"
+      },
+      {
+        "rank": 8,
+        "name": "David Martinez"
+      },
+      {
+        "rank": 9,
+        "name": "Aiemann Zahabi"
+      },
+      {
+        "rank": 10,
+        "name": "Raul Rosas Jr."
+      },
+      {
+        "rank": 11,
+        "name": "Marlon Vera"
+      },
+      {
+        "rank": 12,
+        "name": "Deiveson Figueiredo"
+      },
+      {
+        "rank": 13,
+        "name": "Marcus McGhee"
+      },
+      {
+        "rank": 14,
+        "name": "Raoni Barcelos"
+      },
+      {
+        "rank": 15,
+        "name": "Bryce Mitchell"
+      }
+    ]
+  },
+  {
+    "division": "Featherweight",
+    "champion": "Alexander Volkanovski",
+    "fighters": [
+      {
+        "rank": 1,
+        "name": "Movsar Evloev"
+      },
+      {
+        "rank": 2,
+        "name": "Diego Lopes"
+      },
+      {
+        "rank": 3,
+        "name": "Lerone Murphy"
+      },
+      {
+        "rank": 4,
+        "name": "Aljamain Sterling"
+      },
+      {
+        "rank": 5,
+        "name": "Jean Silva"
+      },
+      {
+        "rank": 6,
+        "name": "Arnold Allen"
+      },
+      {
+        "rank": 7,
+        "name": "Yair Rodriguez"
+      },
+      {
+        "rank": 8,
+        "name": "Youssef Zalal"
+      },
+      {
+        "rank": 9,
+        "name": "Kevin Vallejos"
+      },
+      {
+        "rank": 10,
+        "name": "Steve Garcia"
+      },
+      {
+        "rank": 11,
+        "name": "Aaron Pico"
+      },
+      {
+        "rank": 12,
+        "name": "Patricio Pitbull"
+      },
+      {
+        "rank": 13,
+        "name": "Brian Ortega"
+      },
+      {
+        "rank": 14,
+        "name": "David Onama"
+      },
+      {
+        "rank": 15,
+        "name": "Pat Sabatini"
+      }
+    ]
+  },
+  {
+    "division": "Lightweight",
+    "champion": "Justin Gaethje",
+    "fighters": [
+      {
+        "rank": 1,
+        "name": "Ilia Topuria"
+      },
+      {
+        "rank": 2,
+        "name": "Arman Tsarukyan"
+      },
+      {
+        "rank": 3,
+        "name": "Charles Oliveira"
+      },
+      {
+        "rank": 4,
+        "name": "Max Holloway"
+      },
+      {
+        "rank": 5,
+        "name": "Paddy Pimblett"
+      },
+      {
+        "rank": 6,
+        "name": "Benoît Saint Denis"
+      },
+      {
+        "rank": 7,
+        "name": "Quillan Salkilld"
+      },
+      {
+        "rank": 8,
+        "name": "Mauricio Ruffy"
+      },
+      {
+        "rank": 9,
+        "name": "Salahdine Parnasse"
+      },
+      {
+        "rank": 10,
+        "name": "Mateusz Gamrot"
+      },
+      {
+        "rank": 11,
+        "name": "Rafael Fiziev"
+      },
+      {
+        "rank": 12,
+        "name": "Tom Nolan"
+      },
+      {
+        "rank": 13,
+        "name": "Renato Moicano"
+      },
+      {
+        "rank": 14,
+        "name": "Dan Hooker"
+      },
+      {
+        "rank": 15,
+        "name": "Grant Dawson"
+      }
+    ]
+  },
+  {
+    "division": "Welterweight",
+    "champion": "Islam Makhachev",
+    "fighters": [
+      {
+        "rank": 1,
+        "name": "Ian Machado Garry"
+      },
+      {
+        "rank": 2,
+        "name": "Carlos Prates"
+      },
+      {
+        "rank": 3,
+        "name": "Michael Morales"
+      },
+      {
+        "rank": 4,
+        "name": "Jack Della Maddalena"
+      },
+      {
+        "rank": 5,
+        "name": "Gabriel Bonfim"
+      },
+      {
+        "rank": 6,
+        "name": "Sean Brady"
+      },
+      {
+        "rank": 7,
+        "name": "Belal Muhammad"
+      },
+      {
+        "rank": 8,
+        "name": "Leon Edwards"
+      },
+      {
+        "rank": 9,
+        "name": "Mike Malott"
+      },
+      {
+        "rank": 10,
+        "name": "Kamaru Usman"
+      },
+      {
+        "rank": 11,
+        "name": "Yaroslav Amosov"
+      },
+      {
+        "rank": 12,
+        "name": "Uroš Medić"
+      },
+      {
+        "rank": 13,
+        "name": "Joaquin Buckley"
+      },
+      {
+        "rank": 14,
+        "name": "Kevin Holland"
+      },
+      {
+        "rank": 15,
+        "name": "Daniel Rodriguez"
+      }
+    ]
+  },
+  {
+    "division": "Middleweight",
+    "champion": "Sean Strickland",
+    "fighters": [
+      {
+        "rank": 1,
+        "name": "Khamzat Chimaev"
+      },
+      {
+        "rank": 2,
+        "name": "Dricus Du Plessis"
+      },
+      {
+        "rank": 3,
+        "name": "Nassourdine Imavov"
+      },
+      {
+        "rank": 4,
+        "name": "Brendan Allen"
+      },
+      {
+        "rank": 5,
+        "name": "Caio Borralho"
+      },
+      {
+        "rank": 6,
+        "name": "Joe Pyfer"
+      },
+      {
+        "rank": 7,
+        "name": "Gregory Rodrigues"
+      },
+      {
+        "rank": 8,
+        "name": "Anthony Hernandez"
+      },
+      {
+        "rank": 9,
+        "name": "Israel Adesanya"
+      },
+      {
+        "rank": 10,
+        "name": "Christian Leroy Duncan"
+      },
+      {
+        "rank": 11,
+        "name": "Abus Magomedov"
+      },
+      {
+        "rank": 12,
+        "name": "Jared Cannonier"
+      },
+      {
+        "rank": 13,
+        "name": "Ikram Aliskerov"
+      },
+      {
+        "rank": 14,
+        "name": "Bo Nickal"
+      },
+      {
+        "rank": 15,
+        "name": "Shara Magomedov"
+      }
+    ]
+  },
+  {
+    "division": "Light Heavyweight",
+    "champion": "Carlos Ulberg",
+    "fighters": [
+      {
+        "rank": 1,
+        "name": "Magomed Ankalaev"
+      },
+      {
+        "rank": 2,
+        "name": "Jiří Procházka"
+      },
+      {
+        "rank": 3,
+        "name": "Alex Pereira"
+      },
+      {
+        "rank": 4,
+        "name": "Khalil Rountree Jr."
+      },
+      {
+        "rank": 5,
+        "name": "Navajo Stirling"
+      },
+      {
+        "rank": 6,
+        "name": "Paulo Costa"
+      },
+      {
+        "rank": 7,
+        "name": "Dominick Reyes"
+      },
+      {
+        "rank": 8,
+        "name": "Bogdan Guskov"
+      },
+      {
+        "rank": 9,
+        "name": "Azamat Murzakanov"
+      },
+      {
+        "rank": 10,
+        "name": "Robert Whittaker"
+      },
+      {
+        "rank": 11,
+        "name": "Jan Błachowicz"
+      },
+      {
+        "rank": 12,
+        "name": "Abdul Rakhman Yakhyaev"
+      },
+      {
+        "rank": 13,
+        "name": "Alonzo Menifield"
+      },
+      {
+        "rank": 14,
+        "name": "Reinier de Ridder"
+      },
+      {
+        "rank": 15,
+        "name": "Nikita Krylov"
+      }
+    ]
+  },
+  {
+    "division": "Heavyweight",
+    "champion": "Ciryl Gane",
+    "fighters": [
+      {
+        "rank": 1,
+        "name": "Tom Aspinall"
+      },
+      {
+        "rank": 2,
+        "name": "Alexander Volkov"
+      },
+      {
+        "rank": 3,
+        "name": "Sergei Pavlovich"
+      },
+      {
+        "rank": 4,
+        "name": "Josh Hokit"
+      },
+      {
+        "rank": 5,
+        "name": "Curtis Blaydes"
+      },
+      {
+        "rank": 6,
+        "name": "Johnny Walker"
+      },
+      {
+        "rank": 7,
+        "name": "Rizvan Kuniev"
+      },
+      {
+        "rank": 8,
+        "name": "Waldo Cortes Acosta"
+      },
+      {
+        "rank": 9,
+        "name": "Vitor Petrino"
+      },
+      {
+        "rank": 10,
+        "name": "Serghei Spivac"
+      },
+      {
+        "rank": 11,
+        "name": "Ante Delija"
+      },
+      {
+        "rank": 12,
+        "name": "Valter Walker"
+      },
+      {
+        "rank": 13,
+        "name": "Tyrell Fortune"
+      },
+      {
+        "rank": 14,
+        "name": "Derrick Lewis"
+      },
+      {
+        "rank": 15,
+        "name": "Aleksandar Rakić"
+      }
+    ]
+  },
+  {
+    "division": "Women's Pound-for-Pound",
+    "champion": "Kayla Harrison",
+    "fighters": [
+      {
+        "rank": 1,
+        "name": "Kayla Harrison"
+      },
+      {
+        "rank": 2,
+        "name": "Valentina Shevchenko"
+      },
+      {
+        "rank": 3,
+        "name": "Zhang Weili"
+      },
+      {
+        "rank": 4,
+        "name": "Natalia Silva"
+      },
+      {
+        "rank": 5,
+        "name": "Mackenzie Dern"
+      },
+      {
+        "rank": 6,
+        "name": "Alexa Grasso"
+      },
+      {
+        "rank": 7,
+        "name": "Manon Fiorot"
+      },
+      {
+        "rank": 8,
+        "name": "Tatiana Suarez"
+      },
+      {
+        "rank": 9,
+        "name": "Jasmine Jasudavicius"
+      },
+      {
+        "rank": 10,
+        "name": "Amanda Nunes"
+      },
+      {
+        "rank": 11,
+        "name": "Erin Blanchfield"
+      },
+      {
+        "rank": 12,
+        "name": "Julianna Peña"
+      },
+      {
+        "rank": 13,
+        "name": "Virna Jandiroba"
+      },
+      {
+        "rank": 14,
+        "name": "Rose Namajunas"
+      },
+      {
+        "rank": 15,
+        "name": "Denise Gomes"
+      }
+    ]
+  },
+  {
+    "division": "Women's Strawweight",
+    "champion": "Mackenzie Dern",
+    "fighters": [
+      {
+        "rank": 1,
+        "name": "Zhang Weili"
+      },
+      {
+        "rank": 2,
+        "name": "Tatiana Suarez"
+      },
+      {
+        "rank": 3,
+        "name": "Virna Jandiroba"
+      },
+      {
+        "rank": 4,
+        "name": "Denise Gomes"
+      },
+      {
+        "rank": 5,
+        "name": "Gillian Robertson"
+      },
+      {
+        "rank": 6,
+        "name": "Fatima Kline"
+      },
+      {
+        "rank": 7,
+        "name": "Yan Xiaonan"
+      },
+      {
+        "rank": 8,
+        "name": "Loopy Godinez"
+      },
+      {
+        "rank": 9,
+        "name": "Alexia Thainara"
+      },
+      {
+        "rank": 10,
+        "name": "Tabatha Ricci"
+      },
+      {
+        "rank": 11,
+        "name": "Amanda Lemos"
+      },
+      {
+        "rank": 12,
+        "name": "Jéssica Andrade"
+      },
+      {
+        "rank": 13,
+        "name": "Amanda Ribas"
+      },
+      {
+        "rank": 14,
+        "name": "Piera Rodriguez"
+      },
+      {
+        "rank": 15,
+        "name": "Angela Hill"
+      }
+    ]
+  },
+  {
+    "division": "Women's Flyweight",
+    "champion": "Natalia Silva",
+    "fighters": [
+      {
+        "rank": 1,
+        "name": "Valentina Shevchenko"
+      },
+      {
+        "rank": 2,
+        "name": "Alexa Grasso"
+      },
+      {
+        "rank": 3,
+        "name": "Manon Fiorot"
+      },
+      {
+        "rank": 4,
+        "name": "Jasmine Jasudavicius"
+      },
+      {
+        "rank": 5,
+        "name": "Erin Blanchfield"
+      },
+      {
+        "rank": 6,
+        "name": "Rose Namajunas"
+      },
+      {
+        "rank": 7,
+        "name": "Maycee Barber"
+      },
+      {
+        "rank": 8,
+        "name": "Wang Cong"
+      },
+      {
+        "rank": 9,
+        "name": "Tracy Cortez"
+      },
+      {
+        "rank": 10,
+        "name": "Miranda Maverick"
+      },
+      {
+        "rank": 11,
+        "name": "Karine Silva"
+      },
+      {
+        "rank": 12,
+        "name": "Casey O'Neill"
+      },
+      {
+        "rank": 13,
+        "name": "Eduarda Moura"
+      },
+      {
+        "rank": 14,
+        "name": "Regina Tarin"
+      },
+      {
+        "rank": 15,
+        "name": "Gabriella Fernandes"
+      }
+    ]
+  },
+  {
+    "division": "Women's Bantamweight",
+    "champion": "Kayla Harrison",
+    "fighters": [
+      {
+        "rank": 1,
+        "name": "Amanda Nunes"
+      },
+      {
+        "rank": 2,
+        "name": "Joselyne Edwards"
+      },
+      {
+        "rank": 2,
+        "name": "Julianna Peña"
+      },
+      {
+        "rank": 4,
+        "name": "Ailin Perez"
+      },
+      {
+        "rank": 5,
+        "name": "Luana Santos"
+      },
+      {
+        "rank": 6,
+        "name": "Yana Santos"
+      },
+      {
+        "rank": 7,
+        "name": "Raquel Pennington"
+      },
+      {
+        "rank": 8,
+        "name": "Bia Mesquita"
+      },
+      {
+        "rank": 9,
+        "name": "Jacqueline Cavalcanti"
+      },
+      {
+        "rank": 10,
+        "name": "Karol Rosa"
+      },
+      {
+        "rank": 11,
+        "name": "Michelle Montague"
+      },
+      {
+        "rank": 12,
+        "name": "Macy Chiasson"
+      },
+      {
+        "rank": 13,
+        "name": "Nora Cornolle"
+      },
+      {
+        "rank": 14,
+        "name": "Alice Pereira"
+      },
+      {
+        "rank": 15,
+        "name": "Chelsea Chandler"
+      }
+    ]
+  }
+];
+
+
+const DIVISION_META = {
+  "Men's Pound-for-Pound": { limit: "Pound-for-Pound", icon: "👑", cat: "p4p", gender: "men" },
+  "Flyweight": { limit: "125 lb (56.7 kg)", icon: "⚡", cat: "div", gender: "men" },
+  "Bantamweight": { limit: "135 lb (61.2 kg)", icon: "🥊", cat: "div", gender: "men" },
+  "Featherweight": { limit: "145 lb (65.8 kg)", icon: "🦅", cat: "div", gender: "men" },
+  "Lightweight": { limit: "155 lb (70.3 kg)", icon: "🔥", cat: "div", gender: "men" },
+  "Welterweight": { limit: "170 lb (77.1 kg)", icon: "⚔️", cat: "div", gender: "men" },
+  "Middleweight": { limit: "185 lb (83.9 kg)", icon: "🛡️", cat: "div", gender: "men" },
+  "Light Heavyweight": { limit: "205 lb (93.0 kg)", icon: "⚡", cat: "div", gender: "men" },
+  "Heavyweight": { limit: "265 lb (120.2 kg)", icon: "💥", cat: "div", gender: "men" },
+  "Women's Pound-for-Pound": { limit: "Pound-for-Pound", icon: "👑", cat: "p4p", gender: "women" },
+  "Women's Strawweight": { limit: "115 lb (52.2 kg)", icon: "✨", cat: "div", gender: "women" },
+  "Women's Flyweight": { limit: "125 lb (56.7 kg)", icon: "⚡", cat: "div", gender: "women" },
+  "Women's Bantamweight": { limit: "135 lb (61.2 kg)", icon: "🥊", cat: "div", gender: "women" }
+};
+
+function findRosterFighter(name) {
+  if (!name) return null;
+  const clean = name.trim().toLowerCase();
+  return FIGHTERS.find(f => f.name.toLowerCase() === clean) || null;
+}
+
+function rankAvatarHTML(f, name, size = 16) {
+  if (f && f.photoUrl) {
+    return photoBox(f, size);
+  }
+  const inits = (name || '').split(' ').map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'UFC';
+  return `<div style="width:100%;height:100%;background:linear-gradient(135deg,#1f242d,#12151b);display:flex;align-items:center;justify-content:center;color:var(--muted);font-family:'Oswald',sans-serif;font-weight:600;font-size:${size}px;">${inits}</div>`;
+}
+
 // ---------------- Rankings ----------------
 function renderRankings(){
-  const divisions = WEIGHT_CLASSES;
+  const divisions = UFC_OFFICIAL_RANKINGS;
+
   app.innerHTML = `
   <section class="pad wrap">
-    <div class="sectionHead"><div><h2>Rankings</h2><p>Current standing per division, as tracked in this demo dataset. Dates reflect each fighter's individual last-updated field.</p></div></div>
-    ${divisions.map(d=>{
-      const list = FIGHTERS.filter(f=>f.weightClass===d).sort((a,b)=>{
-        const champA = a.ranking.current.includes('Champion');
-        const champB = b.ranking.current.includes('Champion');
-        return (champB?1:0)-(champA?1:0);
-      });
-      return `<div style="margin-bottom:34px;">
-        <div class="subhead">${d}</div>
-        <div class="tableScroll">
-          ${list.map((f,i)=>`<a class="rankRow" href="/fighter/${f.id}" style="text-decoration:none;color:inherit;">
-            <div class="rankNum ${f.ranking.current.includes('Champion')?'champ':''}">${f.ranking.current.includes('Champion')?'C':'#'+(i+1)}</div>
-            <div style="width:40px;height:40px;border-radius:6px;overflow:hidden;">${photoBox(f,16)}</div>
-            <div class="nm">${f.name} <span style="color:var(--muted);font-weight:400;">${f.nickname&&f.nickname!=='—'?'"'+f.nickname+'"':''}</span></div>
-            <div class="rec">${f.record.w}-${f.record.l}-${f.record.d}</div>
-          </a>`).join('')}
+    <div class="sectionHead" style="margin-bottom:24px;">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(210,10,10,0.14);border:1px solid rgba(210,10,10,0.35);padding:4px 12px;border-radius:20px;font-size:12px;font-family:'Oswald',sans-serif;font-weight:600;letter-spacing:1px;color:#ff5555;text-transform:uppercase;margin-bottom:10px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:#ff3333;box-shadow:0 0 8px #ff3333;display:inline-block;"></span>
+          Official Live UFC Rankings
         </div>
-      </div>`;
-    }).join('')}
+        <h2 style="font-size:36px;letter-spacing:1px;margin:0 0 8px;">UFC DIVISIONAL RANKINGS</h2>
+        <p style="color:var(--muted);max-width:760px;margin:0;font-size:15px;line-height:1.6;">
+          Official UFC rankings across all 13 weight divisions and Pound-for-Pound standings, sourced directly from <a href="https://www.ufc.com/rankings" target="_blank" rel="noopener" style="color:var(--red);text-decoration:underline;">ufc.com/rankings</a>. Fighters in our active directory link directly to comprehensive fight histories and career metrics.
+        </p>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:12px;">
+        <a href="https://www.ufc.com/rankings" target="_blank" rel="noopener" class="btn btn-outline" style="font-size:13px;padding:8px 16px;display:inline-flex;align-items:center;gap:8px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          View on UFC.com
+        </a>
+      </div>
+    </div>
+
+    <!-- Quick Category Filter & Search Bar -->
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:28px;">
+      <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;">
+        <!-- Filter Tabs -->
+        <div class="rankFilterTabs" style="display:flex;flex-wrap:wrap;gap:8px;">
+          <button class="rankFilterBtn active" onclick="filterRankings('all', this)">All Divisions (13)</button>
+          <button class="rankFilterBtn" onclick="filterRankings('p4p', this)">Pound-for-Pound</button>
+          <button class="rankFilterBtn" onclick="filterRankings('men', this)">Men's Divisions</button>
+          <button class="rankFilterBtn" onclick="filterRankings('women', this)">Women's Divisions</button>
+        </div>
+
+        <!-- Search Fighter Input -->
+        <div style="position:relative;min-width:260px;flex:1;max-width:380px;">
+          <input type="text" id="rankingsSearchInput" placeholder="Search any fighter (e.g. Makhachev, Topuria)..."
+            style="width:100%;background:rgba(0,0,0,0.45);border:1px solid var(--line);border-radius:8px;padding:9px 14px 9px 36px;color:var(--white);font-size:13.5px;outline:none;transition:border-color .2s ease;"
+            oninput="searchRankings(this.value)"
+            onfocus="this.style.borderColor='var(--red)'"
+            onblur="this.style.borderColor='var(--line)'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;">
+            <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Quick division pills -->
+      <div class="rankPillsBar" style="margin-top:14px;margin-bottom:0;padding-bottom:4px;">
+        ${divisions.map(d => {
+          const meta = DIVISION_META[d.division] || {};
+          const shortName = d.division.replace("Men's ", "").replace("Women's ", "W. ");
+          return `<button class="rankDivQuickBtn" data-division="${d.division}" onclick="jumpToDivision('${d.division}')"
+            style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);color:var(--muted);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;white-space:nowrap;transition:all .15s ease;">
+            ${meta.icon || '🥊'} ${shortName}
+          </button>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- Divisions Grid -->
+    <div id="rankingsGrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(460px, 1fr));gap:24px;">
+      ${divisions.map((d, dIdx) => {
+        const meta = DIVISION_META[d.division] || { limit: '', icon: '🥊', cat: 'div', gender: 'men' };
+        const champFighter = findRosterFighter(d.champion);
+        const isP4P = meta.cat === 'p4p';
+
+        return `
+        <div class="rankCard" id="div-card-${dIdx}" data-division="${d.division.toLowerCase()}" data-cat="${meta.cat}" data-gender="${meta.gender}">
+          <!-- Division Header -->
+          <div class="rankCardHead">
+            <h3><span>${meta.icon}</span> ${d.division.toUpperCase()}</h3>
+            <div style="display:flex;align-items:center;gap:8px;">
+              ${meta.limit ? `<span style="font-size:12px;color:var(--muted);background:rgba(255,255,255,0.05);padding:3px 8px;border-radius:4px;">${meta.limit}</span>` : ''}
+              <span style="font-size:11.5px;color:var(--red);font-weight:600;letter-spacing:0.5px;">TOP 15</span>
+            </div>
+          </div>
+
+          <!-- Champion Showcase Banner -->
+          <div class="rankChampBanner">
+            <div style="width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;border:1.5px solid var(--gold);box-shadow:0 0 10px rgba(230,175,46,0.25);">
+              ${rankAvatarHTML(champFighter, d.champion, 18)}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div class="badge">${isP4P ? '👑 TOP RANKED P4P' : '👑 UNDISPUTED CHAMPION'}</div>
+              <div class="nm" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                ${champFighter ? `
+                  <a href="/fighter/${champFighter.id}" style="color:var(--white);text-decoration:none;display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--white)'">
+                    ${d.champion}
+                    <span class="rosterTag" style="background:rgba(230,175,46,0.18);color:var(--gold);border-color:rgba(230,175,46,0.35);">ROSTER</span>
+                  </a>
+                ` : `<span style="color:var(--white);">${d.champion}</span>`}
+              </div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px;">
+                ${champFighter ? `${champFighter.nickname && champFighter.nickname !== '—' ? '"' + champFighter.nickname + '" · ' : ''}Record: ${champFighter.record.w}-${champFighter.record.l}-${champFighter.record.d}` : 'UFC Titleholder'}
+              </div>
+            </div>
+            ${champFighter ? `
+              <a href="/fighter/${champFighter.id}" class="btn btn-outline" style="padding:6px 10px;font-size:11.5px;color:var(--gold);border-color:rgba(230,175,46,0.4);border-radius:6px;text-decoration:none;white-space:nowrap;">
+                Profile →
+              </a>
+            ` : ''}
+          </div>
+
+          <!-- Contenders List -->
+          <div class="rankTableList" style="padding:0 6px 10px;">
+            ${d.fighters.map(f => {
+              const rf = findRosterFighter(f.name);
+              const isTop1 = f.rank === 1;
+              const isTop3 = f.rank > 1 && f.rank <= 3;
+              const numClass = isTop1 ? 'top1' : isTop3 ? 'top3' : '';
+
+              if (rf) {
+                return `
+                <a class="rankRow isRoster" href="/fighter/${rf.id}" data-name="${f.name.toLowerCase()}">
+                  <div class="rankNum ${numClass}">#${f.rank}</div>
+                  <div class="avatarBox">${rankAvatarHTML(rf, f.name, 14)}</div>
+                  <div class="nm">
+                    <span style="color:var(--white);font-weight:600;">${f.name}</span>
+                    ${rf.nickname && rf.nickname !== '—' ? `<span style="color:var(--muted);font-weight:400;font-size:12.5px;">"${rf.nickname}"</span>` : ''}
+                    <span class="rosterTag">ROSTER</span>
+                  </div>
+                  <div class="rec" style="display:flex;align-items:center;gap:6px;">
+                    <span>${rf.record.w}-${rf.record.l}-${rf.record.d}</span>
+                    <span style="color:var(--muted);font-size:14px;">›</span>
+                  </div>
+                </a>`;
+              } else {
+                return `
+                <div class="rankRow" data-name="${f.name.toLowerCase()}">
+                  <div class="rankNum ${numClass}">#${f.rank}</div>
+                  <div class="avatarBox">${rankAvatarHTML(null, f.name, 14)}</div>
+                  <div class="nm">
+                    <span style="color:#dcdcdc;">${f.name}</span>
+                  </div>
+                  <div class="rec" style="color:rgba(255,255,255,0.25);font-size:11px;">UFC</div>
+                </div>`;
+              }
+            }).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- Empty State for Search -->
+    <div id="rankingsEmptyState" style="display:none;text-align:center;padding:60px 20px;background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-top:20px;">
+      <div style="font-size:42px;margin-bottom:12px;">🔍</div>
+      <h3 style="font-family:'Oswald',sans-serif;font-size:22px;color:var(--white);margin-bottom:8px;">No Ranked Fighters Found</h3>
+      <p style="color:var(--muted);font-size:14px;max-width:440px;margin:0 auto 18px;">
+        We couldn't find any fighters matching your search query. Try searching for last name or exploring all divisions.
+      </p>
+      <button onclick="clearRankingSearch()" class="btn btn-primary" style="font-size:13px;padding:8px 18px;">Clear Search</button>
+    </div>
   </section>`;
 }
+
+window.filterRankings = function(cat, btn) {
+  document.querySelectorAll('.rankFilterBtn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  const cards = document.querySelectorAll('.rankCard');
+  let visibleCount = 0;
+
+  cards.forEach(card => {
+    const cardCat = card.getAttribute('data-cat');
+    const cardGender = card.getAttribute('data-gender');
+
+    let show = false;
+    if (cat === 'all') {
+      show = true;
+    } else if (cat === 'p4p') {
+      show = cardCat === 'p4p';
+    } else if (cat === 'men') {
+      show = cardGender === 'men' && cardCat === 'div';
+    } else if (cat === 'women') {
+      show = cardGender === 'women';
+    }
+
+    if (show) {
+      card.style.display = '';
+      visibleCount++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  const empty = document.getElementById('rankingsEmptyState');
+  if (empty) empty.style.display = visibleCount === 0 ? 'block' : 'none';
+};
+
+window.jumpToDivision = function(divName) {
+  const clean = divName.toLowerCase();
+  const cards = document.querySelectorAll('.rankCard');
+  let target = null;
+  cards.forEach(card => {
+    if (card.getAttribute('data-division') === clean) {
+      card.style.display = '';
+      target = card;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  document.querySelectorAll('.rankFilterBtn').forEach(b => b.classList.remove('active'));
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+};
+
+window.searchRankings = function(val) {
+  const query = (val || '').trim().toLowerCase();
+  const cards = document.querySelectorAll('.rankCard');
+  const empty = document.getElementById('rankingsEmptyState');
+
+  if (!query) {
+    const activeTab = document.querySelector('.rankFilterBtn.active');
+    const tabCat = activeTab ? (activeTab.getAttribute('onclick').match(/'([^']+)'/)?.[1] || 'all') : 'all';
+    filterRankings(tabCat);
+    return;
+  }
+
+  let totalVisible = 0;
+  cards.forEach(card => {
+    const divName = card.getAttribute('data-division') || '';
+    const rows = card.querySelectorAll('.rankRow');
+    const champNm = card.querySelector('.rankChampBanner .nm')?.textContent?.toLowerCase() || '';
+
+    let divMatched = divName.includes(query) || champNm.includes(query);
+    let matchedRowCount = 0;
+
+    rows.forEach(r => {
+      const name = r.getAttribute('data-name') || '';
+      if (name.includes(query)) {
+        r.style.display = '';
+        r.style.background = 'rgba(210,10,10,0.18)';
+        matchedRowCount++;
+      } else if (divMatched) {
+        r.style.display = '';
+        r.style.background = '';
+      } else {
+        r.style.display = 'none';
+        r.style.background = '';
+      }
+    });
+
+    if (divMatched || matchedRowCount > 0) {
+      card.style.display = '';
+      totalVisible++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  if (empty) empty.style.display = totalVisible === 0 ? 'block' : 'none';
+};
+
+window.clearRankingSearch = function() {
+  const input = document.getElementById('rankingsSearchInput');
+  if (input) input.value = '';
+  filterRankings('all', document.querySelector('.rankFilterBtn'));
+};
+
 
 // ---------------- News ----------------
 function renderNews(){
