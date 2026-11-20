@@ -443,6 +443,69 @@ src="https://www.facebook.com/tr?id=1185466460574306&ev=PageView&noscript=1"
     return list;
   };
 
+  window.adminFetchFightVideos = async function() {
+    let data = null;
+    if(db){
+      try {
+        const snap = await get(ref(db, 'fight_videos'));
+        if(snap.exists()) data = snap.val();
+      }catch(e){}
+    }
+    if(!data){
+      try {
+        const res = await fetch(`${RTDB_BASE}/fight_videos.json`);
+        data = await res.json();
+      }catch(e){}
+    }
+    if(!data || Object.keys(data).length === 0){
+      const local = JSON.parse(localStorage.getItem('ufc_mania_fight_videos') || 'null');
+      if(local && local.length) return local;
+      return DEFAULT_FIGHT_VIDEOS;
+    }
+    const list = Object.keys(data).map(k => ({ id: k, ...data[k] }));
+    list.sort((a,b) => (b.createdAtEpoch||0) - (a.createdAtEpoch||0));
+    return list;
+  };
+
+  window.adminSaveFightVideo = async function(video) {
+    try {
+      const vidKey = video.id || ('fight_' + Date.now());
+      const payload = { ...video, id: vidKey, updatedAt: Date.now() };
+      if(db){
+        await set(ref(db, `fight_videos/${vidKey}`), payload);
+      }
+      await fetch(`${RTDB_BASE}/fight_videos/${vidKey}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const cached = JSON.parse(localStorage.getItem('ufc_mania_fight_videos') || '[]');
+      const idx = cached.findIndex(v => v.id === vidKey);
+      if(idx >= 0) cached[idx] = payload;
+      else cached.unshift(payload);
+      localStorage.setItem('ufc_mania_fight_videos', JSON.stringify(cached));
+      if(typeof localFightVideosCache !== 'undefined') localFightVideosCache = cached;
+      return payload;
+    }catch(e){
+      console.error("Save fight video failed:", e);
+      throw e;
+    }
+  };
+
+  window.adminDeleteFightVideo = async function(videoKey) {
+    try {
+      if(db) await remove(ref(db, `fight_videos/${videoKey}`));
+      await fetch(`${RTDB_BASE}/fight_videos/${videoKey}.json`, { method: 'DELETE' });
+      const cached = JSON.parse(localStorage.getItem('ufc_mania_fight_videos') || '[]');
+      const filtered = cached.filter(v => v.id !== videoKey);
+      localStorage.setItem('ufc_mania_fight_videos', JSON.stringify(filtered));
+      if(typeof localFightVideosCache !== 'undefined') localFightVideosCache = filtered;
+    }catch(e){
+      console.error("Delete fight video failed:", e);
+      throw e;
+    }
+  };
+
   window.adminUpdateUserStatus = async function(uid, newStatus) {
     try {
       if(db) await update(ref(db, `users/${uid}`), { status: newStatus });
@@ -1475,6 +1538,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
       <a href="/" onclick="navigateTo('/'); return false;" data-route="home">Home</a>
       <a href="/fighters" onclick="navigateTo('/fighters'); return false;" data-route="fighters">Fighters</a>
       <a href="/rankings" onclick="navigateTo('/rankings'); return false;" data-route="rankings">Rankings</a>
+      <a href="/fights" onclick="navigateTo('/fights'); return false;" data-route="fights" style="position:relative;display:inline-flex;align-items:center;gap:5px;"><span>Fights</span><span style="font-size:9px;background:var(--red);color:#fff;padding:1px 5px;border-radius:8px;font-weight:700;line-height:1.2;">STREAM</span></a>
       <a href="/weightclasses" onclick="navigateTo('/weightclasses'); return false;" data-route="weightclasses">Weight Classes</a>
       <a href="/countries" onclick="navigateTo('/countries'); return false;" data-route="countries">Countries</a>
       <a href="/compare" onclick="navigateTo('/compare'); return false;" data-route="compare">Compare</a>
@@ -1530,6 +1594,10 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
   <a href="/fighters" onclick="navigateTo('/fighters'); return false;" class="mbTab" data-route="fighters">
     <span class="mbIcon">🥊</span>
     <span class="mbLabel">Fighters</span>
+  </a>
+  <a href="/fights" onclick="navigateTo('/fights'); return false;" class="mbTab" data-route="fights">
+    <span class="mbIcon">🎬</span>
+    <span class="mbLabel">Fights</span>
   </a>
   <a href="/shop" onclick="navigateTo('/shop'); return false;" class="mbTab" data-route="shop">
     <span class="mbIcon">🛍️</span>
@@ -3147,6 +3215,19 @@ function age(dob){
   return a;
 }
 function byId(id){ return FIGHTERS.find(f=>f.id===id); }
+function findFightVideoMatch(fighterName, opponentName, eventName) {
+  const vids = typeof getFightVideosList === 'function' ? getFightVideosList() : (typeof DEFAULT_FIGHT_VIDEOS !== 'undefined' ? DEFAULT_FIGHT_VIDEOS : []);
+  const f1 = (fighterName || '').toLowerCase();
+  const f2 = (opponentName || '').toLowerCase();
+  const ev = (eventName || '').toLowerCase();
+
+  return vids.find(v => {
+    const vText = (v.title + ' ' + v.event + ' ' + v.fighter1 + ' ' + v.fighter2).toLowerCase();
+    const hasFighters = f1 && f2 && (vText.includes(f1) && vText.includes(f2));
+    const hasEvent = ev && ev.length > 4 && vText.includes(ev);
+    return hasFighters || (hasEvent && (vText.includes(f1) || vText.includes(f2)));
+  }) || null;
+}
 function resClass(r){ return r==='win'?'win':r==='loss'?'loss':r==='draw'?'draw':'nc'; }
 function resLabel(r){ return r==='win'?'Win':r==='loss'?'Loss':r==='draw'?'Draw':'No Contest'; }
 
@@ -3533,13 +3614,18 @@ function renderProfile(id){
       <div class="subhead">Fight History</div>
       <div class="tableScroll">
         <table class="fh">
-          <thead><tr><th>Date</th><th>Event</th><th>Opponent</th><th>Result</th><th>Method</th><th>Round</th><th>Time</th></tr></thead>
+          <thead><tr><th>Date</th><th>Event</th><th>Opponent</th><th>Result</th><th>Method</th><th>Round</th><th>Time</th><th style="text-align:center;">Stream</th></tr></thead>
           <tbody>
-            ${f.fightHistory.map(h=>`<tr>
+            ${f.fightHistory.map(h=>{
+              const vm = findFightVideoMatch(f.name, h.opponent, h.event);
+              return `<tr>
               <td>${fmtDate(h.date)}</td><td>${h.event}</td><td>${h.opponent}</td>
               <td><span class="resBadge ${resClass(h.result)}">${resLabel(h.result)}</span></td>
               <td>${h.method}</td><td>${h.round}</td><td>${h.time}</td>
-            </tr>`).join('')}
+              <td style="text-align:center;">
+                ${vm ? `<button onclick="playFightVideo('${vm.id}')" class="btn btn-ghost" style="padding:3px 8px;font-size:11px;color:#ff5555;border-color:rgba(224,16,43,0.35);display:inline-flex;align-items:center;gap:4px;" title="Stream Fight"><span>▶</span> Watch</button>` : '<span style="color:rgba(255,255,255,0.2);font-size:12px;">—</span>'}
+              </td>
+            </tr>`;}).join('')}
           </tbody>
         </table>
       </div>
@@ -4779,6 +4865,1013 @@ function renderNews(){
   </section>`;
 }
 
+// ============================================================================
+// UFC MANIA - FIGHTS & STREAM SECTION (MEMBERS-ONLY STREAMING)
+// ============================================================================
+
+const DEFAULT_FIGHT_VIDEOS = [
+  {
+    id: "makhachev-volkanovski-2",
+    title: "Islam Makhachev vs Alexander Volkanovski 2",
+    event: "UFC 294",
+    date: "2023-10-21",
+    weightClass: "Lightweight",
+    category: "Title Bout",
+    fighter1: "Islam Makhachev",
+    fighter2: "Alexander Volkanovski",
+    fighter1Id: "islam-makhachev",
+    fighter2Id: "alexander-volkanovski",
+    winner: "Islam Makhachev",
+    finish: "KO (Head Kick & Punches)",
+    round: "Round 1",
+    time: "3:06",
+    duration: "14:20",
+    sourceType: "embed",
+    videoUrl: "https://www.youtube-nocookie.com/embed/5a3jK7Z8uXo?autoplay=1&rel=0",
+    thumbnail: "https://img.youtube.com/vi/5a3jK7Z8uXo/hqdefault.jpg",
+    views: 142000,
+    featured: true
+  },
+  {
+    id: "pereira-prochazka-1",
+    title: "Alex Pereira vs Jiří Procházka",
+    event: "UFC 295",
+    date: "2023-11-11",
+    weightClass: "Light Heavyweight",
+    category: "Title Bout",
+    fighter1: "Alex Pereira",
+    fighter2: "Jiří Procházka",
+    fighter1Id: "alex-pereira",
+    fighter2Id: "",
+    winner: "Alex Pereira",
+    finish: "TKO (Elbows & Hooks)",
+    round: "Round 2",
+    time: "4:08",
+    duration: "18:45",
+    sourceType: "embed",
+    videoUrl: "https://www.youtube-nocookie.com/embed/L1dFv9QYjK8?autoplay=1&rel=0",
+    thumbnail: "https://img.youtube.com/vi/L1dFv9QYjK8/hqdefault.jpg",
+    views: 189000,
+    featured: true
+  },
+  {
+    id: "topuria-volkanovski",
+    title: "Ilia Topuria vs Alexander Volkanovski",
+    event: "UFC 298",
+    date: "2024-02-17",
+    weightClass: "Featherweight",
+    category: "Title Bout",
+    fighter1: "Ilia Topuria",
+    fighter2: "Alexander Volkanovski",
+    fighter1Id: "ilia-topuria",
+    fighter2Id: "alexander-volkanovski",
+    winner: "Ilia Topuria",
+    finish: "KO (Right Hook)",
+    round: "Round 2",
+    time: "3:32",
+    duration: "16:10",
+    sourceType: "embed",
+    videoUrl: "https://www.youtube-nocookie.com/embed/5X7WWVTrB8c?autoplay=1&rel=0",
+    thumbnail: "https://img.youtube.com/vi/5X7WWVTrB8c/hqdefault.jpg",
+    views: 230000,
+    featured: true
+  },
+  {
+    id: "gaethje-poirier-2",
+    title: "Justin Gaethje vs Dustin Poirier 2",
+    event: "UFC 291",
+    date: "2023-07-29",
+    weightClass: "Lightweight",
+    category: "KO Highlights",
+    fighter1: "Justin Gaethje",
+    fighter2: "Dustin Poirier",
+    fighter1Id: "justin-gaethje",
+    fighter2Id: "",
+    winner: "Justin Gaethje",
+    finish: "KO (Head Kick)",
+    round: "Round 2",
+    time: "1:00",
+    duration: "12:15",
+    sourceType: "embed",
+    videoUrl: "https://www.youtube-nocookie.com/embed/7r1p0j2m3tE?autoplay=1&rel=0",
+    thumbnail: "https://img.youtube.com/vi/7r1p0j2m3tE/hqdefault.jpg",
+    views: 175000,
+    featured: true
+  },
+  {
+    id: "jones-gane",
+    title: "Jon Jones vs Ciryl Gane",
+    event: "UFC 285",
+    date: "2023-03-04",
+    weightClass: "Heavyweight",
+    category: "Title Bout",
+    fighter1: "Jon Jones",
+    fighter2: "Ciryl Gane",
+    fighter1Id: "jon-jones",
+    fighter2Id: "",
+    winner: "Jon Jones",
+    finish: "Submission (Guillotine Choke)",
+    round: "Round 1",
+    time: "2:04",
+    duration: "11:30",
+    sourceType: "embed",
+    videoUrl: "https://www.youtube-nocookie.com/embed/tgbNymZ7vqY?autoplay=1&rel=0",
+    thumbnail: "https://img.youtube.com/vi/tgbNymZ7vqY/hqdefault.jpg",
+    views: 215000,
+    featured: false
+  },
+  {
+    id: "edwards-usman-2",
+    title: "Leon Edwards vs Kamaru Usman 2",
+    event: "UFC 278",
+    date: "2022-08-20",
+    weightClass: "Welterweight",
+    category: "KO Highlights",
+    fighter1: "Leon Edwards",
+    fighter2: "Kamaru Usman",
+    fighter1Id: "leon-edwards",
+    fighter2Id: "kamaru-usman",
+    winner: "Leon Edwards",
+    finish: "KO (Head Kick)",
+    round: "Round 5",
+    time: "4:04",
+    duration: "24:10",
+    sourceType: "embed",
+    videoUrl: "https://www.youtube-nocookie.com/embed/kJQP7kiw5Fk?autoplay=1&rel=0",
+    thumbnail: "https://img.youtube.com/vi/kJQP7kiw5Fk/hqdefault.jpg",
+    views: 310000,
+    featured: false
+  },
+  {
+    id: "zhang-joanna-2",
+    title: "Zhang Weili vs Joanna Jędrzejczyk 2",
+    event: "UFC 275",
+    date: "2022-06-11",
+    weightClass: "Women's Strawweight",
+    category: "KO Highlights",
+    fighter1: "Zhang Weili",
+    fighter2: "Joanna Jędrzejczyk",
+    fighter1Id: "zhang-weili",
+    fighter2Id: "",
+    winner: "Zhang Weili",
+    finish: "KO (Spinning Backfist)",
+    round: "Round 2",
+    time: "2:28",
+    duration: "15:20",
+    sourceType: "embed",
+    videoUrl: "https://www.youtube-nocookie.com/embed/9bZkp7q19f0?autoplay=1&rel=0",
+    thumbnail: "https://img.youtube.com/vi/9bZkp7q19f0/hqdefault.jpg",
+    views: 195000,
+    featured: false
+  },
+  {
+    id: "khabib-mcgregor",
+    title: "Khabib Nurmagomedov vs Conor McGregor",
+    event: "UFC 229",
+    date: "2018-10-06",
+    weightClass: "Lightweight",
+    category: "Full Fight",
+    fighter1: "Khabib Nurmagomedov",
+    fighter2: "Conor McGregor",
+    fighter1Id: "khabib-nurmagomedov",
+    fighter2Id: "conor-mcgregor",
+    winner: "Khabib Nurmagomedov",
+    finish: "Submission (Neck Crank)",
+    round: "Round 4",
+    time: "3:03",
+    duration: "32:45",
+    sourceType: "embed",
+    videoUrl: "https://www.youtube-nocookie.com/embed/2X_2Idri09c?autoplay=1&rel=0",
+    thumbnail: "https://img.youtube.com/vi/2X_2Idri09c/hqdefault.jpg",
+    views: 890000,
+    featured: true
+  }
+];
+
+// In-memory / localStorage cache for fight videos
+let localFightVideosCache = null;
+
+function getFightVideosList() {
+  if (localFightVideosCache && localFightVideosCache.length) return localFightVideosCache;
+  try {
+    const stored = JSON.parse(localStorage.getItem('ufc_mania_fight_videos') || 'null');
+    if (stored && Array.isArray(stored) && stored.length > 0) {
+      localFightVideosCache = stored;
+      return localFightVideosCache;
+    }
+  } catch(e){}
+  localFightVideosCache = [...DEFAULT_FIGHT_VIDEOS];
+  return localFightVideosCache;
+}
+
+function extractVideoEmbedUrl(url) {
+  if (!url) return '';
+  if (url.includes('youtube.com/embed/') || url.includes('youtube-nocookie.com/embed/')) {
+    if (!url.includes('autoplay=')) {
+      return url + (url.includes('?') ? '&autoplay=1&rel=0' : '?autoplay=1&rel=0');
+    }
+    return url;
+  }
+  const watchMatch = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+  if (watchMatch) {
+    return `https://www.youtube-nocookie.com/embed/${watchMatch[1]}?autoplay=1&rel=0`;
+  }
+  const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+  if (shortMatch) {
+    return `https://www.youtube-nocookie.com/embed/${shortMatch[1]}?autoplay=1&rel=0`;
+  }
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
+  }
+  return url;
+}
+
+function extractYouTubeThumb(url) {
+  if (!url) return '';
+  const match = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/) || url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/) || url.match(/embed\/([a-zA-Z0-9_-]{11})/);
+  if (match) {
+    return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
+  }
+  return '';
+}
+
+// ---------------- Stream Gate Modal (Triggered for Unregistered / Guest Users) ----------------
+window.openStreamGateModal = function(videoId) {
+  const video = getFightVideosList().find(v => v.id === videoId);
+  const title = video ? video.title : 'Exclusive UFC Fight';
+  const event = video ? (video.event + ' · ' + (video.finish || 'Championship Bout')) : 'Full Fight Replay';
+  const thumb = video ? video.thumbnail : 'images/products/boxing-gloves.png';
+
+  let modal = document.getElementById('streamGateModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'streamGateModal';
+    modal.className = 'authModal';
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div class="authModalOverlay" onclick="closeStreamGateModal()"></div>
+    <div class="authModalContent" style="max-width:460px;text-align:center;padding:32px 28px;position:relative;">
+      <button class="authModalClose" onclick="closeStreamGateModal()">&times;</button>
+      
+      <div style="width:68px;height:68px;border-radius:50%;background:rgba(224,16,43,0.14);border:1px solid rgba(224,16,43,0.4);display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 0 24px rgba(224,16,43,0.35);">
+        <span style="font-size:32px;">🔒</span>
+      </div>
+
+      <div style="display:inline-block;padding:3px 10px;background:rgba(230,175,46,0.18);border:1px solid rgba(230,175,46,0.4);border-radius:20px;font-size:11px;font-family:'Oswald',sans-serif;letter-spacing:1px;color:var(--gold);text-transform:uppercase;margin-bottom:12px;">
+        MEMBERS ONLY STREAMING
+      </div>
+
+      <h2 style="font-family:'Oswald',sans-serif;font-size:24px;letter-spacing:0.5px;color:var(--white);margin:0 0 10px;text-transform:uppercase;">
+        SIGN IN TO STREAM FIGHTS
+      </h2>
+
+      <p style="color:var(--muted);font-size:13.5px;line-height:1.6;margin:0 0 20px;">
+        Full-length fight replays, championship rounds, and knockout highlights are reserved exclusively for registered <b>UFC Mania</b> members.
+      </p>
+
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;align-items:center;gap:12px;margin-bottom:24px;text-align:left;">
+        <img src="${thumb}" alt="${title}" style="width:72px;height:46px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,255,255,0.1);" onerror="this.src='images/fighters/islam-makhachev.png'">
+        <div style="min-width:0;flex:1;">
+          <div style="font-weight:700;font-size:13.5px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${title}</div>
+          <div style="font-size:12px;color:var(--gold);margin-top:2px;">${event}</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button onclick="handleStreamAuthAction('signin', '${videoId}')" class="btn btn-primary" style="padding:12px;font-size:14px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+          Sign In to Your Account 🥊
+        </button>
+        <button onclick="handleStreamAuthAction('signup', '${videoId}')" class="btn btn-outline" style="padding:11px;font-size:13.5px;">
+          Create Free Account (30 seconds)
+        </button>
+      </div>
+    </div>
+  `;
+  modal.classList.remove('hidden');
+  modal.style.display = 'flex';
+};
+
+window.closeStreamGateModal = function() {
+  const modal = document.getElementById('streamGateModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+};
+
+window.handleStreamAuthAction = function(tab, videoId) {
+  closeStreamGateModal();
+  window._postAuthRedirect = '/fights?watch=' + encodeURIComponent(videoId);
+  openAuthModal(tab);
+};
+
+// ---------------- Play Action Trigger ----------------
+window.playFightVideo = function(videoId) {
+  if (!window._currentUser) {
+    openStreamGateModal(videoId);
+    return;
+  }
+  navigateTo('/fights?watch=' + encodeURIComponent(videoId));
+};
+
+// ---------------- Main Render Function: /fights or /stream ----------------
+function renderFightsStream(queryStr) {
+  const allVideos = getFightVideosList();
+  const isLoggedIn = !!window._currentUser;
+  const user = window._currentUser || {};
+  const userProfile = window._currentUserProfile || {};
+  const userName = userProfile.displayName || user.displayName || (user.email ? user.email.split('@')[0] : 'Member');
+
+  let watchId = null;
+  if (queryStr) {
+    if (typeof queryStr === 'string' && queryStr.includes('watch=')) {
+      const match = queryStr.match(/watch=([^&]+)/);
+      if (match) watchId = decodeURIComponent(match[1]);
+    }
+  }
+
+  const activeVideo = watchId ? (allVideos.find(v => v.id === watchId) || allVideos[0]) : null;
+
+  app.innerHTML = `
+  <section class="pad wrap">
+    <!-- Stream Hero / Member Status Banner -->
+    <div class="streamHeroBanner" style="background:linear-gradient(135deg,rgba(224,16,43,0.12),rgba(18,21,27,0.95));border:1px solid ${isLoggedIn ? 'rgba(16,185,129,0.35)' : 'rgba(224,16,43,0.35)'};border-radius:16px;padding:22px 26px;margin-bottom:28px;position:relative;overflow:hidden;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;">
+        <div style="flex:1;min-width:280px;">
+          <div style="display:inline-flex;align-items:center;gap:8px;padding:4px 12px;border-radius:20px;font-size:11.5px;font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;${isLoggedIn ? 'background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.4);' : 'background:rgba(224,16,43,0.18);color:#ff5555;border:1px solid rgba(224,16,43,0.4);'}">
+            <span style="width:7px;height:7px;border-radius:50%;background:${isLoggedIn ? '#10b981' : '#ff3333'};box-shadow:0 0 8px ${isLoggedIn ? '#10b981' : '#ff3333'};display:inline-block;"></span>
+            ${isLoggedIn ? 'OCTAGON PASS ACTIVE · UNLIMITED STREAMING' : 'MEMBERS-ONLY STREAMING · SIGN IN REQUIRED'}
+          </div>
+          <h1 style="font-family:'Oswald',sans-serif;font-size:32px;letter-spacing:1px;margin:0 0 6px;color:var(--white);text-transform:uppercase;">
+            UFC OCTAGON CINEMA &amp; FIGHT REPLAYS
+          </h1>
+          <p style="color:var(--muted);font-size:14.5px;margin:0;line-height:1.6;max-width:720px;">
+            ${isLoggedIn ? `Welcome, <b>${userName}</b>! Your verified membership grants full streaming access to all official UFC championship bouts, knockout reels, and career milestones.` : `Exclusive fight replays and knockout streams are reserved exclusively for registered UFC Mania accounts. Create a free account or sign in to start streaming instantly.`}
+          </p>
+        </div>
+        <div>
+          ${!isLoggedIn ? `
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button onclick="openAuthModal('signin')" class="btn btn-primary" style="padding:10px 18px;font-size:13.5px;font-weight:700;">
+                Sign In to Stream 🥊
+              </button>
+              <button onclick="openAuthModal('signup')" class="btn btn-outline" style="padding:10px 16px;font-size:13.5px;">
+                Create Free Account
+              </button>
+            </div>
+          ` : `
+            <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 14px;">
+              <span style="font-size:20px;">👤</span>
+              <div style="font-size:12.5px;">
+                <div style="color:var(--white);font-weight:700;">${userName}</div>
+                <div style="color:#34d399;font-size:11px;">Verified Member ✓</div>
+              </div>
+            </div>
+          `}
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Video Cinema Player (if watchId is set) -->
+    ${activeVideo ? `
+      <div id="cinemaTheaterSection" style="margin-bottom:44px;scroll-margin-top:80px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <a href="/fights" onclick="navigateTo('/fights'); return false;" class="btn btn-ghost" style="padding:6px 12px;font-size:12.5px;gap:6px;">
+              ← Back to All Fights
+            </a>
+            <span style="font-family:'Oswald',sans-serif;color:var(--gold);font-size:14px;letter-spacing:0.5px;">
+              NOW PLAYING: ${activeVideo.event}
+            </span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <span style="font-size:12px;background:rgba(255,255,255,0.06);padding:4px 10px;border-radius:6px;color:var(--muted);">
+              ⏱ ${activeVideo.duration}
+            </span>
+            <span style="font-size:12px;background:rgba(210,10,10,0.18);color:#ff5555;padding:4px 10px;border-radius:6px;font-weight:600;">
+              ${activeVideo.category}
+            </span>
+          </div>
+        </div>
+
+        <!-- The Video Screen Box -->
+        <div class="cinemaPlayerWrap" style="position:relative;width:100%;padding-top:56.25%;background:#0a0c10;border-radius:14px;overflow:hidden;border:1px solid rgba(224,16,43,0.35);box-shadow:0 0 35px rgba(224,16,43,0.22);">
+          ${isLoggedIn ? `
+            <!-- Logged In: Play Video -->
+            ${activeVideo.sourceType === 'file' || activeVideo.videoUrl.match(/\.(mp4|webm)($|\?)/i) ? `
+              <video controls autoplay playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;">
+                <source src="${activeVideo.videoUrl}" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            ` : `
+              <iframe src="${extractVideoEmbedUrl(activeVideo.videoUrl)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:none;"></iframe>
+            `}
+          ` : `
+            <!-- Guest / Not Logged In: LOCKED SCREEN -->
+            <div style="position:absolute;inset:0;background:radial-gradient(circle at center, rgba(30,10,15,0.92) 0%, rgba(10,12,16,0.98) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;">
+              <div style="width:72px;height:72px;border-radius:50%;background:rgba(224,16,43,0.15);border:1.5px solid rgba(224,16,43,0.45);display:flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 0 25px rgba(224,16,43,0.4);">
+                <span style="font-size:34px;">🔒</span>
+              </div>
+              <div style="font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:1px;color:var(--gold);text-transform:uppercase;background:rgba(230,175,46,0.18);padding:3px 10px;border-radius:4px;margin-bottom:10px;">
+                MEMBER STREAM LOCK
+              </div>
+              <h2 style="font-family:'Oswald',sans-serif;font-size:26px;color:var(--white);margin:0 0 8px;letter-spacing:0.5px;">
+                SIGN IN TO STREAM "${activeVideo.title.toUpperCase()}"
+              </h2>
+              <p style="color:var(--muted);font-size:14px;max-width:520px;margin:0 0 20px;line-height:1.6;">
+                This fight video replay is restricted to registered members. Sign in to your account or create a free membership to unlock instant streaming with zero commercials.
+              </p>
+              <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+                <button onclick="handleStreamAuthAction('signin', '${activeVideo.id}')" class="btn btn-primary" style="padding:11px 22px;font-size:14px;font-weight:700;">
+                  Sign In to Watch 🥊
+                </button>
+                <button onclick="handleStreamAuthAction('signup', '${activeVideo.id}')" class="btn btn-outline" style="padding:11px 20px;font-size:14px;">
+                  Create Free Account
+                </button>
+              </div>
+            </div>
+          `}
+        </div>
+
+        <!-- Fight Details & Tale of the Tape -->
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;margin-top:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:20px;border-bottom:1px solid var(--line);padding-bottom:18px;">
+            <div>
+              <div style="font-size:12px;color:var(--gold);font-family:'Oswald',sans-serif;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">
+                ${activeVideo.event} · ${activeVideo.weightClass} Division
+              </div>
+              <h2 style="font-family:'Oswald',sans-serif;font-size:26px;color:var(--white);margin:0 0 6px;">
+                ${activeVideo.title}
+              </h2>
+              <div style="display:flex;align-items:center;gap:12px;font-size:13.5px;color:var(--muted);flex-wrap:wrap;">
+                <span><b>Finish:</b> <span style="color:#ff5555;font-weight:600;">${activeVideo.finish}</span></span>
+                <span>•</span>
+                <span><b>Time:</b> ${activeVideo.round} (${activeVideo.time})</span>
+                <span>•</span>
+                <span><b>Date:</b> ${activeVideo.date}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tale of the Tape Fighter Cards -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;">
+            ${renderFighterTapeCard(activeVideo.fighter1, activeVideo.fighter1Id, activeVideo.winner === activeVideo.fighter1)}
+            <div style="display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:24px;color:var(--red);font-weight:700;">
+              VS
+            </div>
+            ${renderFighterTapeCard(activeVideo.fighter2, activeVideo.fighter2Id, activeVideo.winner === activeVideo.fighter2)}
+          </div>
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- Search & Filter Controls -->
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:28px;">
+      <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;">
+        <!-- Category Filter Pills -->
+        <div class="rankFilterTabs" style="display:flex;flex-wrap:wrap;gap:8px;">
+          <button class="rankFilterBtn active" onclick="filterFightVideos('all', this)">All Fights (${allVideos.length})</button>
+          <button class="rankFilterBtn" onclick="filterFightVideos('Title Bout', this)">🏆 Title Bouts</button>
+          <button class="rankFilterBtn" onclick="filterFightVideos('KO Highlights', this)">⚡ KO Finishes</button>
+          <button class="rankFilterBtn" onclick="filterFightVideos('Full Fight', this)">🥊 Full Fights</button>
+        </div>
+
+        <!-- Live Search -->
+        <div style="position:relative;min-width:260px;flex:1;max-width:360px;">
+          <input type="text" id="fightSearchInput" placeholder="Search fighters or event (e.g. Makhachev, UFC 294)..."
+            style="width:100%;background:rgba(0,0,0,0.45);border:1px solid var(--line);border-radius:8px;padding:9px 14px 9px 36px;color:var(--white);font-size:13.5px;outline:none;"
+            oninput="searchFightVideos(this.value)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;">
+            <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fights Video Catalog Grid -->
+    <div id="fightVideosGrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:22px;">
+      ${allVideos.map(v => {
+        return `
+        <div class="fightVideoCard" data-category="${v.category}" data-search="${(v.title + ' ' + v.event + ' ' + v.fighter1 + ' ' + v.fighter2).toLowerCase()}" style="background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;"
+          onmouseover="this.style.borderColor='rgba(224,16,43,0.45)';this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 24px rgba(0,0,0,0.4)';"
+          onmouseout="this.style.borderColor='var(--line)';this.style.transform='translateY(0)';this.style.boxShadow='none';">
+          
+          <!-- Thumbnail Container -->
+          <div style="position:relative;width:100%;padding-top:56.25%;background:#12151b;overflow:hidden;cursor:pointer;" onclick="playFightVideo('${v.id}')">
+            <img src="${v.thumbnail}" alt="${v.title}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .3s ease;"
+              onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"
+              onerror="this.src='images/fighters/islam-makhachev.png'">
+            
+            <!-- Category Badge -->
+            <div style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.1);padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.5px;color:var(--gold);">
+              ${v.category}
+            </div>
+
+            <!-- Duration Badge -->
+            <div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);padding:2px 7px;border-radius:4px;font-size:11.5px;font-weight:600;color:var(--white);">
+              ${v.duration}
+            </div>
+
+            <!-- Lock / Stream Status Icon -->
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.25);transition:background .2s ease;"
+              onmouseover="this.style.background='rgba(0,0,0,0.4)'" onmouseout="this.style.background='rgba(0,0,0,0.25)'">
+              <div style="width:48px;height:48px;border-radius:50%;background:${isLoggedIn ? 'rgba(224,16,43,0.9)' : 'rgba(0,0,0,0.85)'};border:1.5px solid ${isLoggedIn ? '#ff4444' : 'var(--gold)'};display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px rgba(0,0,0,0.6);">
+                <span style="font-size:${isLoggedIn ? '18px' : '20px'};margin-left:${isLoggedIn ? '3px' : '0'};color:#fff;">
+                  ${isLoggedIn ? '▶' : '🔒'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div style="padding:16px;flex:1;display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <span style="font-size:11.5px;color:var(--red);font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">
+                  ${v.event}
+                </span>
+                <span style="font-size:11.5px;color:var(--muted);">${v.date}</span>
+              </div>
+              <h3 style="font-family:'Oswald',sans-serif;font-size:18px;margin:0 0 8px;color:var(--white);line-height:1.3;cursor:pointer;" onclick="playFightVideo('${v.id}')">
+                ${v.title}
+              </h3>
+              <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px;line-height:1.4;">
+                <span style="color:#ff6666;font-weight:600;">Finish:</span> ${v.finish} · ${v.round}
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <div>
+              <button onclick="playFightVideo('${v.id}')" class="btn ${isLoggedIn ? 'btn-primary' : 'btn-outline'}" style="width:100%;padding:8px;font-size:12.5px;font-weight:700;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:6px;">
+                ${isLoggedIn ? '<span>▶</span> STREAM REPLAY' : '<span>🔒</span> MEMBERS ONLY STREAM'}
+              </button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- Empty State -->
+    <div id="fightVideosEmptyState" style="display:none;text-align:center;padding:60px 20px;background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-top:24px;">
+      <div style="font-size:42px;margin-bottom:12px;">🎬</div>
+      <h3 style="font-family:'Oswald',sans-serif;font-size:22px;color:var(--white);margin-bottom:6px;">No Fight Videos Found</h3>
+      <p style="color:var(--muted);font-size:14px;max-width:400px;margin:0 auto 16px;">We couldn't find any fight videos matching your search. Try adjusting your query or filter.</p>
+      <button onclick="clearFightSearch()" class="btn btn-primary" style="font-size:13px;padding:8px 16px;">Reset Filters</button>
+    </div>
+  </section>`;
+
+  if (watchId) {
+    setTimeout(() => {
+      const el = document.getElementById('cinemaTheaterSection');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  }
+}
+
+function renderFighterTapeCard(name, fighterId, isWinner) {
+  const f = fighterId ? byId(fighterId) : FIGHTERS.find(x => x.name.toLowerCase() === (name || '').toLowerCase());
+  return `
+    <div style="background:rgba(255,255,255,0.03);border:1px solid ${isWinner ? 'rgba(230,175,46,0.45)' : 'var(--line)'};border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;position:relative;">
+      ${isWinner ? `<div style="position:absolute;top:-10px;right:10px;background:rgba(230,175,46,0.2);border:1px solid rgba(230,175,46,0.5);color:var(--gold);font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:0.5px;">WINNER 🏆</div>` : ''}
+      <div style="width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;border:1px solid rgba(255,255,255,0.1);">
+        ${f ? photoBox(f, 16) : `<div style="width:100%;height:100%;background:#181c24;display:flex;align-items:center;justify-content:center;color:var(--muted);font-family:'Oswald',sans-serif;font-weight:700;">${(name || 'UFC').substring(0, 2).toUpperCase()}</div>`}
+      </div>
+      <div style="min-width:0;flex:1;">
+        <div style="font-weight:700;font-size:14.5px;color:var(--white);">
+          ${f ? `<a href="/fighter/${f.id}" style="color:var(--white);text-decoration:none;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--white)'">${f.name}</a>` : name}
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">
+          ${f ? `${f.country} · Record: ${f.record.w}-${f.record.l}-${f.record.d}` : 'UFC Athlete'}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ---------------- Filtering & Search for Fights Catalog ----------------
+window.filterFightVideos = function(cat, btn) {
+  document.querySelectorAll('.rankFilterBtn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  const cards = document.querySelectorAll('.fightVideoCard');
+  let visible = 0;
+  cards.forEach(c => {
+    const cardCat = c.getAttribute('data-category');
+    if (cat === 'all' || cardCat === cat) {
+      c.style.display = '';
+      visible++;
+    } else {
+      c.style.display = 'none';
+    }
+  });
+
+  const empty = document.getElementById('fightVideosEmptyState');
+  if (empty) empty.style.display = visible === 0 ? 'block' : 'none';
+};
+
+window.searchFightVideos = function(val) {
+  const query = (val || '').trim().toLowerCase();
+  const cards = document.querySelectorAll('.fightVideoCard');
+  let visible = 0;
+
+  cards.forEach(c => {
+    const text = c.getAttribute('data-search') || '';
+    if (!query || text.includes(query)) {
+      c.style.display = '';
+      visible++;
+    } else {
+      c.style.display = 'none';
+    }
+  });
+
+  const empty = document.getElementById('fightVideosEmptyState');
+  if (empty) empty.style.display = visible === 0 ? 'block' : 'none';
+};
+
+window.clearFightSearch = function() {
+  const input = document.getElementById('fightSearchInput');
+  if (input) input.value = '';
+  filterFightVideos('all', document.querySelector('.rankFilterBtn'));
+};
+
+// ============================================================================
+// ADMIN PANEL - FIGHT VIDEOS MANAGEMENT (TAB: 'fights')
+// ============================================================================
+
+window.renderFightVideosTab = function() {
+  const box = document.getElementById('adminTabContent');
+  if (!box) return;
+
+  const videos = getFightVideosList();
+
+  box.innerHTML = `
+  <div class="adminCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h3 style="font-family:'Oswald',sans-serif;font-size:20px;margin:0 0 4px;letter-spacing:0.5px;">
+          FIGHT VIDEOS &amp; STREAM MANAGEMENT
+        </h3>
+        <p style="color:var(--muted);font-size:13px;margin:0;">
+          Add, edit, and upload fight videos with YouTube/Embed links or direct .mp4 video files. Only logged-in members can stream these replays.
+        </p>
+      </div>
+      <div>
+        <button onclick="openAddFightVideoModal()" class="btn btn-primary" style="padding:9px 18px;font-size:13px;font-weight:700;">
+          + Add New Fight Video 🎬
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:14px;margin-bottom:24px;">
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:10px;padding:14px;">
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;">Total Fight Videos</div>
+        <div style="font-size:24px;font-family:'Oswald',sans-serif;color:var(--white);font-weight:700;margin-top:4px;">${videos.length}</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:10px;padding:14px;">
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;">Title Bouts</div>
+        <div style="font-size:24px;font-family:'Oswald',sans-serif;color:var(--gold);font-weight:700;margin-top:4px;">${videos.filter(v=>v.category==='Title Bout').length}</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:10px;padding:14px;">
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;">KO Highlights</div>
+        <div style="font-size:24px;font-family:'Oswald',sans-serif;color:var(--red);font-weight:700;margin-top:4px;">${videos.filter(v=>v.category==='KO Highlights').length}</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:10px;padding:14px;">
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;">Access Policy</div>
+        <div style="font-size:14px;color:#34d399;font-weight:700;margin-top:8px;">🔒 Members Only</div>
+      </div>
+    </div>
+
+    <!-- Videos Table -->
+    <div class="adminTableWrap">
+      <table class="adminTable">
+        <thead>
+          <tr>
+            <th>Thumbnail</th>
+            <th>Title &amp; Event</th>
+            <th>Division / Category</th>
+            <th>Finish Details</th>
+            <th>Duration &amp; Source</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${videos.map(v => `
+            <tr>
+              <td>
+                <div style="width:70px;height:42px;border-radius:6px;overflow:hidden;background:#12151b;border:1px solid rgba(255,255,255,0.1);">
+                  <img src="${v.thumbnail}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='images/fighters/islam-makhachev.png'">
+                </div>
+              </td>
+              <td>
+                <div style="font-weight:700;color:var(--white);font-size:14px;">${v.title}</div>
+                <div style="font-size:12px;color:var(--gold);margin-top:2px;">${v.event} · ${v.date}</div>
+              </td>
+              <td>
+                <div style="font-size:13px;color:var(--white);">${v.weightClass}</div>
+                <span class="statusBadge" style="background:rgba(210,10,10,0.18);color:#ff6666;border:1px solid rgba(210,10,10,0.3);margin-top:3px;">
+                  ${v.category}
+                </span>
+              </td>
+              <td>
+                <div style="font-size:13px;color:#ff5555;font-weight:600;">${v.finish}</div>
+                <div style="font-size:12px;color:var(--muted);">${v.round} (${v.time})</div>
+              </td>
+              <td>
+                <div style="font-size:13px;color:var(--white);">⏱ ${v.duration}</div>
+                <div style="font-size:11.5px;color:var(--muted);text-transform:uppercase;">${v.sourceType || 'embed'}</div>
+              </td>
+              <td style="text-align:right;">
+                <div style="display:inline-flex;gap:8px;">
+                  <button onclick="playFightVideo('${v.id}')" class="btn btn-ghost" style="padding:6px 10px;font-size:12px;" title="Stream Video">
+                    ▶ Play
+                  </button>
+                  <button onclick="handleAdminDeleteFight('${v.id}')" class="btn btn-ghost" style="padding:6px 10px;font-size:12px;color:var(--loss);border-color:rgba(239,68,68,0.3);" title="Delete Video">
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add Fight Video Modal -->
+  <div id="addFightVideoModal" class="authModal hidden" role="dialog" aria-modal="true" style="display:none;">
+    <div class="authModalOverlay" onclick="closeAddFightVideoModal()"></div>
+    <div class="authModalContent" style="max-width:540px;padding:26px;">
+      <button class="authModalClose" onclick="closeAddFightVideoModal()">&times;</button>
+      <div style="font-family:'Oswald',sans-serif;font-size:22px;color:var(--white);margin-bottom:14px;letter-spacing:0.5px;">
+        ADD NEW FIGHT VIDEO (HYBRID UPLOAD)
+      </div>
+
+      <form id="addFightVideoForm" onsubmit="handleAdminSaveFight(event)">
+        <div class="formGroup">
+          <label class="formLabel">Fight Title <span class="req">*</span></label>
+          <input type="text" id="afvTitle" class="formInput" placeholder="e.g. Islam Makhachev vs Alexander Volkanovski 2" required>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="formGroup">
+            <label class="formLabel">Event Name <span class="req">*</span></label>
+            <input type="text" id="afvEvent" class="formInput" placeholder="e.g. UFC 294" required>
+          </div>
+          <div class="formGroup">
+            <label class="formLabel">Date</label>
+            <input type="date" id="afvDate" class="formInput" value="${new Date().toISOString().split('T')[0]}">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="formGroup">
+            <label class="formLabel">Weight Class</label>
+            <select id="afvWeightClass" class="formInput" style="background:#161920;color:#fff;">
+              <option value="Lightweight">Lightweight</option>
+              <option value="Welterweight">Welterweight</option>
+              <option value="Middleweight">Middleweight</option>
+              <option value="Light Heavyweight">Light Heavyweight</option>
+              <option value="Heavyweight">Heavyweight</option>
+              <option value="Featherweight">Featherweight</option>
+              <option value="Bantamweight">Bantamweight</option>
+              <option value="Flyweight">Flyweight</option>
+              <option value="Women's Strawweight">Women's Strawweight</option>
+              <option value="Women's Flyweight">Women's Flyweight</option>
+              <option value="Women's Bantamweight">Women's Bantamweight</option>
+            </select>
+          </div>
+          <div class="formGroup">
+            <label class="formLabel">Category</label>
+            <select id="afvCategory" class="formInput" style="background:#161920;color:#fff;">
+              <option value="Title Bout">Title Bout</option>
+              <option value="KO Highlights">KO Highlights</option>
+              <option value="Full Fight">Full Fight</option>
+              <option value="Submission Finish">Submission Finish</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="formGroup">
+            <label class="formLabel">Fighter 1 Name</label>
+            <input type="text" id="afvFighter1" class="formInput" placeholder="e.g. Islam Makhachev">
+          </div>
+          <div class="formGroup">
+            <label class="formLabel">Fighter 2 Name</label>
+            <input type="text" id="afvFighter2" class="formInput" placeholder="e.g. Alexander Volkanovski">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;">
+          <div class="formGroup">
+            <label class="formLabel">Finish Method</label>
+            <input type="text" id="afvFinish" class="formInput" placeholder="e.g. KO (Head Kick & Punches)">
+          </div>
+          <div class="formGroup">
+            <label class="formLabel">Round &amp; Time</label>
+            <input type="text" id="afvRound" class="formInput" placeholder="e.g. Round 1 (3:06)">
+          </div>
+        </div>
+
+        <!-- Video Source (Hybrid Choice) -->
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:14px;">
+          <label class="formLabel" style="margin-bottom:8px;">Video Source Type (Hybrid Option C)</label>
+          <div style="display:flex;gap:16px;margin-bottom:10px;font-size:13px;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="radio" name="videoSourceType" value="link" checked onchange="toggleAdminVideoSource('link')">
+              <span>YouTube / Embed URL</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="radio" name="videoSourceType" value="file" onchange="toggleAdminVideoSource('file')">
+              <span>Direct Video File (.mp4)</span>
+            </label>
+          </div>
+
+          <div id="afvLinkBox">
+            <input type="text" id="afvUrl" class="formInput" placeholder="Paste YouTube / Vimeo / MP4 stream link..." oninput="autoPopulateThumb(this.value)">
+            <div style="font-size:11.5px;color:var(--muted);margin-top:4px;">
+              Auto-extracts YouTube thumbnail and creates safe responsive stream embed.
+            </div>
+          </div>
+
+          <div id="afvFileBox" style="display:none;">
+            <input type="file" id="afvFileInput" accept="video/mp4,video/webm" class="formInput" onchange="handleAdminVideoFile(event)">
+            <div style="font-size:11.5px;color:var(--gold);margin-top:4px;">
+              Select .mp4 or .webm file from your device for direct HTML5 player streaming.
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="formGroup">
+            <label class="formLabel">Thumbnail URL (Optional)</label>
+            <input type="text" id="afvThumb" class="formInput" placeholder="Auto-generated if YouTube">
+          </div>
+          <div class="formGroup">
+            <label class="formLabel">Duration</label>
+            <input type="text" id="afvDuration" class="formInput" placeholder="e.g. 15:30" value="12:00">
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+          <button type="button" onclick="closeAddFightVideoModal()" class="btn btn-ghost">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="padding:10px 22px;font-weight:700;">Save &amp; Publish Video</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  `;
+};
+
+window.openAddFightVideoModal = function() {
+  const modal = document.getElementById('addFightVideoModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
+};
+
+window.closeAddFightVideoModal = function() {
+  const modal = document.getElementById('addFightVideoModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+};
+
+window.toggleAdminVideoSource = function(type) {
+  const linkBox = document.getElementById('afvLinkBox');
+  const fileBox = document.getElementById('afvFileBox');
+  if (!linkBox || !fileBox) return;
+  if (type === 'file') {
+    linkBox.style.display = 'none';
+    fileBox.style.display = 'block';
+  } else {
+    linkBox.style.display = 'block';
+    fileBox.style.display = 'none';
+  }
+};
+
+let pendingAdminVideoBlob = null;
+window.handleAdminVideoFile = function(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  pendingAdminVideoBlob = URL.createObjectURL(file);
+  const durInput = document.getElementById('afvDuration');
+  if (durInput && (!durInput.value || durInput.value === '12:00')) {
+    durInput.value = 'Direct File';
+  }
+  showToast(`Selected video file: ${file.name} (${Math.round(file.size / 1024 / 1024)} MB)`, 'info');
+};
+
+window.autoPopulateThumb = function(val) {
+  const thumbInput = document.getElementById('afvThumb');
+  if (!thumbInput) return;
+  const autoThumb = extractYouTubeThumb(val);
+  if (autoThumb && !thumbInput.value) {
+    thumbInput.value = autoThumb;
+  }
+};
+
+window.handleAdminSaveFight = async function(e) {
+  e.preventDefault();
+  const title = document.getElementById('afvTitle')?.value?.trim();
+  const eventName = document.getElementById('afvEvent')?.value?.trim();
+  const dateVal = document.getElementById('afvDate')?.value || new Date().toISOString().split('T')[0];
+  const weightClass = document.getElementById('afvWeightClass')?.value || 'Lightweight';
+  const category = document.getElementById('afvCategory')?.value || 'Title Bout';
+  const fighter1 = document.getElementById('afvFighter1')?.value?.trim() || 'Fighter 1';
+  const fighter2 = document.getElementById('afvFighter2')?.value?.trim() || 'Fighter 2';
+  const finish = document.getElementById('afvFinish')?.value?.trim() || 'Unanimous Decision';
+  const round = document.getElementById('afvRound')?.value?.trim() || 'Round 3 (5:00)';
+  const duration = document.getElementById('afvDuration')?.value?.trim() || '15:00';
+  let thumb = document.getElementById('afvThumb')?.value?.trim() || '';
+
+  const isFile = document.querySelector('input[name="videoSourceType"]:checked')?.value === 'file';
+  let videoUrl = '';
+  let sourceType = 'embed';
+
+  if (isFile) {
+    if (!pendingAdminVideoBlob) {
+      showToast('Please select an .mp4 video file to upload.', 'error');
+      return;
+    }
+    videoUrl = pendingAdminVideoBlob;
+    sourceType = 'file';
+    if (!thumb) thumb = 'images/fighters/islam-makhachev.png';
+  } else {
+    videoUrl = document.getElementById('afvUrl')?.value?.trim() || '';
+    if (!videoUrl) {
+      showToast('Please paste a YouTube or video stream link.', 'error');
+      return;
+    }
+    if (!thumb) thumb = extractYouTubeThumb(videoUrl) || 'images/fighters/islam-makhachev.png';
+  }
+
+  const newVid = {
+    id: 'fight_' + Date.now(),
+    title,
+    event: eventName,
+    date: dateVal,
+    weightClass,
+    category,
+    fighter1,
+    fighter2,
+    fighter1Id: '',
+    fighter2Id: '',
+    winner: fighter1,
+    finish,
+    round,
+    time: round,
+    duration,
+    sourceType,
+    videoUrl,
+    thumbnail: thumb,
+    views: 1,
+    createdAtEpoch: Date.now()
+  };
+
+  try {
+    if (window.adminSaveFightVideo) {
+      await window.adminSaveFightVideo(newVid);
+    } else {
+      const list = getFightVideosList();
+      list.unshift(newVid);
+      localStorage.setItem('ufc_mania_fight_videos', JSON.stringify(list));
+      localFightVideosCache = list;
+    }
+    showToast('Fight video added successfully! Live for all members.', 'success');
+    closeAddFightVideoModal();
+    renderFightVideosTab();
+  } catch(err) {
+    console.error('Save fight failed:', err);
+    showToast('Could not save fight video to cloud: ' + err.message, 'error');
+  }
+};
+
+window.handleAdminDeleteFight = async function(videoId) {
+  if (!confirm('Are you sure you want to remove this fight video from the catalog?')) return;
+  try {
+    if (window.adminDeleteFightVideo) {
+      await window.adminDeleteFightVideo(videoId);
+    } else {
+      let list = getFightVideosList().filter(v => v.id !== videoId);
+      localStorage.setItem('ufc_mania_fight_videos', JSON.stringify(list));
+      localFightVideosCache = list;
+    }
+    showToast('Fight video deleted.', 'info');
+    renderFightVideosTab();
+  } catch(err) {
+    console.error('Delete fight failed:', err);
+    showToast('Could not delete fight video: ' + err.message, 'error');
+  }
+};
+
+
 // ---------------- About ----------------
 function renderAbout(){
   app.innerHTML = `
@@ -5763,6 +6856,8 @@ window.handleCustomerSignIn = async function(e){
     window._postAuthRedirect = null;
     if(targetRedir === 'checkout' && typeof getCart === 'function' && getCart().length > 0){
       navigateTo('checkout');
+    } else if(targetRedir && targetRedir.startsWith('/fights')){
+      navigateTo(targetRedir);
     } else {
       navigateTo('account');
     }
@@ -5861,6 +6956,8 @@ window.handleCustomerSignUp = async function(e){
     window._postAuthRedirect = null;
     if(targetRedir === 'checkout' && typeof getCart === 'function' && getCart().length > 0){
       navigateTo('checkout');
+    } else if(targetRedir && targetRedir.startsWith('/fights')){
+      navigateTo(targetRedir);
     } else {
       navigateTo('account');
     }
@@ -6258,6 +7355,7 @@ async function renderAdminPanel(){
       <button class="adminTabBtn ${adminActiveTab==='users'?'active':''}" onclick="switchAdminTab('users')">👥 User Accounts</button>
       <button class="adminTabBtn ${adminActiveTab==='activity'?'active':''}" onclick="switchAdminTab('activity')">⚡ Live User Activity</button>
       <button class="adminTabBtn ${adminActiveTab==='products'?'active':''}" onclick="switchAdminTab('products')">🛍️ Products Catalog</button>
+      <button class="adminTabBtn ${adminActiveTab==='fights'?'active':''}" onclick="switchAdminTab('fights')">🎬 Fight Videos &amp; Streams</button>
       <button class="adminTabBtn ${adminActiveTab==='quick'?'active':''}" onclick="switchAdminTab('quick')">⚙️ System &amp; Cloud Info</button>
     </div>
 
@@ -6356,6 +7454,8 @@ async function loadAdminDashboardData(){
     renderProductsTab();
   } else if(adminActiveTab === 'quick'){
     renderQuickTab();
+  } else if(adminActiveTab === 'fights'){
+    renderFightVideosTab();
   }
 }
 
@@ -6898,6 +7998,9 @@ function navigateTo(targetRoute, query = null, pushHistory = true){
       }
       renderCompare(params);
       setActiveNav('compare');
+    } else if(cleanPath === '/fights' || cleanPath === '/stream' || cleanPath === '/videos'){
+      renderFightsStream(query);
+      setActiveNav('fights');
     } else if(cleanPath === '/news'){
       renderNews();
       setActiveNav('news');
